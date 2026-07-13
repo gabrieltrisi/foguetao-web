@@ -21,7 +21,7 @@ export function LoginHero() {
       />
 
       <div className="relative z-10">
-        <Logo tone="white" />
+        <Logo variant="mono" white />
       </div>
 
       <div className="relative z-10 mt-auto">

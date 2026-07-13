@@ -8,7 +8,7 @@ import { landingBenefits } from "@/mocks/landing";
 export function Hero() {
   return (
     <section className="mx-auto max-w-6xl px-4 pb-8 pt-14 sm:px-6 sm:pt-20">
-      <div className="mx-auto max-w-3xl text-center sm:text-left">
+      <div className="max-w-3xl text-left">
         <span className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 text-small font-medium text-ink-2">
           <span className="relative flex size-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/60" />
@@ -25,7 +25,7 @@ export function Hero() {
           <span className="text-brand">Escale sem limites.</span>
         </h1>
 
-        <p className="mt-5 max-w-2xl text-body text-ink-2 sm:mx-0 sm:text-[16px]">
+        <p className="mt-5 max-w-2xl text-body text-ink-2 sm:text-[16px]">
           {siteConfig.description}
         </p>
 
@@ -41,7 +41,7 @@ export function Hero() {
           </Button>
         </div>
 
-        <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:justify-start">
+        <ul className="mt-6 flex flex-wrap items-center justify-start gap-x-5 gap-y-2">
           {landingBenefits.map((benefit) => (
             <li key={benefit} className="inline-flex items-center gap-1.5 text-small text-ink-2">
               <Check className="size-4 text-success" aria-hidden />

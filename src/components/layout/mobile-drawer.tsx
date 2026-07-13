@@ -34,7 +34,7 @@ export function MobileDrawer() {
               onClick={() => setMobileOpen(false)}
               className="flex items-center rounded-md"
             >
-              <Logo />
+              <Logo variant="sidebar" />
             </Link>
             <DialogPrimitive.Close
               aria-label="Fechar menu"

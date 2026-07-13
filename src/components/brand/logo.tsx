@@ -1,66 +1,58 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Marca do Foguetão.
- *
- * ⚠️ PLACEHOLDER — não é a logomarca oficial. Substitua os arquivos em
- * `public/brand/*` e, se desejar, este componente pelos assets definitivos.
- * Mantém o wordmark "Foguetão" (Sora) + símbolo geométrico na cor da marca.
+ * Marca oficial do Foguetão.
+ * Usa exclusivamente os assets oficiais em `public/brand/` (não redesenhar,
+ * não recolorir, não alterar proporções). Dimensões `width`/`height` são as
+ * intrínsecas de cada arquivo; o tamanho de exibição vem das classes.
  */
 
-type LogoTone = "default" | "white";
+type LogoVariant = "horizontal" | "sidebar" | "mono";
 
-export function LogoSymbol({
+const LOGO_ASSETS: Record<LogoVariant, { src: string; width: number; height: number }> = {
+  // F vermelho + wordmark preto (fundo claro)
+  horizontal: { src: "/brand/logo-horizontal.svg", width: 4000, height: 1200 },
+  // Versão para a sidebar (transparente)
+  sidebar: { src: "/brand/logo-sidebar.png", width: 2400, height: 600 },
+  // Versão monocromática (aplicada em branco sobre fundos vermelhos/escuros)
+  mono: { src: "/brand/logo-mono.png", width: 4000, height: 1200 },
+};
+
+export function Logo({
+  variant = "horizontal",
+  white = false,
   className,
-  tone = "default",
-  title = "Foguetão",
 }: {
+  variant?: LogoVariant;
+  /** Renderiza o monocromático em branco (uso sobre vermelho/escuro). */
+  white?: boolean;
   className?: string;
-  tone?: LogoTone;
-  title?: string;
 }) {
-  const badge = tone === "white" ? "#ffffff" : "var(--color-brand)";
-  const arrow = tone === "white" ? "var(--color-brand)" : "#ffffff";
+  const asset = LOGO_ASSETS[variant];
   return (
-    <svg
-      viewBox="0 0 32 32"
-      className={cn("shrink-0", className)}
-      role="img"
-      aria-label={title}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="32" height="32" rx="8" fill={badge} />
-      {/* Seta ascendente — símbolo de lançamento / performance */}
-      <path d="M16 6 L24 16 H19 V26 H13 V16 H8 Z" fill={arrow} />
-    </svg>
+    <Image
+      src={asset.src}
+      alt="Foguetão"
+      width={asset.width}
+      height={asset.height}
+      priority
+      unoptimized
+      className={cn("h-7 w-auto", white && "brightness-0 invert", className)}
+    />
   );
 }
 
-export function Logo({
-  className,
-  tone = "default",
-  showWordmark = true,
-  symbolClassName,
-}: {
-  className?: string;
-  tone?: LogoTone;
-  showWordmark?: boolean;
-  symbolClassName?: string;
-}) {
+export function LogoSymbol({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
-      <LogoSymbol tone={tone} className={cn("h-7 w-7", symbolClassName)} />
-      {showWordmark ? (
-        <span
-          className={cn(
-            "font-display text-h2 font-bold tracking-tight",
-            tone === "white" ? "text-white" : "text-ink",
-          )}
-        >
-          Foguetão
-        </span>
-      ) : null}
-    </span>
+    <Image
+      src="/brand/symbol.png"
+      alt="Foguetão"
+      width={3000}
+      height={3000}
+      priority
+      unoptimized
+      className={cn("size-7", className)}
+    />
   );
 }

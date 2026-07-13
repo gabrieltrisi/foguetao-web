@@ -136,6 +136,17 @@ Consulte [`docs/frontend-architecture.md`](docs/frontend-architecture.md) e
 
 ## Assets de marca
 
-Os arquivos em `public/brand/` (`logo-horizontal.svg`, `logo-white.svg`, `symbol.svg`,
-`favicon.svg`) são **placeholders** e devem ser substituídos pelos assets oficiais quando
-disponíveis. O componente [`Logo`](src/components/brand/logo.tsx) usa o mesmo símbolo.
+A interface usa os **assets oficiais** do Foguetão, em `public/brand/`:
+
+| Arquivo | Uso |
+|---|---|
+| `logo-horizontal.svg` | Landing, Navbar e Footer |
+| `logo-sidebar.png` | Sidebar expandida e drawer mobile |
+| `logo-mono.png` | Login (painel vermelho), renderizado em branco |
+| `symbol.png` | Sidebar recolhida e preview |
+| `app-icon.png` | App icon (`src/app/apple-icon.png`) e manifest |
+| `favicon.svg` · `favicon-16.png` · `favicon-128.png` | Favicon (`src/app/icon.png` = 128px) |
+| `logo-vertical.svg` | Disponível (não usado na UI atual) |
+
+O componente [`Logo`](src/components/brand/logo.tsx) referencia esses arquivos via `next/image`.
+A cor da marca (`#E0070F` / `#8A0509`) segue o `foguetao-brand-guide.pdf` e já está nos tokens.

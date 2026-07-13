@@ -1,6 +1,0 @@
-<svg width="184" height="32" viewBox="0 0 184 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- PLACEHOLDER: logo Foguetão para fundos escuros/vermelhos. Substituir pelo asset oficial. -->
-  <rect width="32" height="32" rx="8" fill="#FFFFFF"/>
-  <path d="M16 6 L24 16 H19 V26 H13 V16 H8 Z" fill="#E0070F"/>
-  <text x="42" y="22" font-family="Sora, system-ui, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">Foguetão</text>
-</svg>

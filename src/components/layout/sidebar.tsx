@@ -31,7 +31,7 @@ export function Sidebar() {
             aria-label="Foguetão — Visão geral"
             className="flex items-center rounded-md"
           >
-            {collapsed ? <LogoSymbol className="h-7 w-7" /> : <Logo />}
+            {collapsed ? <LogoSymbol /> : <Logo variant="sidebar" />}
           </Link>
         </div>
 
