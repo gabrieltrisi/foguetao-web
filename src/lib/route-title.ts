@@ -15,6 +15,12 @@ const extraTitles: Record<string, string> = {
   "/lead-sources": "Origens de lead",
   "/forms": "Formulários",
   "/commissions": "Comissões",
+  "/automation-templates": "Templates",
+  "/automation-executions": "Execuções",
+  "/automation-variables": "Variáveis",
+  "/automation-ai": "Assistente de IA",
+  "/scheduler": "Agendador",
+  "/webhooks": "Webhooks",
 };
 
 /** Retorna o rótulo legível da rota atual para breadcrumb / título. */
