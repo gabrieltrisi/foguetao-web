@@ -111,6 +111,9 @@ App (todas com AppShell): `/dashboard`, `/agenda`, `/tasks`, `/contacts`, `/orga
 `/meta-ads`, `/google-ads`, `/affiliates`, `/tracking`, `/automations`, `/integrations`,
 `/reports`, `/performance`, `/team`, `/audit`, `/settings`, `/help`.
 
+Interno (fora da sidebar): `/design-system` — showcase vivo de componentes, estados, tokens,
+skeletons, empty/error states, toasts e modal.
+
 O mapa completo vive em [`src/config/nav.ts`](src/config/nav.ts). O conteúdo dos placeholders
 (título, descrição, empty state e ação) vive em [`src/config/routes.ts`](src/config/routes.ts).
 

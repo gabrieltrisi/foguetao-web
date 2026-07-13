@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, Info, TriangleAlert, X } from "lucide-react";
+import { CheckCircle2, CircleAlert, Info, TriangleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type ToastVariant = "default" | "success" | "danger";
+type ToastVariant = "success" | "error" | "warning" | "info";
 
 type ToastItem = {
   id: string;
@@ -29,11 +29,12 @@ const ToastContext = React.createContext<ToastContextValue | null>(null);
 
 const variantConfig: Record<
   ToastVariant,
-  { icon: typeof Info; iconClass: string }
+  { icon: typeof Info; iconClass: string; accent: string }
 > = {
-  default: { icon: Info, iconClass: "text-info" },
-  success: { icon: CheckCircle2, iconClass: "text-success" },
-  danger: { icon: TriangleAlert, iconClass: "text-danger" },
+  success: { icon: CheckCircle2, iconClass: "text-success", accent: "bg-success" },
+  error: { icon: TriangleAlert, iconClass: "text-danger", accent: "bg-danger" },
+  warning: { icon: CircleAlert, iconClass: "text-warning", accent: "bg-warning" },
+  info: { icon: Info, iconClass: "text-info", accent: "bg-info" },
 };
 
 let counter = 0;
@@ -52,7 +53,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toast = React.useCallback(
-    ({ title, description, variant = "default", duration = 4000 }: ToastInput) => {
+    ({ title, description, variant = "info", duration = 4000 }: ToastInput) => {
       counter += 1;
       const id = `toast-${counter}`;
       setToasts((prev) => [...prev, { id, title, description, variant }]);
@@ -85,9 +86,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div
               key={item.id}
-              className="pointer-events-auto flex items-start gap-3 rounded-lg border border-line bg-white p-4 shadow-lg data-[state=open]:animate-in data-[state=open]:slide-in-from-right-4"
+              role={item.variant === "error" ? "alert" : "status"}
+              className="pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-lg border border-line bg-white p-4 pl-5 shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-right-4 data-[state=open]:duration-200"
               data-state="open"
             >
+              <span className={cn("absolute inset-y-0 left-0 w-1", config.accent)} aria-hidden />
               <Icon className={cn("mt-0.5 size-5 shrink-0", config.iconClass)} aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="text-body2 font-semibold text-ink">{item.title}</p>

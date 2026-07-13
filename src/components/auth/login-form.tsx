@@ -77,6 +77,7 @@ export function LoginForm() {
             placeholder="voce@empresa.com.br"
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? "email-error" : undefined}
+            disabled={isSubmitting}
             {...register("email")}
           />
           {errors.email ? (
@@ -102,6 +103,7 @@ export function LoginForm() {
             placeholder="Sua senha"
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "password-error" : undefined}
+            disabled={isSubmitting}
             {...register("password")}
           />
           {errors.password ? (
