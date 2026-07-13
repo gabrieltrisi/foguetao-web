@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/layout/route-placeholder";
-import { routeMeta } from "@/config/routes";
-
-const path = "/performance";
+import { PageHeader } from "@/components/ui/page-header";
+import { MarketingNav } from "@/components/marketing/marketing-nav";
+import { PerformanceView } from "@/components/marketing/performance-view";
 
 export const metadata: Metadata = {
-  title: routeMeta[path].title,
-  description: routeMeta[path].description,
+  title: "Performance",
+  description: "Indicadores completos de marketing.",
+  robots: { index: false, follow: false },
 };
 
 export default function Page() {
-  return <RoutePlaceholder path={path} />;
+  return (
+    <div className="flex flex-col gap-5">
+      <PageHeader title="Performance" description="Indicadores completos de marketing." />
+      <MarketingNav />
+      <PerformanceView />
+    </div>
+  );
 }

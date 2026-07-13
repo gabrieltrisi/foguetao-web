@@ -9,6 +9,12 @@ const extraTitles: Record<string, string> = {
   "/queues": "Filas",
   "/ai-assistant": "Assistente de IA",
   "/design-system": "Design System",
+  "/tiktok-ads": "TikTok Ads",
+  "/landing-pages": "Landing Pages",
+  "/utm-builder": "UTM Builder",
+  "/lead-sources": "Origens de lead",
+  "/forms": "Formulários",
+  "/commissions": "Comissões",
 };
 
 /** Retorna o rótulo legível da rota atual para breadcrumb / título. */
