@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/layout/route-placeholder";
-import { routeMeta } from "@/config/routes";
-
-const path = "/tasks";
+import { ListPageLayout } from "@/components/patterns/page-patterns";
+import { TasksView } from "@/components/crm/tasks-view";
+import { NewTaskButton } from "@/components/crm/new-task-button";
 
 export const metadata: Metadata = {
-  title: routeMeta[path].title,
-  description: routeMeta[path].description,
+  title: "Tarefas",
+  description: "Acompanhe as tarefas do seu time.",
 };
 
-export default function Page() {
-  return <RoutePlaceholder path={path} />;
+export default function TasksPage() {
+  return (
+    <ListPageLayout
+      title="Tarefas"
+      description="Acompanhe as tarefas pendentes do seu time."
+      actions={<NewTaskButton />}
+    >
+      <TasksView />
+    </ListPageLayout>
+  );
 }
