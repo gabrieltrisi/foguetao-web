@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/layout/route-placeholder";
-import { routeMeta } from "@/config/routes";
-
-const path = "/conversations";
+import { CommunicationNav } from "@/components/messaging/communication-nav";
+import { ConversationsLayout } from "@/components/messaging/conversations-layout";
 
 export const metadata: Metadata = {
-  title: routeMeta[path].title,
-  description: routeMeta[path].description,
+  title: "Conversas",
+  description: "Central de mensagens de todos os canais.",
 };
 
-export default function Page() {
-  return <RoutePlaceholder path={path} />;
+export default function ConversationsPage() {
+  return (
+    <div className="flex flex-col gap-4">
+      <CommunicationNav />
+      <ConversationsLayout />
+    </div>
+  );
 }
