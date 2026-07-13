@@ -45,6 +45,7 @@ import {
 import { Modal, ModalClose, ModalContent, ModalTrigger } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
+import { ShowcaseNav } from "@/components/design-system/showcase-nav";
 import type { Metric } from "@/types";
 
 function Section({
@@ -117,6 +118,8 @@ export function DesignSystemShowcase() {
           title="Design System"
           description="Referência viva dos componentes, estados e tokens do Foguetão."
         />
+
+        <ShowcaseNav />
 
         {/* Cores */}
         <Section title="Cores" description="Paleta semântica.">
