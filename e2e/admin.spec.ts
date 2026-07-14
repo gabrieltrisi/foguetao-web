@@ -1,0 +1,152 @@
+import { test, expect, type Page } from "@playwright/test";
+
+function trackErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text());
+  });
+  page.on("pageerror", (err) => errors.push(err.message));
+  return errors;
+}
+
+async function hasHorizontalOverflow(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+  );
+}
+
+const routes = [
+  "/settings",
+  "/company",
+  "/company/general",
+  "/company/branding",
+  "/company/domains",
+  "/company/plans",
+  "/company/billing",
+  "/company/limits",
+  "/team",
+  "/team/new",
+  "/team/usr-1",
+  "/roles",
+  "/permissions",
+  "/invitations",
+  "/security",
+  "/sessions",
+  "/api-keys",
+  "/integrations",
+  "/marketplace",
+  "/onboarding",
+];
+
+const mobileRoutes = [
+  "/settings",
+  "/company/branding",
+  "/company/plans",
+  "/team",
+  "/permissions",
+  "/company/billing",
+  "/integrations",
+  "/marketplace",
+  "/onboarding",
+];
+
+test.describe("Admin — desktop 1440", () => {
+  for (const route of routes) {
+    test(`${route} sem overflow nem erros`, async ({ page }) => {
+      const errors = trackErrors(page);
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(route);
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(150);
+      expect(await hasHorizontalOverflow(page), `overflow em ${route}`).toBe(false);
+      expect(errors, `console em ${route}`).toEqual([]);
+    });
+  }
+});
+
+test.describe("Admin — mobile 390", () => {
+  for (const route of mobileRoutes) {
+    test(`${route} sem overflow @ 390`, async ({ page }) => {
+      const errors = trackErrors(page);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(route);
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(150);
+      expect(await hasHorizontalOverflow(page), `overflow em ${route}`).toBe(false);
+      expect(errors, `console em ${route}`).toEqual([]);
+    });
+  }
+});
+
+test.describe("Admin — interações", () => {
+  test("preview de branding atualiza em tempo real", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/company/branding");
+    const name = page.getByLabel("Nome da empresa");
+    await name.fill("Minha Marca");
+    await expect(page.getByText("Minha Marca").first()).toBeVisible();
+  });
+
+  test("compara planos e faz upgrade mock", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/company/plans");
+    await expect(page.getByText("Mais popular")).toBeVisible();
+    await page.getByRole("button", { name: "Falar com vendas" }).click();
+    await expect(page.getByText(/Enterprise/).first()).toBeVisible();
+  });
+
+  test("exibe barras de progresso nos limites", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/company/limits");
+    expect(await page.getByRole("progressbar").count()).toBeGreaterThan(4);
+  });
+
+  test("navega para criar usuário", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/team");
+    await page.getByRole("link", { name: "Criar usuário" }).click();
+    await expect(page).toHaveURL(/\/team\/new/);
+    await expect(page.getByLabel("Nome completo")).toBeVisible();
+  });
+
+  test("alterna abas no perfil do usuário", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/team/usr-1");
+    await page.getByRole("tab", { name: "Sessões" }).click();
+    await expect(page.getByText("Este dispositivo")).toBeVisible();
+  });
+
+  test("alterna switches na matriz de permissões", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/permissions");
+    const first = page.getByRole("switch").first();
+    const before = await first.getAttribute("aria-checked");
+    await first.click();
+    await expect(first).not.toHaveAttribute("aria-checked", before ?? "");
+  });
+
+  test("filtra integrações por categoria", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/integrations");
+    await page.getByRole("tab", { name: "IA", exact: true }).click();
+    await expect(page.getByText("OpenAI")).toBeVisible();
+  });
+
+  test("mascara valores no API Keys", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/api-keys");
+    await expect(page.getByText(/sk_live_••••/).first()).toBeVisible();
+  });
+
+  test("percorre o wizard de onboarding", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/onboarding");
+    await page.getByRole("button", { name: "Academia" }).click();
+    await page.getByRole("button", { name: "Próximo" }).click();
+    await expect(page.getByRole("heading", { name: /objetivo/i })).toBeVisible();
+    await page.getByRole("button", { name: "Vender" }).click();
+    await page.getByRole("button", { name: "Próximo" }).click();
+    await expect(page.getByRole("heading", { name: "Principais canais" })).toBeVisible();
+  });
+});

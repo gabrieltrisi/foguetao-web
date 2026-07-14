@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/layout/route-placeholder";
-import { routeMeta } from "@/config/routes";
-
-const path = "/settings";
+import { PageHeader } from "@/components/ui/page-header";
+import { AdminNav } from "@/components/admin/admin-nav";
+import { SettingsView } from "@/components/admin/settings-view";
 
 export const metadata: Metadata = {
-  title: routeMeta[path].title,
-  description: routeMeta[path].description,
+  title: "Configurações",
+  description: "Administração da plataforma.",
+  robots: { index: false, follow: false },
 };
 
 export default function Page() {
-  return <RoutePlaceholder path={path} />;
+  return (
+    <div className="flex flex-col gap-5">
+      <PageHeader title="Configurações" description="Administração da plataforma." />
+      <AdminNav />
+      <SettingsView />
+    </div>
+  );
 }

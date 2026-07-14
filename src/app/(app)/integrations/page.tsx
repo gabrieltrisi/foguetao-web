@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/layout/route-placeholder";
-import { routeMeta } from "@/config/routes";
-
-const path = "/integrations";
+import { PageHeader } from "@/components/ui/page-header";
+import { AdminNav } from "@/components/admin/admin-nav";
+import { IntegrationsView } from "@/components/admin/integrations-view";
 
 export const metadata: Metadata = {
-  title: routeMeta[path].title,
-  description: routeMeta[path].description,
+  title: "Integrações",
+  description: "Conecte ferramentas externas.",
+  robots: { index: false, follow: false },
 };
 
 export default function Page() {
-  return <RoutePlaceholder path={path} />;
+  return (
+    <div className="flex flex-col gap-5">
+      <PageHeader title="Integrações" description="Conecte ferramentas externas." />
+      <AdminNav />
+      <IntegrationsView />
+    </div>
+  );
 }

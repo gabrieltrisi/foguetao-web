@@ -28,6 +28,15 @@ const extraTitles: Record<string, string> = {
   "/forecast": "Forecast",
   "/activity-log": "Atividades",
   "/export-center": "Exportações",
+  "/company": "Empresa",
+  "/roles": "Papéis",
+  "/permissions": "Permissões",
+  "/invitations": "Convites",
+  "/security": "Segurança",
+  "/sessions": "Sessões",
+  "/api-keys": "API Keys",
+  "/marketplace": "Marketplace",
+  "/onboarding": "Onboarding",
 };
 
 /** Retorna o rótulo legível da rota atual para breadcrumb / título. */
