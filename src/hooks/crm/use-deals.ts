@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { dealsApi, type DealActionInput } from "@/lib/api/crm-deals/client";
+import { dealsApi, type DealActionInput, type DealInput } from "@/lib/api/crm-deals/client";
 import { queryKeys, crmInvalidation } from "@/lib/query/keys";
 import { useSession } from "@/providers/session-provider";
 
@@ -73,7 +73,7 @@ function useInvalidateDeal(id?: string, pipelineId?: string) {
 export function useCreateDeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: unknown) => dealsApi.create(body),
+    mutationFn: (body: DealInput) => dealsApi.create(body),
     onSuccess: (deal) => {
       qc.invalidateQueries({ queryKey: crmInvalidation.allDeals });
       qc.invalidateQueries({ queryKey: crmInvalidation.kanban(deal.pipelineId) });
@@ -84,7 +84,7 @@ export function useCreateDeal() {
 export function useUpdateDeal(id: string, pipelineId?: string) {
   const invalidate = useInvalidateDeal(id, pipelineId);
   return useMutation({
-    mutationFn: (body: unknown) => dealsApi.update(id, body),
+    mutationFn: (body: DealInput) => dealsApi.update(id, body),
     onSuccess: invalidate,
   });
 }

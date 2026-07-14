@@ -1,5 +1,6 @@
 import "server-only";
 import { backendFetch } from "@/lib/api/http";
+import { buildQuery, type QueryParams } from "@/lib/api/query-string";
 import {
   pipelineSchema,
   pipelineListSchema,
@@ -15,20 +16,6 @@ import {
   kanbanColumnSchema,
 } from "@/types/api/crm-deals";
 
-type Params = Record<string, string | string[] | number | boolean | undefined | null>;
-
-function qs(params?: Params): string {
-  if (!params) return "";
-  const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null || v === "") continue;
-    if (Array.isArray(v)) v.forEach((i) => sp.append(k, i));
-    else sp.set(k, String(v));
-  }
-  const s = sp.toString();
-  return s ? `?${s}` : "";
-}
-
 interface Ctx {
   token: string;
   companyId: string;
@@ -36,8 +23,8 @@ interface Ctx {
 
 /** Pipelines e etapas (Sprint 1.0C-1). */
 export const pipelinesService = {
-  list: ({ token, companyId }: Ctx, params?: Params) =>
-    backendFetch(`/pipelines${qs(params)}`, { token, companyId, schema: pipelineListSchema }),
+  list: ({ token, companyId }: Ctx, params?: QueryParams) =>
+    backendFetch(`/pipelines${buildQuery(params)}`, { token, companyId, schema: pipelineListSchema }),
   get: ({ token, companyId }: Ctx, id: string) =>
     backendFetch(`/pipelines/${id}`, { token, companyId, schema: pipelineSchema }),
   /** POST /pipelines → PipelineSetupResponseDto (setupMode STANDARD | CUSTOM | EMPTY). */
@@ -96,14 +83,14 @@ export const pipelinesService = {
     }),
 
   /* Kanban — board e paginação por cursor de UMA coluna. */
-  kanbanBoard: ({ token, companyId }: Ctx, pipelineId: string, params?: Params) =>
-    backendFetch(`/pipelines/${pipelineId}/kanban${qs(params)}`, {
+  kanbanBoard: ({ token, companyId }: Ctx, pipelineId: string, params?: QueryParams) =>
+    backendFetch(`/pipelines/${pipelineId}/kanban${buildQuery(params)}`, {
       token,
       companyId,
       schema: kanbanBoardSchema,
     }),
-  kanbanColumn: ({ token, companyId }: Ctx, pipelineId: string, stageId: string, params?: Params) =>
-    backendFetch(`/pipelines/${pipelineId}/kanban/stages/${stageId}${qs(params)}`, {
+  kanbanColumn: ({ token, companyId }: Ctx, pipelineId: string, stageId: string, params?: QueryParams) =>
+    backendFetch(`/pipelines/${pipelineId}/kanban/stages/${stageId}${buildQuery(params)}`, {
       token,
       companyId,
       schema: kanbanColumnSchema,
@@ -112,8 +99,8 @@ export const pipelinesService = {
 
 /** Oportunidades (deals) e recursos relacionados. */
 export const dealsService = {
-  list: ({ token, companyId }: Ctx, params?: Params) =>
-    backendFetch(`/deals${qs(params)}`, { token, companyId, schema: dealListSchema }),
+  list: ({ token, companyId }: Ctx, params?: QueryParams) =>
+    backendFetch(`/deals${buildQuery(params)}`, { token, companyId, schema: dealListSchema }),
   get: ({ token, companyId }: Ctx, id: string) =>
     backendFetch(`/deals/${id}`, { token, companyId, schema: dealSchema }),
   create: ({ token, companyId }: Ctx, body: unknown) =>
@@ -140,8 +127,8 @@ export const dealsService = {
   /** Lazy: só carregados ao abrir o detalhe. */
   history: ({ token, companyId }: Ctx, id: string) =>
     backendFetch(`/deals/${id}/history`, { token, companyId, schema: dealHistoryListSchema }),
-  activities: ({ token, companyId }: Ctx, id: string, params?: Params) =>
-    backendFetch(`/deals/${id}/activities${qs(params)}`, {
+  activities: ({ token, companyId }: Ctx, id: string, params?: QueryParams) =>
+    backendFetch(`/deals/${id}/activities${buildQuery(params)}`, {
       token,
       companyId,
       schema: dealActivityListSchema,

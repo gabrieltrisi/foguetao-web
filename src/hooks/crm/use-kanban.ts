@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { pipelinesApi, dealsApi } from "@/lib/api/crm-deals/client";
 import { queryKeys, crmInvalidation } from "@/lib/query/keys";
@@ -16,11 +15,17 @@ import type { ApiKanbanBoard } from "@/types/api/crm-deals";
 
 const PER_COLUMN = 20;
 
+/** Chave do board no cache — centralizada (queryKeys) e escopada por empresa. */
+function useKanbanKey(pipelineId: string) {
+  const { activeCompanyId } = useSession();
+  return [...queryKeys.crm.kanban(pipelineId), activeCompanyId];
+}
+
 /** Board do Kanban (primeira página por coluna). */
 export function useKanbanBoard(pipelineId: string) {
   const { activeCompanyId, can } = useSession();
   return useQuery({
-    queryKey: [...queryKeys.crm.kanban(pipelineId), activeCompanyId],
+    queryKey: useKanbanKey(pipelineId),
     queryFn: () => pipelinesApi.kanbanBoard(pipelineId, PER_COLUMN),
     enabled: Boolean(activeCompanyId) && Boolean(pipelineId) && can("crm.deals.read"),
   });
@@ -29,24 +34,21 @@ export function useKanbanBoard(pipelineId: string) {
 /**
  * "Carregar mais" de UMA coluna: busca a próxima página pelo cursor da coluna
  * e faz merge no board em cache — o board inteiro NUNCA é recarregado.
+ * Instanciado por coluna, então `isPending` já é o estado daquela coluna.
  */
-export function useLoadMoreColumn(pipelineId: string) {
+export function useLoadMoreColumn(pipelineId: string, stageId: string) {
   const qc = useQueryClient();
-  const { activeCompanyId } = useSession();
-  const key = [...queryKeys.crm.kanban(pipelineId), activeCompanyId];
-  const [loadingStageId, setLoadingStageId] = React.useState<string | null>(null);
+  const key = useKanbanKey(pipelineId);
 
   const mutation = useMutation({
-    mutationFn: ({ stageId, cursor }: { stageId: string; cursor: string }) =>
+    mutationFn: (cursor: string) =>
       pipelinesApi.kanbanColumn(pipelineId, stageId, { limit: PER_COLUMN, cursor }),
-    onMutate: ({ stageId }) => setLoadingStageId(stageId),
-    onSettled: () => setLoadingStageId(null),
     onSuccess: (page) => {
       qc.setQueryData<ApiKanbanBoard>(key, (board) => (board ? appendColumnPage(board, page) : board));
     },
   });
 
-  return { loadMore: mutation.mutate, loadingStageId, isError: mutation.isError };
+  return { loadMore: mutation.mutate, isPending: mutation.isPending, isError: mutation.isError };
 }
 
 /**
@@ -59,8 +61,7 @@ export function useLoadMoreColumn(pipelineId: string) {
  */
 export function useMoveDeal(pipelineId: string) {
   const qc = useQueryClient();
-  const { activeCompanyId } = useSession();
-  const key = [...queryKeys.crm.kanban(pipelineId), activeCompanyId];
+  const key = useKanbanKey(pipelineId);
 
   const refetchColumns = async (stageIds: string[]) => {
     const pages = await Promise.all(

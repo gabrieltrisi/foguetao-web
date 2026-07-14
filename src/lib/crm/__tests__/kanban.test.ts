@@ -2,11 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   moveCardInBoard,
   replaceCardInBoard,
-  removeCardFromBoard,
   appendColumnPage,
   replaceColumn,
   findDeal,
-  findColumnOfDeal,
   isVersionConflict,
 } from "@/lib/crm/kanban";
 import { ApiError } from "@/types/api/error";
@@ -54,6 +52,11 @@ function column(stageId: string, deals: ApiDeal[], nextCursor: string | null = n
   };
 }
 
+/** Helper local de teste: coluna que contém o card. */
+function columnOf(b: ApiKanbanBoard, dealId: string) {
+  return b.columns.find((c) => c.deals.some((d) => d.id === dealId));
+}
+
 const board = (): ApiKanbanBoard => ({
   pipelineId: "p1",
   columns: [column("s1", [deal("d1", "s1"), deal("d2", "s1")]), column("s2", [deal("d3", "s2")])],
@@ -90,12 +93,40 @@ describe("optimistic update do Kanban", () => {
     expect(found.title).toBe("Deal atualizado");
     // sem duplicidade
     expect(next.columns.flatMap((c) => c.deals).filter((d) => d.id === "d1")).toHaveLength(1);
-    expect(findColumnOfDeal(next, "d1")!.stageId).toBe("s2");
+    expect(columnOf(next, "d1")!.stageId).toBe("s2");
+  });
+});
+
+describe("identidade de referência (evita re-render do board inteiro)", () => {
+  it("moveCardInBoard preserva a referência das colunas não afetadas", () => {
+    const b: ApiKanbanBoard = {
+      pipelineId: "p1",
+      columns: [column("s1", [deal("d1", "s1")]), column("s2", []), column("s3", [deal("d5", "s3")])],
+    };
+    const next = moveCardInBoard(b, "d1", "s2");
+    expect(next.columns[0]).not.toBe(b.columns[0]); // origem mudou
+    expect(next.columns[1]).not.toBe(b.columns[1]); // destino mudou
+    expect(next.columns[2]).toBe(b.columns[2]); // intacta → MESMA referência
   });
 
-  it("removeCardFromBoard remove o card de qualquer coluna", () => {
-    const next = removeCardFromBoard(board(), "d3");
-    expect(findDeal(next, "d3")).toBeUndefined();
+  it("replaceCardInBoard preserva a referência das colunas não afetadas", () => {
+    const b = board();
+    const next = replaceCardInBoard(b, { ...deal("d1", "s1", 2), title: "novo" });
+    expect(next.columns[0]).not.toBe(b.columns[0]); // contém o card
+    expect(next.columns[1]).toBe(b.columns[1]); // intacta
+  });
+
+  it("replaceCardInBoard substitui no lugar quando a etapa não muda (preserva ordem)", () => {
+    const b = board();
+    const next = replaceCardInBoard(b, { ...deal("d2", "s1", 3) });
+    expect(next.columns[0].deals.map((d) => d.id)).toEqual(["d1", "d2"]); // ordem mantida
+    expect(findDeal(next, "d2")!.version).toBe(3);
+  });
+
+  it("appendColumnPage preserva a referência das outras colunas", () => {
+    const b = board();
+    const next = appendColumnPage(b, column("s1", [deal("d9", "s1")], null));
+    expect(next.columns[1]).toBe(b.columns[1]);
   });
 });
 
@@ -137,8 +168,8 @@ describe("conflito de versão", () => {
   it("rollback: restaurar o snapshot anterior desfaz o movimento", () => {
     const previous = board();
     const optimistic = moveCardInBoard(previous, "d1", "s2");
-    expect(findColumnOfDeal(optimistic, "d1")!.stageId).toBe("s2");
+    expect(columnOf(optimistic, "d1")!.stageId).toBe("s2");
     // rollback = voltar ao snapshot
-    expect(findColumnOfDeal(previous, "d1")!.stageId).toBe("s1");
+    expect(columnOf(previous, "d1")!.stageId).toBe("s1");
   });
 });

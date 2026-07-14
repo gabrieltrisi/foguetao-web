@@ -1,6 +1,7 @@
 "use client";
 
 import { clientFetch } from "@/lib/api/client";
+import { buildQuery } from "@/lib/api/query-string";
 import type {
   ApiContact,
   ApiContactDetail,
@@ -15,16 +16,9 @@ import type {
 
 export type ContactFilters = Record<string, string | number | string[] | undefined>;
 
+/** Mantido como alias tipado de `buildQuery` para os filtros de CRM. */
 export function crmQs(params?: ContactFilters): string {
-  if (!params) return "";
-  const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === "" || (Array.isArray(v) && v.length === 0)) continue;
-    if (Array.isArray(v)) v.forEach((i) => sp.append(k, i));
-    else sp.set(k, String(v));
-  }
-  const s = sp.toString();
-  return s ? `?${s}` : "";
+  return buildQuery(params);
 }
 
 const B = "/api/crm";

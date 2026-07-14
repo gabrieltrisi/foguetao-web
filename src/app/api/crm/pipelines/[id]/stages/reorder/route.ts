@@ -8,7 +8,8 @@ export function POST(request: Request, { params }: { params: Promise<{ id: strin
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const ids = (body?.orderedStageIds ?? []) as string[];
-    await withCompany((ctx) => pipelinesService.reorderStages(ctx, id, ids));
-    return NextResponse.json({ ok: true });
+    const result = await withCompany((ctx) => pipelinesService.reorderStages(ctx, id, ids));
+    // propaga o payload do backend ({ message }) sem reescrever
+    return NextResponse.json(result);
   });
 }

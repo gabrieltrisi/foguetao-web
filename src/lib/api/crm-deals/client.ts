@@ -1,6 +1,7 @@
 "use client";
 
 import { clientFetch } from "@/lib/api/client";
+import { buildQuery } from "@/lib/api/query-string";
 import type { Paginated } from "@/types/api/crm";
 import type {
   ApiPipeline,
@@ -13,21 +14,11 @@ import type {
   ApiLostReason,
   ApiKanbanBoard,
   ApiKanbanColumn,
+  DealPriority,
 } from "@/types/api/crm-deals";
 
 const B = "/api/crm/pipelines";
 const D = "/api/crm/deals";
-
-function qs(params?: Record<string, string | number | undefined>): string {
-  if (!params) return "";
-  const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === "") continue;
-    sp.set(k, String(v));
-  }
-  const s = sp.toString();
-  return s ? `?${s}` : "";
-}
 
 export interface CreatePipelineInput {
   name: string;
@@ -39,7 +30,7 @@ export interface CreatePipelineInput {
 /** Cliente de pipelines/etapas (browser → BFF). */
 export const pipelinesApi = {
   list: (params?: Record<string, string | number | undefined>) =>
-    clientFetch<Paginated<ApiPipeline>>(`${B}${qs(params)}`),
+    clientFetch<Paginated<ApiPipeline>>(`${B}${buildQuery(params)}`),
   get: (id: string) => clientFetch<ApiPipeline>(`${B}/${id}`),
   create: (body: CreatePipelineInput) => clientFetch<ApiPipelineSetup>(B, { method: "POST", body }),
   setup: (id: string, body: { setupMode: "STANDARD" | "CUSTOM"; stages?: CustomStageInput[] }) =>
@@ -61,23 +52,44 @@ export const pipelinesApi = {
 
   /** Board do Kanban (primeira página por coluna). */
   kanbanBoard: (pipelineId: string, limit = 20) =>
-    clientFetch<ApiKanbanBoard>(`${B}/${pipelineId}/kanban${qs({ limit })}`),
+    clientFetch<ApiKanbanBoard>(`${B}/${pipelineId}/kanban${buildQuery({ limit })}`),
   /** Carregar mais de UMA coluna (cursor independente). */
   kanbanColumn: (pipelineId: string, stageId: string, params: { limit?: number; cursor?: string }) =>
-    clientFetch<ApiKanbanColumn>(`${B}/${pipelineId}/kanban/stages/${stageId}${qs(params)}`),
+    clientFetch<ApiKanbanColumn>(`${B}/${pipelineId}/kanban/stages/${stageId}${buildQuery(params)}`),
 };
 
 export interface DealActionInput {
   expectedVersion: number;
 }
 
+/**
+ * Entrada de criação/edição de oportunidade. `value` é STRING decimal — a
+ * conversão para number nunca acontece fora da formatação de apresentação.
+ */
+export interface DealInput {
+  title?: string;
+  description?: string;
+  value?: string;
+  currency?: string;
+  priority?: DealPriority;
+  source?: string;
+  expectedCloseDate?: string;
+  pipelineId?: string;
+  stageId?: string;
+  contactId?: string | null;
+  organizationId?: string | null;
+  assignedToUserId?: string | null;
+  /** Optimistic locking opcional no PATCH. */
+  expectedVersion?: number;
+}
+
 /** Cliente de oportunidades (browser → BFF). */
 export const dealsApi = {
   list: (params?: Record<string, string | number | undefined>) =>
-    clientFetch<Paginated<ApiDeal>>(`${D}${qs(params)}`),
+    clientFetch<Paginated<ApiDeal>>(`${D}${buildQuery(params)}`),
   get: (id: string) => clientFetch<ApiDeal>(`${D}/${id}`),
-  create: (body: unknown) => clientFetch<ApiDeal>(D, { method: "POST", body }),
-  update: (id: string, body: unknown) => clientFetch<ApiDeal>(`${D}/${id}`, { method: "PATCH", body }),
+  create: (body: DealInput) => clientFetch<ApiDeal>(D, { method: "POST", body }),
+  update: (id: string, body: DealInput) => clientFetch<ApiDeal>(`${D}/${id}`, { method: "PATCH", body }),
   remove: (id: string) => clientFetch(`${D}/${id}`, { method: "DELETE" }),
 
   move: (id: string, body: DealActionInput & { toStageId: string; reason?: string }) =>
@@ -95,6 +107,6 @@ export const dealsApi = {
 
   history: (id: string) => clientFetch<ApiDealHistory[]>(`${D}/${id}/history`),
   activities: (id: string, params?: { page?: number; limit?: number }) =>
-    clientFetch<Paginated<ApiDealActivity>>(`${D}/${id}/activities${qs(params)}`),
+    clientFetch<Paginated<ApiDealActivity>>(`${D}/${id}/activities${buildQuery(params)}`),
   lostReasons: () => clientFetch<ApiLostReason[]>(`/api/crm/lost-reasons`),
 };

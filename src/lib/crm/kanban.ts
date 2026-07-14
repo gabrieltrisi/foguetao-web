@@ -1,6 +1,14 @@
 import { isApiError } from "@/types/api/error";
 import type { ApiKanbanBoard, ApiKanbanColumn, ApiDeal } from "@/types/api/crm-deals";
 
+/**
+ * Transformações puras do board em cache.
+ *
+ * Invariante de performance: colunas NÃO afetadas mantêm a mesma referência.
+ * Com `React.memo` nas colunas/cards, mover um card re-renderiza apenas as
+ * colunas de origem e destino — nunca o board inteiro.
+ */
+
 /** Conflito de versão (optimistic locking) reportado pelo backend. */
 export function isVersionConflict(error: unknown): boolean {
   return isApiError(error) && error.code === "DEAL_VERSION_CONFLICT";
@@ -10,15 +18,9 @@ export function findDeal(board: ApiKanbanBoard | undefined, dealId: string): Api
   return board?.columns.flatMap((c) => c.deals).find((d) => d.id === dealId);
 }
 
-export function findColumnOfDeal(board: ApiKanbanBoard | undefined, dealId: string): ApiKanbanColumn | undefined {
-  return board?.columns.find((c) => c.deals.some((d) => d.id === dealId));
-}
-
 /**
- * Move um card entre colunas no board em cache (optimistic update).
- * Puro: devolve um novo board. Não altera contadores/totais do backend — eles
- * são reconciliados no refetch da coluna. Sem card ou etapa alvo, devolve o
- * board original (no-op seguro).
+ * Move um card entre colunas (optimistic update). Devolve o board original
+ * quando é no-op (card/etapa inexistente ou mesma etapa).
  */
 export function moveCardInBoard(
   board: ApiKanbanBoard,
@@ -31,62 +33,65 @@ export function moveCardInBoard(
 
   return {
     ...board,
-    columns: board.columns.map((c) => {
-      if (c.deals.some((d) => d.id === dealId)) {
-        // remove da coluna de origem
-        return { ...c, deals: c.deals.filter((d) => d.id !== dealId) };
+    columns: board.columns.map((column) => {
+      if (column.deals.some((d) => d.id === dealId)) {
+        return { ...column, deals: column.deals.filter((d) => d.id !== dealId) };
       }
-      if (c.stageId === toStageId) {
-        // insere no topo da coluna de destino com o stageId novo
-        return { ...c, deals: [{ ...deal, stageId: toStageId }, ...c.deals] };
+      if (column.stageId === toStageId) {
+        return { ...column, deals: [{ ...deal, stageId: toStageId }, ...column.deals] };
       }
-      return c;
+      return column; // identidade preservada
     }),
   };
 }
 
 /**
- * Substitui um card pelo retorno autoritativo do servidor (nova `version` e
- * `stageId`), reposicionando-o na coluna correta. Puro.
+ * Aplica o retorno autoritativo do servidor (nova `version`/`stageId`).
+ * Se o card já está na coluna certa, é substituído no lugar (preserva a ordem);
+ * caso contrário, é removido da origem e inserido no topo do destino.
  */
 export function replaceCardInBoard(board: ApiKanbanBoard, deal: ApiDeal): ApiKanbanBoard {
-  const withoutDeal = board.columns.map((c) => ({
-    ...c,
-    deals: c.deals.filter((d) => d.id !== deal.id),
-  }));
   return {
     ...board,
-    columns: withoutDeal.map((c) =>
-      c.stageId === deal.stageId ? { ...c, deals: [deal, ...c.deals] } : c,
-    ),
-  };
-}
+    columns: board.columns.map((column) => {
+      const contains = column.deals.some((d) => d.id === deal.id);
+      const isTarget = column.stageId === deal.stageId;
 
-/** Remove um card do board (ex.: arquivado ou saiu dos status do board). */
-export function removeCardFromBoard(board: ApiKanbanBoard, dealId: string): ApiKanbanBoard {
-  return {
-    ...board,
-    columns: board.columns.map((c) => ({ ...c, deals: c.deals.filter((d) => d.id !== dealId) })),
+      if (contains && isTarget) {
+        return { ...column, deals: column.deals.map((d) => (d.id === deal.id ? deal : d)) };
+      }
+      if (contains) {
+        return { ...column, deals: column.deals.filter((d) => d.id !== deal.id) };
+      }
+      if (isTarget) {
+        return { ...column, deals: [deal, ...column.deals] };
+      }
+      return column; // identidade preservada
+    }),
   };
 }
 
 /**
- * Anexa a próxima página de UMA coluna (paginação por cursor), preservando as
- * demais colunas intactas. Deduplica por id e atualiza `nextCursor`/`totals`.
+ * Anexa a próxima página de UMA coluna (paginação por cursor). Deduplica por id
+ * e atualiza `nextCursor`/`totals`; as demais colunas mantêm a referência.
  */
 export function appendColumnPage(board: ApiKanbanBoard, page: ApiKanbanColumn): ApiKanbanBoard {
   return {
     ...board,
-    columns: board.columns.map((c) => {
-      if (c.stageId !== page.stageId) return c;
-      const seen = new Set(c.deals.map((d) => d.id));
-      const merged = [...c.deals, ...page.deals.filter((d) => !seen.has(d.id))];
-      return { ...c, deals: merged, nextCursor: page.nextCursor, totals: page.totals };
+    columns: board.columns.map((column) => {
+      if (column.stageId !== page.stageId) return column; // identidade preservada
+      const seen = new Set(column.deals.map((d) => d.id));
+      return {
+        ...column,
+        deals: [...column.deals, ...page.deals.filter((d) => !seen.has(d.id))],
+        nextCursor: page.nextCursor,
+        totals: page.totals,
+      };
     }),
   };
 }
 
-/** Substitui uma coluna inteira (usado no refetch pós-conflito). */
+/** Substitui uma coluna inteira (refetch pós-conflito de versão). */
 export function replaceColumn(board: ApiKanbanBoard, column: ApiKanbanColumn): ApiKanbanBoard {
   return {
     ...board,

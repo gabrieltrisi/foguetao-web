@@ -20,6 +20,7 @@ import { messageForDealError, dealPriorityMeta } from "@/lib/crm/deal-errors";
 import { parseMoneyInput } from "@/lib/crm/money";
 import { isApiError } from "@/types/api/error";
 import type { DealPriority } from "@/types/api/crm-deals";
+import type { DealInput } from "@/lib/api/crm-deals/client";
 
 const PRIORITY_OPTIONS = (["LOW", "MEDIUM", "HIGH", "URGENT"] as DealPriority[]).map((p) => ({
   value: p,
@@ -119,19 +120,24 @@ function DealFormFields({
   const openStages = (stages.data ?? []).filter((s) => s.category === "OPEN");
 
   async function handleSave() {
-    const value = form.value.trim() ? parseMoneyInput(form.value) : undefined;
-    if (form.value.trim() && value === null) {
-      toast({ title: "Valor monetário inválido.", variant: "error" });
-      return;
+    // `value` permanece string decimal; entrada inválida nem chega ao BFF.
+    let value: string | undefined;
+    if (form.value.trim()) {
+      const parsed = parseMoneyInput(form.value);
+      if (parsed === null) {
+        toast({ title: "Valor monetário inválido.", variant: "error" });
+        return;
+      }
+      value = parsed;
     }
 
-    const payload: Record<string, unknown> = {
+    const payload: DealInput = {
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       // value permanece STRING decimal — sem conversão para number
       value,
       currency: form.currency || undefined,
-      priority: form.priority,
+      priority: form.priority as DealPriority,
       contactId: form.contactId || undefined,
       organizationId: form.organizationId || undefined,
       expectedCloseDate: form.expectedCloseDate || undefined,

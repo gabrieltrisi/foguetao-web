@@ -16,7 +16,8 @@ export function PATCH(request: Request, { params }: P): Promise<NextResponse> {
 export function DELETE(_r: Request, { params }: P): Promise<NextResponse> {
   return route(async () => {
     const { id, stageId } = await params;
-    await withCompany((ctx) => pipelinesService.deleteStage(ctx, id, stageId));
-    return NextResponse.json({ ok: true });
+    const result = await withCompany((ctx) => pipelinesService.deleteStage(ctx, id, stageId));
+    // propaga o payload do backend ({ message }) sem reescrever
+    return NextResponse.json(result);
   });
 }

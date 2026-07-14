@@ -25,6 +25,12 @@ import { messageForDealError, dealPriorityMeta } from "@/lib/crm/deal-errors";
 import { formatMoney, formatMoneyCompact } from "@/lib/crm/money";
 import type { ApiDeal, ApiKanbanColumn, StageCategory } from "@/types/api/crm-deals";
 
+/** Etapa de destino para "mover" — projeção estável do board. */
+interface StageTarget {
+  stageId: string;
+  name: string;
+}
+
 const dotByCategory: Record<StageCategory, string> = {
   OPEN: "bg-brand",
   WON: "bg-success",
@@ -44,6 +50,22 @@ export function PipelineBoard() {
 
   const pipelineId = selectedId || defaultId;
   const board = useKanbanBoard(pipelineId);
+  const columns = React.useMemo(() => board.data?.columns ?? [], [board.data]);
+
+  /**
+   * Alvos de "mover para" (etapas ABERTAS). Memoizado por uma assinatura das
+   * etapas — assim a referência NÃO muda quando apenas um card se move, o que
+   * mantém os cards memoizados estáveis.
+   */
+  const stageSignature = columns.map((c) => `${c.stageId}:${c.name}:${c.category}`).join("|");
+  const openTargets = React.useMemo(
+    () =>
+      columns
+        .filter((c) => c.category === "OPEN")
+        .map((c) => ({ stageId: c.stageId, name: c.name })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stageSignature],
+  );
 
   if (!can("crm.deals.read")) {
     return <p className="py-10 text-center text-body2 text-ink-3">Você não tem permissão para ver oportunidades.</p>;
@@ -57,8 +79,6 @@ export function PipelineBoard() {
   if (!pipelineId) {
     return <p className="py-16 text-center text-body2 text-ink-3">Nenhum pipeline configurado.</p>;
   }
-
-  const columns = board.data?.columns ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -76,7 +96,7 @@ export function PipelineBoard() {
 
       <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         {columns.map((column) => (
-          <KanbanColumn key={column.stageId} pipelineId={pipelineId} column={column} columns={columns} />
+          <KanbanColumn key={column.stageId} pipelineId={pipelineId} column={column} openTargets={openTargets} />
         ))}
         {columns.length === 0 ? (
           <p className="py-10 text-body2 text-ink-3">Este pipeline não possui etapas.</p>
@@ -86,19 +106,22 @@ export function PipelineBoard() {
   );
 }
 
-function KanbanColumn({
+/**
+ * Coluna memoizada: só re-renderiza quando a própria coluna muda de referência
+ * (as transformações puras do board preservam as colunas não afetadas).
+ */
+const KanbanColumn = React.memo(function KanbanColumn({
   pipelineId,
   column,
-  columns,
+  openTargets,
 }: {
   pipelineId: string;
   column: ApiKanbanColumn;
-  columns: ApiKanbanColumn[];
+  openTargets: StageTarget[];
 }) {
-  const { loadMore, loadingStageId } = useLoadMoreColumn(pipelineId);
+  const { loadMore, isPending: loading } = useLoadMoreColumn(pipelineId, column.stageId);
   const total = column.totals[0];
-  const count = column.totals.reduce((s, t) => s + t.count, 0);
-  const loading = loadingStageId === column.stageId;
+  const count = column.totals.reduce((sum, t) => sum + t.count, 0);
 
   return (
     <section
@@ -123,7 +146,7 @@ function KanbanColumn({
 
       <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-2.5">
         {column.deals.map((deal) => (
-          <DealCard key={deal.id} deal={deal} pipelineId={pipelineId} columns={columns} />
+          <DealCard key={deal.id} deal={deal} pipelineId={pipelineId} openTargets={openTargets} />
         ))}
 
         {column.deals.length === 0 ? (
@@ -136,7 +159,7 @@ function KanbanColumn({
             size="sm"
             variant="secondary"
             loading={loading}
-            onClick={() => loadMore({ stageId: column.stageId, cursor: column.nextCursor! })}
+            onClick={() => loadMore(column.nextCursor!)}
           >
             <ChevronDown className="size-4" aria-hidden />
             Carregar mais
@@ -145,16 +168,20 @@ function KanbanColumn({
       </div>
     </section>
   );
-}
+});
 
-function DealCard({
+/**
+ * Card memoizado: só re-renderiza quando o próprio deal muda de referência
+ * (`openTargets` e `pipelineId` são estáveis).
+ */
+const DealCard = React.memo(function DealCard({
   deal,
   pipelineId,
-  columns,
+  openTargets,
 }: {
   deal: ApiDeal;
   pipelineId: string;
-  columns: ApiKanbanColumn[];
+  openTargets: StageTarget[];
 }) {
   const { toast } = useToast();
   const { can } = useSession();
@@ -169,7 +196,7 @@ function DealCard({
   const pending = move.isPending || win.isPending || lose.isPending;
 
   // Mover só entre etapas ABERTAS: WON/LOST exigem as ações Ganhar/Perder.
-  const openTargets = columns.filter((c) => c.category === "OPEN" && c.stageId !== deal.stageId);
+  const targets = openTargets.filter((t) => t.stageId !== deal.stageId);
   const priority = dealPriorityMeta[deal.priority];
 
   const onError = (e: unknown) => toast({ title: messageForDealError(e), variant: "error" });
@@ -199,10 +226,10 @@ function DealCard({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {canMove && openTargets.length > 0 ? (
+              {canMove && targets.length > 0 ? (
                 <>
                   <DropdownMenuLabel>Mover para</DropdownMenuLabel>
-                  {openTargets.map((t) => (
+                  {targets.map((t) => (
                     <DropdownMenuItem
                       key={t.stageId}
                       onSelect={() =>
@@ -260,4 +287,4 @@ function DealCard({
       </div>
     </div>
   );
-}
+});

@@ -6,7 +6,8 @@ import { pipelinesService } from "@/lib/api/crm-deals/service";
 export function POST(_r: Request, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
   return route(async () => {
     const { id } = await params;
-    await withCompany((ctx) => pipelinesService.setDefault(ctx, id));
-    return NextResponse.json({ ok: true });
+    const result = await withCompany((ctx) => pipelinesService.setDefault(ctx, id));
+    // propaga o payload do backend ({ message }) sem reescrever
+    return NextResponse.json(result);
   });
 }

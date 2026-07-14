@@ -23,7 +23,8 @@ export function PATCH(request: Request, { params }: P): Promise<NextResponse> {
 export function DELETE(_r: Request, { params }: P): Promise<NextResponse> {
   return route(async () => {
     const { id } = await params;
-    await withCompany((ctx) => pipelinesService.remove(ctx, id));
-    return NextResponse.json({ ok: true });
+    const result = await withCompany((ctx) => pipelinesService.remove(ctx, id));
+    // propaga o payload do backend ({ message }) sem reescrever
+    return NextResponse.json(result);
   });
 }
