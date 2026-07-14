@@ -21,6 +21,13 @@ const extraTitles: Record<string, string> = {
   "/automation-ai": "Assistente de IA",
   "/scheduler": "Agendador",
   "/webhooks": "Webhooks",
+  "/analytics": "Analytics",
+  "/funnels": "Funis",
+  "/attribution": "Atribuição",
+  "/cohorts": "Cohorts",
+  "/forecast": "Forecast",
+  "/activity-log": "Atividades",
+  "/export-center": "Exportações",
 };
 
 /** Retorna o rótulo legível da rota atual para breadcrumb / título. */
