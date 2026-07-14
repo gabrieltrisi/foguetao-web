@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ListPageLayout } from "@/components/patterns/page-patterns";
 import { ContactsView } from "@/components/crm/contacts-view";
+import { NewContactAction } from "@/components/crm/contacts-view.actions";
 
 export const metadata: Metadata = {
   title: "Contatos",
   description: "Gerencie a base de contatos da sua operação.",
+  robots: { index: false, follow: false },
 };
 
 export default function ContactsPage() {
@@ -15,14 +14,7 @@ export default function ContactsPage() {
     <ListPageLayout
       title="Contatos"
       description="Gerencie a base de contatos da sua operação."
-      actions={
-        <Button asChild size="sm">
-          <Link href="/contacts/new">
-            <Plus />
-            Novo contato
-          </Link>
-        </Button>
-      }
+      actions={<NewContactAction />}
     >
       <ContactsView />
     </ListPageLayout>

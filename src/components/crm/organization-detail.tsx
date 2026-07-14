@@ -1,36 +1,54 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
-import { Globe, MapPin, Pencil, Target } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Globe, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import { EntityAvatar } from "@/components/business/entity-avatar";
 import { StatusBadge } from "@/components/business/badges";
 import { KPIBlock, StatList } from "@/components/business/kpi-block";
-import { Timeline } from "@/components/business/timeline";
-import { AssigneeSelector } from "@/components/business/assignee-selector";
-import { DetailPageLayout, DashboardSection } from "@/components/patterns/page-patterns";
-import { formatCurrency, formatNumber } from "@/lib/format";
-import { orgStatusLabel, orgStatusTone } from "@/mocks/crm/organizations";
-import { contacts } from "@/mocks/crm/contacts";
-import { deals } from "@/mocks/crm/deals";
-import { contactTimeline } from "@/mocks/crm/timeline";
-import type { Organization } from "@/types/crm";
+import { DetailPageLayout } from "@/components/patterns/page-patterns";
+import { ErrorState } from "@/components/ui/error-state";
+import { useToast } from "@/components/ui/toast";
+import { useSession } from "@/providers/session-provider";
+import { useOrganization, useOrgContacts, useDeleteOrganization } from "@/hooks/crm/use-organizations";
+import { organizationSizeLabel, contactStatusMeta, formatDate } from "@/lib/crm/display";
+import { isApiError } from "@/types/api/error";
 
-const PEOPLE = [
-  { id: "cr", name: "Camila Ribeiro" },
-  { id: "rm", name: "Rafael Monteiro" },
-  { id: "ba", name: "Bruno Alcântara" },
-  { id: "lp", name: "Larissa Prado" },
-];
+export function OrganizationDetail({ id }: { id: string }) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { can } = useSession();
+  const { data: o, isLoading, isError, error, refetch } = useOrganization(id);
+  const contacts = useOrgContacts(id, { limit: 50 });
+  const del = useDeleteOrganization();
 
-export function OrganizationDetail({ organization: o }: { organization: Organization }) {
-  const [owner, setOwner] = React.useState(PEOPLE.find((p) => p.name === o.owner)?.id ?? "cr");
-  const orgContacts = contacts.filter((c) => c.organizationId === o.id);
-  const orgDeals = deals.filter((d) => d.organizationName === o.name);
+  const canUpdate = can("crm.organizations.update");
+  const canDelete = can("crm.organizations.delete");
+
+  if (isLoading) {
+    return <p className="py-16 text-center text-body2 text-ink-3">Carregando organização…</p>;
+  }
+  if (isError || !o) {
+    const notFound = isApiError(error) && error.statusCode === 404;
+    return (
+      <ErrorState
+        title={notFound ? "Organização não encontrada." : "Não foi possível carregar a organização."}
+        onRetry={notFound ? undefined : () => refetch()}
+      />
+    );
+  }
+
+  const contactsTotal = contacts.data?.total ?? 0;
 
   const aside = (
     <div className="flex flex-col gap-4">
@@ -38,29 +56,12 @@ export function OrganizationDetail({ organization: o }: { organization: Organiza
         <EntityAvatar name={o.name} type="company" size="lg" className="size-16" />
         <div>
           <p className="font-display text-h3 font-semibold text-ink">{o.name}</p>
-          <p className="text-caption text-ink-3">{o.segment}</p>
+          {o.industry ? <p className="text-caption text-ink-3">{o.industry}</p> : null}
         </div>
-        <StatusBadge tone={orgStatusTone[o.status]}>{orgStatusLabel[o.status]}</StatusBadge>
+        {o.size ? <Badge tone="neutral">{organizationSizeLabel[o.size]}</Badge> : null}
       </Card>
-      <Card className="grid grid-cols-3 gap-2 p-4 text-center">
-        <KPIBlock label="Contatos" value={formatNumber(o.contactsCount)} className="items-center" />
-        <KPIBlock label="Deals" value={formatNumber(o.dealsCount)} className="items-center" />
-        <KPIBlock label="Receita" value={`${(o.revenue / 1000).toFixed(0)}k`} className="items-center" />
-      </Card>
-      <Card className="p-4">
-        <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-ink-3">Responsável</p>
-        <AssigneeSelector people={PEOPLE} value={owner} onValueChange={setOwner} />
-      </Card>
-      <Card className="p-4">
-        <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-ink-3">Informações</p>
-        <StatList
-          items={[
-            { label: "Site", value: <span className="inline-flex items-center gap-1"><Globe className="size-3.5 text-ink-3" aria-hidden />{o.website}</span> },
-            { label: "Local", value: <span className="inline-flex items-center gap-1"><MapPin className="size-3.5 text-ink-3" aria-hidden />{o.location}</span> },
-            { label: "Segmento", value: o.segment },
-            { label: "Receita", value: formatCurrency(o.revenue) },
-          ]}
-        />
+      <Card className="grid grid-cols-1 gap-2 p-4 text-center">
+        <KPIBlock label="Contatos vinculados" value={String(contactsTotal)} className="items-center" />
       </Card>
     </div>
   );
@@ -68,18 +69,59 @@ export function OrganizationDetail({ organization: o }: { organization: Organiza
   return (
     <DetailPageLayout
       title={o.name}
-      subtitle={`${o.segment} · ${o.location}`}
+      subtitle={o.industry ?? undefined}
       back={{ href: "/organizations", label: "Organizações" }}
       actions={
         <>
-          <Button size="sm" variant="secondary">
-            <Pencil />
-            Editar
-          </Button>
-          <Button size="sm">
-            <Target />
-            Nova oportunidade
-          </Button>
+          {canUpdate ? (
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/organizations/${id}/edit`}>
+                <Pencil />
+                Editar
+              </Link>
+            </Button>
+          ) : null}
+          {canDelete ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon-sm" variant="secondary" aria-label="Mais ações">
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <ConfirmDialog
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-body2 text-danger hover:bg-surface [&_svg]:text-danger"
+                    >
+                      <Trash2 className="size-4" aria-hidden /> Excluir organização
+                    </button>
+                  }
+                  title="Excluir organização?"
+                  description="Só é possível excluir organizações sem contatos vinculados."
+                  confirmLabel="Excluir"
+                  destructive
+                  onConfirm={() =>
+                    del.mutate(id, {
+                      onSuccess: () => {
+                        toast({ title: "Organização excluída", variant: "success" });
+                        router.push("/organizations");
+                      },
+                      onError: (e) =>
+                        toast({
+                          title:
+                            isApiError(e) && e.code === "ORGANIZATION_HAS_CONTACTS"
+                              ? "Remova ou realoque os contatos antes de excluir."
+                              : "Falha ao excluir organização.",
+                          variant: "error",
+                        }),
+                    })
+                  }
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </>
       }
       aside={aside}
@@ -87,49 +129,43 @@ export function OrganizationDetail({ organization: o }: { organization: Organiza
       <Tabs defaultValue="resumo">
         <TabsList className="overflow-x-auto">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="contatos">Contatos</TabsTrigger>
-          <TabsTrigger value="deals">Deals</TabsTrigger>
+          <TabsTrigger value="contatos">Contatos ({contactsTotal})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumo">
-          <DashboardSection title="Histórico">
-            <Card className="p-5">
-              <Timeline items={contactTimeline} />
-            </Card>
-          </DashboardSection>
+          <Card className="p-5">
+            <StatList
+              items={[
+                { label: "Razão social", value: o.legalName ?? "—" },
+                { label: "Documento", value: o.document ?? "—" },
+                { label: "E-mail", value: o.email ? <span className="inline-flex items-center gap-1"><Mail className="size-3.5" aria-hidden /> {o.email}</span> : "—" },
+                { label: "Telefone", value: o.phone ? <span className="inline-flex items-center gap-1"><Phone className="size-3.5" aria-hidden /> {o.phone}</span> : "—" },
+                { label: "Website", value: o.website ? <span className="inline-flex items-center gap-1"><Globe className="size-3.5" aria-hidden /> {o.website}</span> : "—" },
+                { label: "Segmento", value: o.industry ?? "—" },
+                { label: "Porte", value: o.size ? organizationSizeLabel[o.size] : "—" },
+                { label: "Criada em", value: formatDate(o.createdAt) },
+              ]}
+            />
+          </Card>
         </TabsContent>
 
         <TabsContent value="contatos">
           <Card className="divide-y divide-line">
-            {orgContacts.length === 0 ? (
+            {contacts.isLoading ? (
+              <p className="p-5 text-body2 text-ink-3">Carregando contatos…</p>
+            ) : (contacts.data?.items.length ?? 0) === 0 ? (
               <p className="p-5 text-body2 text-ink-3">Nenhum contato vinculado.</p>
             ) : (
-              orgContacts.map((c) => (
-                <Link key={c.id} href={`/contacts/${c.id}`} className="flex items-center gap-3 p-4 transition-colors hover:bg-surface">
-                  <EntityAvatar name={c.name} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-ink">{c.name}</p>
-                    <p className="truncate text-caption text-ink-3">{c.role}</p>
+              contacts.data!.items.map((c) => (
+                <Link key={c.id} href={`/contacts/${c.id}`} className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-surface">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <EntityAvatar name={c.fullName} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-ink">{c.fullName}</p>
+                      {c.email ? <p className="truncate text-caption text-ink-3">{c.email}</p> : null}
+                    </div>
                   </div>
-                  <Badge tone="neutral" className="normal-case">{c.email}</Badge>
-                </Link>
-              ))
-            )}
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="deals">
-          <Card className="divide-y divide-line">
-            {orgDeals.length === 0 ? (
-              <p className="p-5 text-body2 text-ink-3">Nenhuma oportunidade vinculada.</p>
-            ) : (
-              orgDeals.map((d) => (
-                <Link key={d.id} href={`/deals/${d.id}`} className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-surface">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{d.title}</p>
-                    <p className="text-caption text-ink-3">{d.probability}% · {d.owner}</p>
-                  </div>
-                  <span className="shrink-0 font-display font-semibold text-ink">{formatCurrency(d.value)}</span>
+                  <StatusBadge tone={contactStatusMeta[c.status].tone}>{contactStatusMeta[c.status].label}</StatusBadge>
                 </Link>
               ))
             )}

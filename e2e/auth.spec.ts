@@ -1,7 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 
 const EMPTY_STATE = { cookies: [], origins: [] };
-const OWNER = { email: "owner@foguetao.dev", password: "Str0ng!Passw0rd" };
+// IMPORTANTE: os testes de sessão isolada usam COMMERCIAL, não OWNER. O backend
+// revoga TODA a família de sessões do usuário ao detectar reuso de refresh token
+// (rotação sob next start multi-worker). Usar owner aqui mataria a sessão
+// compartilhada (storageState) e cascataria falhas nos demais specs.
+const COMMERCIAL = { email: "commercial@foguetao.dev", password: "Str0ng!Passw0rd" };
 const VIEWER = { email: "viewer@foguetao.dev", password: "Str0ng!Passw0rd" };
 
 async function login(page: Page, creds: { email: string; password: string }) {
@@ -17,13 +21,13 @@ test.describe("Autenticação (sessão isolada)", () => {
   test.use({ storageState: EMPTY_STATE });
 
   test("login real redireciona para o dashboard", async ({ page }) => {
-    await login(page, OWNER);
+    await login(page, COMMERCIAL);
     await page.waitForURL("**/dashboard");
     await expect(page.getByRole("heading", { name: "Visão geral", level: 1 })).toBeVisible();
   });
 
   test("credenciais inválidas exibem erro", async ({ page }) => {
-    await login(page, { email: "owner@foguetao.dev", password: "senha-errada" });
+    await login(page, { email: "commercial@foguetao.dev", password: "senha-errada" });
     await expect(page.getByText(/E-mail ou senha incorretos/)).toBeVisible();
     await expect(page).toHaveURL(/\/login/);
   });
@@ -39,7 +43,7 @@ test.describe("Autenticação (sessão isolada)", () => {
   });
 
   test("refresh coordenado: sem access token, a sessão é renovada", async ({ page, context }) => {
-    await login(page, OWNER);
+    await login(page, COMMERCIAL);
     await page.waitForURL("**/dashboard");
     // Remove apenas o access token; o refresh token (httpOnly) permanece.
     await context.clearCookies({ name: "fg_at" });
@@ -50,7 +54,7 @@ test.describe("Autenticação (sessão isolada)", () => {
   });
 
   test("logout encerra a sessão e protege as rotas", async ({ page }) => {
-    await login(page, OWNER);
+    await login(page, COMMERCIAL);
     await page.waitForURL("**/dashboard");
     await page.getByRole("button", { name: "Conta" }).first().click();
     await page.getByRole("menuitem", { name: "Sair" }).click();

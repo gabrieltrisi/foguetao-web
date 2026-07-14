@@ -42,7 +42,7 @@ export function FlowEditor({ automation }: { automation: Automation }) {
           {active ? "Ativa" : "Pausada"}
         </label>
         <Button variant="secondary" size="sm" asChild>
-          <Link href={`/automations/${automation.id}/executions`}><History /><span className="hidden sm:inline">Histórico</span></Link>
+          <Link href={`/automations/${automation.id}/executions`} prefetch={false}><History /><span className="hidden sm:inline">Histórico</span></Link>
         </Button>
         <Button variant="secondary" size="sm" onClick={() => toast({ title: "Teste executado (mock)", variant: "success" })}><FlaskConical /><span className="hidden sm:inline">Testar</span></Button>
         <Button variant="secondary" size="sm" onClick={() => toast({ title: "Rascunho salvo (mock)", variant: "success" })}><Save /><span className="hidden sm:inline">Salvar</span></Button>

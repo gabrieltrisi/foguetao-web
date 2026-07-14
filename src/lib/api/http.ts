@@ -4,7 +4,7 @@ import { apiErrorFromResponse, unavailableError } from "@/types/api/error";
 import { backendUrl, COMPANY_ID_HEADER } from "./config";
 
 export interface BackendRequest<TSchema extends z.ZodTypeAny | undefined> {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   /** JSON body (será serializado). */
   body?: unknown;
   /** Access token (Bearer). Nunca logado. */

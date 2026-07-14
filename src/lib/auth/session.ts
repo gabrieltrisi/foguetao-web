@@ -68,3 +68,22 @@ export async function withAuth<T>(fn: (ctx: AuthContext) => Promise<T>): Promise
   await setSessionCookies({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
   return fn({ token: tokens.accessToken, companyId });
 }
+
+/**
+ * Como `withAuth`, mas exige uma empresa ativa (x-company-id). Usado por rotas
+ * de domínio (CRM etc.). Lança COMPANY_CONTEXT_REQUIRED se não houver empresa.
+ */
+export async function withCompany<T>(
+  fn: (ctx: { token: string; companyId: string }) => Promise<T>,
+): Promise<T> {
+  return withAuth(({ token, companyId }) => {
+    if (!companyId) {
+      throw new ApiError({
+        statusCode: 400,
+        code: ErrorCode.COMPANY_CONTEXT_REQUIRED,
+        message: "Nenhuma empresa ativa",
+      });
+    }
+    return fn({ token, companyId });
+  });
+}

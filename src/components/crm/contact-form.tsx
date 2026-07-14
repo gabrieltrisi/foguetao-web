@@ -9,95 +9,164 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/ui/form-field";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Combobox } from "@/components/ui/combobox";
-import { MultiSelect } from "@/components/ui/combobox";
-import { AssigneeSelector } from "@/components/business/assignee-selector";
 import { FormPageLayout } from "@/components/patterns/page-patterns";
+import { ErrorState } from "@/components/ui/error-state";
 import { useToast } from "@/components/ui/toast";
-import { organizations } from "@/mocks/crm/organizations";
+import { useCreateContact, useUpdateContact } from "@/hooks/crm/use-contacts";
+import { useContact } from "@/hooks/crm/use-contact-detail";
+import { useOrganizations } from "@/hooks/crm/use-organizations";
+import { contactStatusOptions } from "@/lib/crm/display";
+import { isApiError, ErrorCode } from "@/types/api/error";
 
-const STATUS = [
-  { value: "lead", label: "Lead" },
-  { value: "ativo", label: "Ativo" },
-  { value: "cliente", label: "Cliente" },
-  { value: "inativo", label: "Inativo" },
-];
-const TAGS = ["VIP", "Enterprise", "Inbound", "Trial", "Parceiro", "Evento", "SMB", "Newsletter"].map(
-  (t) => ({ value: t, label: t }),
-);
-const PEOPLE = [
-  { id: "cr", name: "Camila Ribeiro" },
-  { id: "rm", name: "Rafael Monteiro" },
-  { id: "ba", name: "Bruno Alcântara" },
-  { id: "lp", name: "Larissa Prado" },
-];
+const STATUS = contactStatusOptions.filter((o) => o.value);
 
-export function ContactForm() {
+type FormState = {
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
+  email: string;
+  phone: string;
+  whatsappPhone: string;
+  organizationId: string;
+  status: string;
+};
+
+const empty: FormState = {
+  firstName: "",
+  lastName: "",
+  jobTitle: "",
+  email: "",
+  phone: "",
+  whatsappPhone: "",
+  organizationId: "",
+  status: "LEAD",
+};
+
+function messageFor(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.code === ErrorCode.VALIDATION_ERROR) return "Verifique os campos e tente novamente.";
+    if (error.code === "CONTACT_EMAIL_ALREADY_EXISTS") return "Já existe um contato com este e-mail.";
+    if (error.code === "CONTACT_PHONE_ALREADY_EXISTS") return "Já existe um contato com este telefone.";
+    if (error.isForbidden) return "Você não tem permissão para esta ação.";
+    return error.message;
+  }
+  return "Não foi possível salvar o contato.";
+}
+
+/** Casca: em modo edição, aguarda os dados e inicializa o formulário via key. */
+export function ContactForm({ contactId }: { contactId?: string }) {
+  const isEdit = Boolean(contactId);
+  const detail = useContact(contactId ?? "");
+
+  if (isEdit) {
+    if (detail.isLoading) return <p className="py-16 text-center text-body2 text-ink-3">Carregando…</p>;
+    if (detail.isError || !detail.data) {
+      const notFound = isApiError(detail.error) && detail.error.statusCode === 404;
+      return <ErrorState title={notFound ? "Contato não encontrado." : "Falha ao carregar o contato."} onRetry={notFound ? undefined : () => detail.refetch()} />;
+    }
+  }
+
+  const c = detail.data?.contact;
+  const initial: FormState = c
+    ? {
+        firstName: c.firstName ?? "",
+        lastName: c.lastName ?? "",
+        jobTitle: c.jobTitle ?? "",
+        email: c.email ?? "",
+        phone: c.phone ?? "",
+        whatsappPhone: c.whatsappPhone ?? "",
+        organizationId: c.organizationId ?? "",
+        status: c.status ?? "LEAD",
+      }
+    : empty;
+
+  return <ContactFormFields key={contactId ?? "new"} initial={initial} contactId={contactId} />;
+}
+
+function ContactFormFields({ initial, contactId }: { initial: FormState; contactId?: string }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [org, setOrg] = React.useState("");
-  const [status, setStatus] = React.useState("lead");
-  const [tags, setTags] = React.useState<string[]>([]);
-  const [owner, setOwner] = React.useState("cr");
-  const [saving, setSaving] = React.useState(false);
+  const isEdit = Boolean(contactId);
+  const orgs = useOrganizations({ limit: 100 });
+  const create = useCreateContact();
+  const update = useUpdateContact(contactId ?? "");
 
-  const orgOptions = organizations.map((o) => ({ value: o.id, label: o.name }));
+  const [form, setForm] = React.useState<FormState>(initial);
+  const set = (k: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const orgOptions = [
+    { value: "", label: "Sem organização" },
+    ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
+  ];
+  const pending = create.isPending || update.isPending;
+  const backHref = isEdit && contactId ? `/contacts/${contactId}` : "/contacts";
 
   async function handleSave() {
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    toast({ title: "Contato criado (mock)", variant: "success" });
-    router.push("/contacts");
+    const payload = {
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim() || undefined,
+      jobTitle: form.jobTitle.trim() || undefined,
+      email: form.email.trim() || undefined,
+      phone: form.phone.trim() || undefined,
+      whatsappPhone: form.whatsappPhone.trim() || undefined,
+      organizationId: form.organizationId || undefined,
+      status: form.status,
+    };
+    try {
+      if (isEdit && contactId) {
+        await update.mutateAsync(payload);
+        toast({ title: "Contato atualizado", variant: "success" });
+        router.push(`/contacts/${contactId}`);
+      } else {
+        const created = await create.mutateAsync(payload);
+        toast({ title: "Contato criado", variant: "success" });
+        router.push(`/contacts/${created.id}`);
+      }
+    } catch (error) {
+      toast({ title: messageFor(error), variant: "error" });
+    }
   }
 
   return (
     <FormPageLayout
-      title="Novo contato"
-      description="Cadastre um novo contato na sua base."
-      back={{ href: "/contacts", label: "Contatos" }}
+      title={isEdit ? "Editar contato" : "Novo contato"}
+      description={isEdit ? "Atualize os dados do contato." : "Cadastre um novo contato na sua base."}
+      back={{ href: backHref, label: "Contatos" }}
       footer={
         <>
           <Button asChild variant="secondary" size="sm">
-            <Link href="/contacts">Cancelar</Link>
+            <Link href={backHref}>Cancelar</Link>
           </Button>
-          <Button size="sm" loading={saving} onClick={handleSave}>
-            Salvar contato
+          <Button size="sm" loading={pending} disabled={!form.firstName.trim()} onClick={handleSave}>
+            {isEdit ? "Salvar alterações" : "Salvar contato"}
           </Button>
         </>
       }
     >
       <Card className="p-5">
         <div className="grid gap-5 sm:grid-cols-2">
-          <FormField id="cf-name" label="Nome" required>
-            {(p) => <Input placeholder="Nome completo" {...p} />}
+          <FormField id="cf-first" label="Nome" required>
+            {(p) => <Input placeholder="Nome" value={form.firstName} onChange={(e) => set("firstName")(e.target.value)} {...p} />}
           </FormField>
-          <FormField id="cf-role" label="Cargo">
-            {(p) => <Input placeholder="Ex.: Gerente comercial" {...p} />}
+          <FormField id="cf-last" label="Sobrenome">
+            {(p) => <Input placeholder="Sobrenome" value={form.lastName} onChange={(e) => set("lastName")(e.target.value)} {...p} />}
           </FormField>
-          <FormField id="cf-email" label="E-mail" required>
-            {(p) => <Input type="email" placeholder="email@empresa.com.br" {...p} />}
+          <FormField id="cf-email" label="E-mail">
+            {(p) => <Input type="email" placeholder="email@empresa.com.br" value={form.email} onChange={(e) => set("email")(e.target.value)} {...p} />}
           </FormField>
           <FormField id="cf-phone" label="Telefone">
-            {(p) => <PhoneInput {...p} />}
+            {(p) => <PhoneInput value={form.phone} onValueChange={set("phone")} {...p} />}
+          </FormField>
+          <FormField id="cf-wa" label="WhatsApp">
+            {(p) => <PhoneInput value={form.whatsappPhone} onValueChange={set("whatsappPhone")} {...p} />}
+          </FormField>
+          <FormField id="cf-role" label="Cargo">
+            {(p) => <Input placeholder="Ex.: Gerente comercial" value={form.jobTitle} onChange={(e) => set("jobTitle")(e.target.value)} {...p} />}
           </FormField>
           <FormField id="cf-org" label="Organização">
-            {(p) => (
-              <Combobox
-                id={p.id}
-                options={orgOptions}
-                value={org}
-                onValueChange={setOrg}
-                placeholder="Selecione a organização"
-              />
-            )}
+            {(p) => <Combobox id={p.id} options={orgOptions} value={form.organizationId} onValueChange={set("organizationId")} placeholder="Selecione a organização" />}
           </FormField>
           <FormField id="cf-status" label="Status">
-            {(p) => <Combobox id={p.id} options={STATUS} value={status} onValueChange={setStatus} />}
-          </FormField>
-          <FormField id="cf-owner" label="Responsável">
-            {(p) => <AssigneeSelector id={p.id} people={PEOPLE} value={owner} onValueChange={setOwner} />}
-          </FormField>
-          <FormField id="cf-tags" label="Tags">
-            {(p) => <MultiSelect id={p.id} options={TAGS} value={tags} onValueChange={setTags} />}
+            {(p) => <Combobox id={p.id} options={STATUS} value={form.status} onValueChange={set("status")} />}
           </FormField>
         </div>
       </Card>
