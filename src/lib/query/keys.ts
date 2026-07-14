@@ -14,6 +14,10 @@ export const queryKeys = {
     organizations: (filters?: unknown) => ["crm", "organizations", filters ?? {}] as const,
     organization: (id: string) => ["crm", "organization", id] as const,
     orgContacts: (id: string) => ["crm", "organization", id, "contacts"] as const,
+
+    pipelines: (filters?: unknown) => ["crm", "pipelines", filters ?? {}] as const,
+    pipeline: (id: string) => ["crm", "pipeline", id] as const,
+    pipelineStages: (id: string) => ["crm", "pipeline", id, "stages"] as const,
   },
 } as const;
 
@@ -23,4 +27,6 @@ export const crmInvalidation = {
   contact: (id: string) => ["crm", "contact", id] as const,
   allOrganizations: ["crm", "organizations"] as const,
   organization: (id: string) => ["crm", "organization", id] as const,
+  allPipelines: ["crm", "pipelines"] as const,
+  pipeline: (id: string) => ["crm", "pipeline", id] as const,
 };

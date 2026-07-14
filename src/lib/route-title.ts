@@ -37,6 +37,7 @@ const extraTitles: Record<string, string> = {
   "/api-keys": "API Keys",
   "/marketplace": "Marketplace",
   "/onboarding": "Onboarding",
+  "/pipelines": "Pipelines",
 };
 
 /** Retorna o rótulo legível da rota atual para breadcrumb / título. */
