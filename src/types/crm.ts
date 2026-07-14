@@ -1,6 +1,4 @@
 /** Tipos de domínio do CRM (dados mockados nesta etapa). */
-import type { Priority } from "@/types";
-
 export type ContactStatus = "lead" | "ativo" | "cliente" | "inativo";
 
 export type Contact = {
@@ -58,21 +56,6 @@ export type Deal = {
   tags: string[];
   closeDate: string;
   status: "aberta" | "ganho" | "perdido";
-};
-
-export type TaskStatus = "todo" | "doing" | "done";
-
-export type Task = {
-  id: string;
-  title: string;
-  description?: string;
-  assignee: string;
-  /** ISO YYYY-MM-DD */
-  due: string;
-  dueLabel: string;
-  priority: Priority;
-  status: TaskStatus;
-  relatedTo?: string;
 };
 
 export type TimelineEventType =

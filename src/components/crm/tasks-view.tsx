@@ -2,57 +2,138 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CalendarDays, Columns3, List } from "lucide-react";
+import { AlertTriangle, CalendarDays, Columns3, List, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";
 import { Combobox } from "@/components/ui/combobox";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { FilterBar } from "@/components/ui/filter-bar";
+import { Pagination } from "@/components/ui/pagination";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ErrorState } from "@/components/ui/error-state";
 import { EntityAvatar } from "@/components/business/entity-avatar";
-import { OwnerBadge, PriorityBadge, StatusBadge } from "@/components/business/badges";
-import { ListTodo } from "lucide-react";
+import { useSession } from "@/providers/session-provider";
+import { useTasks } from "@/hooks/crm/use-tasks";
+import { useAssignableMembers } from "@/hooks/crm/use-assignable-members";
 import {
-  tasks,
-  taskStatusColumns,
-  taskStatusLabel,
-  taskStatusTone,
-  tasksByStatus,
-  calendarMonth,
-} from "@/mocks/crm/tasks";
-import type { Priority } from "@/types";
-import type { Task } from "@/types/crm";
+  taskStatusMeta,
+  taskPriorityMeta,
+  isOverdue,
+  isDueSoon,
+  formatTaskDate,
+} from "@/lib/crm/task-helpers";
+import type { ApiTask, TaskStatus, TaskPriority, TaskFilters } from "@/types/api/crm-tasks";
 
-const priorityDot: Record<Priority, string> = { alta: "bg-danger", media: "bg-warning", baixa: "bg-info" };
+const LIST_PAGE_SIZE = 20;
+/** Kanban/Calendário agrupam no cliente; usam o teto de paginação do backend. */
+const BOARD_PAGE_SIZE = 100;
+
+const STATUS_OPTIONS = [
+  { value: "todos", label: "Todos os status" },
+  ...(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELED"] as TaskStatus[]).map((s) => ({
+    value: s,
+    label: taskStatusMeta[s].label,
+  })),
+];
 const PRIORITY_OPTIONS = [
   { value: "todas", label: "Todas as prioridades" },
-  { value: "alta", label: "Alta" },
-  { value: "media", label: "Média" },
-  { value: "baixa", label: "Baixa" },
+  ...(["LOW", "MEDIUM", "HIGH", "URGENT"] as TaskPriority[]).map((p) => ({
+    value: p,
+    label: taskPriorityMeta[p].label,
+  })),
 ];
+const OVERDUE_OPTIONS = [
+  { value: "todas", label: "Todos os prazos" },
+  { value: "true", label: "Somente atrasadas" },
+];
+
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const MONTH_NAMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+const KANBAN_COLUMNS: TaskStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
 
 export function TasksView() {
+  const { can } = useSession();
   const [view, setView] = React.useState<"list" | "kanban" | "calendar">("list");
   const [query, setQuery] = React.useState("");
+  const [search, setSearch] = React.useState("");
+  const [status, setStatus] = React.useState("todos");
   const [priority, setPriority] = React.useState("todas");
+  const [assignee, setAssignee] = React.useState("todos");
+  const [overdue, setOverdue] = React.useState("todas");
+  const [page, setPage] = React.useState(1);
 
-  const filtered = tasks.filter((t) => {
-    const matchPriority = priority === "todas" || t.priority === priority;
-    const q = query.trim().toLowerCase();
-    const matchQuery = !q || `${t.title} ${t.assignee}`.toLowerCase().includes(q);
-    return matchPriority && matchQuery;
-  });
+  const members = useAssignableMembers();
+
+  // Busca textual com debounce (padrão do projeto) — reseta a página.
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(query);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Somente filtros REAIS do ListTasksQueryDto.
+  const filters: TaskFilters = {
+    page: view === "list" ? page : 1,
+    limit: view === "list" ? LIST_PAGE_SIZE : BOARD_PAGE_SIZE,
+    search: search || undefined,
+    status: status === "todos" ? undefined : (status as TaskStatus),
+    priority: priority === "todas" ? undefined : (priority as TaskPriority),
+    assignedToUserId: assignee === "todos" ? undefined : assignee,
+    overdue: overdue === "true" ? true : undefined,
+    sortBy: "dueAt",
+    sortOrder: "asc",
+  };
+
+  const { data, isLoading, isError, refetch, isFetching } = useTasks(filters);
+
+  if (!can("crm.tasks.read")) {
+    return <p className="py-10 text-center text-body2 text-ink-3">Você não tem permissão para ver tarefas.</p>;
+  }
+  if (isError) {
+    return <ErrorState title="Não foi possível carregar as tarefas." onRetry={() => refetch()} />;
+  }
+
+  const items = data?.items ?? [];
+  /** Reseta a página ao trocar um filtro relevante. */
+  const onFilter = (set: (v: string) => void) => (v: string) => {
+    set(v);
+    setPage(1);
+  };
 
   return (
     <div className="flex flex-col gap-4">
       <FilterBar>
-        <SearchInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar tarefas…" containerClassName="w-full max-w-xs" />
-        <div className="w-52">
-          <Combobox options={PRIORITY_OPTIONS} value={priority} onValueChange={setPriority} />
+        <SearchInput
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar tarefas…"
+          containerClassName="w-full max-w-xs"
+        />
+        <div className="w-44">
+          <Combobox options={STATUS_OPTIONS} value={status} onValueChange={onFilter(setStatus)} />
+        </div>
+        <div className="w-48">
+          <Combobox options={PRIORITY_OPTIONS} value={priority} onValueChange={onFilter(setPriority)} />
+        </div>
+        {members.canRead ? (
+          <div className="w-48">
+            <Combobox
+              options={[{ value: "todos", label: "Todos os responsáveis" }, ...members.options]}
+              value={assignee}
+              onValueChange={onFilter(setAssignee)}
+            />
+          </div>
+        ) : null}
+        <div className="w-44">
+          <Combobox options={OVERDUE_OPTIONS} value={overdue} onValueChange={onFilter(setOverdue)} />
         </div>
         <SegmentedControl
           className="ml-auto"
@@ -66,65 +147,138 @@ export function TasksView() {
         />
       </FilterBar>
 
-      {view === "list" ? <TaskList tasks={filtered} /> : null}
-      {view === "kanban" ? <TaskKanban query={query} priority={priority} /> : null}
-      {view === "calendar" ? <TaskCalendar tasks={filtered} /> : null}
+      {view === "list" ? (
+        <>
+          <TaskList tasks={items} loading={isLoading} nameById={members.nameById} />
+          {data && data.totalPages > 1 ? (
+            <div className={cn("flex justify-end", isFetching && "opacity-60")}>
+              <Pagination page={data.page} totalPages={data.totalPages} onPageChange={setPage} />
+            </div>
+          ) : null}
+        </>
+      ) : null}
+      {view === "kanban" ? <TaskKanban tasks={items} loading={isLoading} nameById={members.nameById} /> : null}
+      {view === "calendar" ? <TaskCalendar tasks={items} /> : null}
     </div>
   );
 }
 
-function TaskList({ tasks: rows }: { tasks: Task[] }) {
-  const columns: DataTableColumn<Task>[] = [
+/** Nome do responsável sem N+1: resolvido pelo mapa de membros já carregado. */
+function assigneeName(nameById: Map<string, string>, userId: string): string {
+  return nameById.get(userId) ?? "Responsável";
+}
+
+function TaskList({
+  tasks,
+  loading,
+  nameById,
+}: {
+  tasks: ApiTask[];
+  loading: boolean;
+  nameById: Map<string, string>;
+}) {
+  const columns: DataTableColumn<ApiTask>[] = [
     {
       id: "title",
       header: "Tarefa",
-      sortable: true,
-      sortAccessor: (t) => t.title,
+      cell: (t) => {
+        const done = t.status === "COMPLETED";
+        const late = isOverdue(t);
+        return (
+          <div className="flex items-center gap-2">
+            {late ? <AlertTriangle className="size-4 shrink-0 text-danger" aria-label="Atrasada" /> : null}
+            <Link
+              href={`/tasks/${t.id}`}
+              className={cn("font-medium hover:text-brand", done ? "text-ink-3 line-through" : "text-ink")}
+            >
+              {t.title}
+            </Link>
+          </div>
+        );
+      },
+    },
+    {
+      id: "assignee",
+      header: "Responsável",
       cell: (t) => (
-        <div className="flex items-center gap-2.5">
-          <Checkbox aria-label={t.title} defaultChecked={t.status === "done"} />
-          <Link href={`/tasks/${t.id}`} className={cn("font-medium hover:text-brand", t.status === "done" ? "text-ink-3 line-through" : "text-ink")}>
-            {t.title}
-          </Link>
-        </div>
+        <span className="inline-flex items-center gap-1.5">
+          <EntityAvatar name={assigneeName(nameById, t.assignedToUserId)} size="sm" className="size-5 text-[9px]" />
+          <span className="text-body2 text-ink">{assigneeName(nameById, t.assignedToUserId)}</span>
+        </span>
       ),
     },
-    { id: "assignee", header: "Responsável", cell: (t) => <OwnerBadge name={t.assignee} /> },
-    { id: "due", header: "Prazo", cell: (t) => <span className="text-ink-2">{t.dueLabel}</span> },
-    { id: "priority", header: "Prioridade", cell: (t) => <PriorityBadge priority={t.priority} /> },
-    { id: "status", header: "Status", cell: (t) => <StatusBadge tone={taskStatusTone[t.status]}>{taskStatusLabel[t.status]}</StatusBadge> },
+    {
+      id: "due",
+      header: "Prazo",
+      cell: (t) => (
+        <span className={cn("text-ink-2", isDueSoon(t) && "text-warning", isOverdue(t) && "font-medium text-danger")}>
+          {formatTaskDate(t.dueAt)}
+        </span>
+      ),
+    },
+    { id: "priority", header: "Prioridade", cell: (t) => <Badge tone={taskPriorityMeta[t.priority].tone}>{taskPriorityMeta[t.priority].label}</Badge> },
+    {
+      id: "status",
+      header: "Status",
+      cell: (t) =>
+        isOverdue(t) ? (
+          <Badge tone="danger">Atrasada</Badge>
+        ) : (
+          <Badge tone={taskStatusMeta[t.status].tone}>{taskStatusMeta[t.status].label}</Badge>
+        ),
+    },
   ];
+
   return (
-    <DataTable data={rows} columns={columns} getRowId={(t) => t.id} empty={{ icon: ListTodo, title: "Nenhuma tarefa encontrada." }} />
+    <DataTable
+      data={tasks}
+      columns={columns}
+      getRowId={(t) => t.id}
+      loading={loading}
+      pageSize={LIST_PAGE_SIZE}
+      empty={{ icon: ListTodo, title: "Nenhuma tarefa encontrada.", description: "Ajuste os filtros ou crie uma nova tarefa." }}
+    />
   );
 }
 
-function TaskKanban({ query, priority }: { query: string; priority: string }) {
-  const match = (t: Task) => {
-    const mp = priority === "todas" || t.priority === priority;
-    const q = query.trim().toLowerCase();
-    return mp && (!q || `${t.title} ${t.assignee}`.toLowerCase().includes(q));
-  };
+/** Kanban agrupa por status as tarefas já carregadas (sem requests extras). */
+function TaskKanban({
+  tasks,
+  loading,
+  nameById,
+}: {
+  tasks: ApiTask[];
+  loading: boolean;
+  nameById: Map<string, string>;
+}) {
+  if (loading) return <p className="py-10 text-center text-body2 text-ink-3">Carregando…</p>;
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      {taskStatusColumns.map((col) => {
-        const items = tasksByStatus(col.id).filter(match);
+      {KANBAN_COLUMNS.map((col) => {
+        const items = tasks.filter((t) => t.status === col);
         return (
-          <section key={col.id} className="flex flex-col rounded-xl border border-line bg-surface" aria-label={col.label}>
+          <section key={col} className="flex flex-col rounded-xl border border-line bg-surface" aria-label={taskStatusMeta[col].label}>
             <header className="flex items-center justify-between border-b border-line px-3 py-2.5">
-              <h3 className="text-body2 font-semibold text-ink">{col.label}</h3>
+              <h3 className="text-body2 font-semibold text-ink">{taskStatusMeta[col].label}</h3>
               <span className="rounded-full bg-white px-1.5 text-caption font-semibold text-ink-2">{items.length}</span>
             </header>
             <div className="flex flex-col gap-2.5 p-2.5">
               {items.map((t) => (
-                <Link key={t.id} href={`/tasks/${t.id}`} className="block rounded-lg border border-line bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md">
-                  <p className="font-medium text-ink">{t.title}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 text-caption text-ink-3">
-                      <EntityAvatar name={t.assignee} size="sm" className="size-5 text-[9px]" />
-                      {t.dueLabel}
+                <Link
+                  key={t.id}
+                  href={`/tasks/${t.id}`}
+                  className="block rounded-lg border border-line bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md"
+                >
+                  <p className={cn("font-medium", t.status === "COMPLETED" ? "text-ink-3 line-through" : "text-ink")}>
+                    {t.title}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-1.5 text-caption text-ink-3">
+                      <EntityAvatar name={assigneeName(nameById, t.assignedToUserId)} size="sm" className="size-5 text-[9px]" />
+                      <span className={cn("truncate", isOverdue(t) && "font-medium text-danger")}>{formatTaskDate(t.dueAt)}</span>
                     </span>
-                    <PriorityBadge priority={t.priority} />
+                    <Badge tone={taskPriorityMeta[t.priority].tone}>{taskPriorityMeta[t.priority].label}</Badge>
                   </div>
                 </Link>
               ))}
@@ -149,15 +303,29 @@ function buildWeeks(year: number, month: number) {
   return weeks;
 }
 
-function TaskCalendar({ tasks: items }: { tasks: Task[] }) {
-  const { year, month } = calendarMonth;
+const priorityDot: Record<TaskPriority, string> = {
+  URGENT: "bg-danger",
+  HIGH: "bg-warning",
+  MEDIUM: "bg-info",
+  LOW: "bg-ink-3",
+};
+
+/** Calendário do mês corrente; agrupa por dia LOCAL de `dueAt`. */
+function TaskCalendar({ tasks }: { tasks: ApiTask[] }) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
   const weeks = buildWeeks(year, month);
-  const byDay = new Map<number, Task[]>();
-  for (const t of items) {
-    const day = Number(t.due.slice(8, 10));
+
+  const byDay = new Map<number, ApiTask[]>();
+  for (const t of tasks) {
+    if (!t.dueAt) continue;
+    const d = new Date(t.dueAt);
+    if (d.getFullYear() !== year || d.getMonth() !== month) continue;
+    const day = d.getDate();
     byDay.set(day, [...(byDay.get(day) ?? []), t]);
   }
-  const today = 13; // referência fixa: 13 jul 2026
 
   return (
     <Card className="overflow-hidden p-0">

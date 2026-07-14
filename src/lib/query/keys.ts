@@ -26,6 +26,9 @@ export const queryKeys = {
     lostReasons: () => ["crm", "lost-reasons"] as const,
     /** Board do Kanban de um pipeline (colunas + 1ª página por coluna). */
     kanban: (pipelineId: string) => ["crm", "kanban", pipelineId] as const,
+
+    tasks: (filters?: unknown) => ["crm", "tasks", filters ?? {}] as const,
+    task: (id: string) => ["crm", "task", id] as const,
   },
 } as const;
 
@@ -40,4 +43,7 @@ export const crmInvalidation = {
   allDeals: ["crm", "deals"] as const,
   deal: (id: string) => ["crm", "deal", id] as const,
   kanban: (pipelineId: string) => ["crm", "kanban", pipelineId] as const,
+  /** Prefixo de TODAS as listas de tarefas (qualquer filtro). */
+  allTasks: ["crm", "tasks"] as const,
+  task: (id: string) => ["crm", "task", id] as const,
 };
