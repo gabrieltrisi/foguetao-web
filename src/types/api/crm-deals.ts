@@ -84,3 +84,140 @@ export interface CustomStageInput {
   color?: string;
   position?: number;
 }
+
+/* ---------- Deals ---------- */
+export const dealStatusSchema = z.enum(["OPEN", "WON", "LOST", "ARCHIVED"]);
+export type DealStatus = z.infer<typeof dealStatusSchema>;
+
+export const dealPrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
+export type DealPriority = z.infer<typeof dealPrioritySchema>;
+
+export const dealActivityTypeSchema = z.enum([
+  "CREATED",
+  "UPDATED",
+  "STAGE_CHANGED",
+  "ASSIGNED",
+  "VALUE_CHANGED",
+  "CONTACT_LINKED",
+  "CONTACT_UNLINKED",
+  "ORGANIZATION_LINKED",
+  "ORGANIZATION_UNLINKED",
+  "TASK_CREATED",
+  "TASK_COMPLETED",
+  "WON",
+  "LOST",
+  "REOPENED",
+  "ARCHIVED",
+  "RESTORED",
+]);
+export type DealActivityType = z.infer<typeof dealActivityTypeSchema>;
+
+/**
+ * DealResponseDto. `value` e `weightedValue` são STRING decimal e permanecem
+ * string em toda a aplicação (formatação só na apresentação).
+ */
+export const dealSchema = z.object({
+  id: z.string(),
+  pipelineId: z.string(),
+  stageId: z.string(),
+  contactId: z.string().nullable(),
+  organizationId: z.string().nullable(),
+  assignedToUserId: z.string().nullable(),
+  title: z.string(),
+  description: z.string().nullable(),
+  value: z.string(),
+  currency: z.string(),
+  weightedValue: z.string(),
+  status: dealStatusSchema,
+  priority: dealPrioritySchema,
+  source: z.string().nullable(),
+  expectedCloseDate: z.string().nullable(),
+  wonAt: z.string().nullable(),
+  lostAt: z.string().nullable(),
+  lostReasonId: z.string().nullable(),
+  lostReasonText: z.string().nullable(),
+  version: z.number(),
+  lastStageChangedAt: z.string(),
+  lastActivityAt: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ApiDeal = z.infer<typeof dealSchema>;
+export const dealListSchema = paginated(dealSchema);
+
+/** DealStageHistory (modelo cru; array não paginado). */
+export const dealHistorySchema = z
+  .object({
+    id: z.string(),
+    dealId: z.string(),
+    pipelineId: z.string(),
+    fromStageId: z.string().nullable(),
+    toStageId: z.string(),
+    movedByUserId: z.string(),
+    reason: z.string().nullable(),
+    enteredAt: z.string(),
+    leftAt: z.string().nullable(),
+    durationSeconds: z.number().nullable(),
+    createdAt: z.string(),
+  })
+  .passthrough();
+export type ApiDealHistory = z.infer<typeof dealHistorySchema>;
+export const dealHistoryListSchema = z.array(dealHistorySchema);
+
+/** DealActivity (modelo cru; paginado). */
+export const dealActivitySchema = z
+  .object({
+    id: z.string(),
+    dealId: z.string(),
+    userId: z.string().nullable(),
+    type: dealActivityTypeSchema,
+    title: z.string(),
+    description: z.string().nullable(),
+    metadata: z.unknown().nullable().optional(),
+    occurredAt: z.string(),
+    createdAt: z.string(),
+  })
+  .passthrough();
+export type ApiDealActivity = z.infer<typeof dealActivitySchema>;
+export const dealActivityListSchema = paginated(dealActivitySchema);
+
+/** LostReason (modelo cru; array não paginado). */
+export const lostReasonSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    active: z.boolean(),
+    position: z.number(),
+  })
+  .passthrough();
+export type ApiLostReason = z.infer<typeof lostReasonSchema>;
+export const lostReasonListSchema = z.array(lostReasonSchema);
+
+/* ---------- Kanban ---------- */
+/** Totais por MOEDA de uma coluna (o backend agrupa por currency). */
+export const kanbanTotalSchema = z.object({
+  currency: z.string(),
+  count: z.number(),
+  totalValue: z.string(),
+  weightedValue: z.string(),
+});
+export type ApiKanbanTotal = z.infer<typeof kanbanTotalSchema>;
+
+/** Coluna do board — também é a resposta de "carregar mais" da coluna. */
+export const kanbanColumnSchema = z.object({
+  stageId: z.string(),
+  name: z.string(),
+  category: stageCategorySchema,
+  position: z.number(),
+  probability: z.number().nullable(),
+  deals: z.array(dealSchema),
+  nextCursor: z.string().nullable(),
+  totals: z.array(kanbanTotalSchema),
+});
+export type ApiKanbanColumn = z.infer<typeof kanbanColumnSchema>;
+
+export const kanbanBoardSchema = z.object({
+  pipelineId: z.string(),
+  columns: z.array(kanbanColumnSchema),
+});
+export type ApiKanbanBoard = z.infer<typeof kanbanBoardSchema>;

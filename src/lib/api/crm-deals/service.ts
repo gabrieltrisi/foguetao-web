@@ -6,6 +6,13 @@ import {
   pipelineSetupResponseSchema,
   stageSchema,
   stageListSchema,
+  dealSchema,
+  dealListSchema,
+  dealHistoryListSchema,
+  dealActivityListSchema,
+  lostReasonListSchema,
+  kanbanBoardSchema,
+  kanbanColumnSchema,
 } from "@/types/api/crm-deals";
 
 type Params = Record<string, string | string[] | number | boolean | undefined | null>;
@@ -87,4 +94,59 @@ export const pipelinesService = {
       companyId,
       body: { orderedStageIds },
     }),
+
+  /* Kanban — board e paginação por cursor de UMA coluna. */
+  kanbanBoard: ({ token, companyId }: Ctx, pipelineId: string, params?: Params) =>
+    backendFetch(`/pipelines/${pipelineId}/kanban${qs(params)}`, {
+      token,
+      companyId,
+      schema: kanbanBoardSchema,
+    }),
+  kanbanColumn: ({ token, companyId }: Ctx, pipelineId: string, stageId: string, params?: Params) =>
+    backendFetch(`/pipelines/${pipelineId}/kanban/stages/${stageId}${qs(params)}`, {
+      token,
+      companyId,
+      schema: kanbanColumnSchema,
+    }),
+};
+
+/** Oportunidades (deals) e recursos relacionados. */
+export const dealsService = {
+  list: ({ token, companyId }: Ctx, params?: Params) =>
+    backendFetch(`/deals${qs(params)}`, { token, companyId, schema: dealListSchema }),
+  get: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/deals/${id}`, { token, companyId, schema: dealSchema }),
+  create: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/deals`, { method: "POST", token, companyId, body, schema: dealSchema }),
+  update: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/deals/${id}`, { method: "PATCH", token, companyId, body, schema: dealSchema }),
+  remove: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/deals/${id}`, { method: "DELETE", token, companyId }),
+
+  /** Ações com optimistic locking — expectedVersion é OBRIGATÓRIO. */
+  move: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/deals/${id}/move`, { method: "POST", token, companyId, body, schema: dealSchema }),
+  win: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/deals/${id}/win`, { method: "POST", token, companyId, body, schema: dealSchema }),
+  lose: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/deals/${id}/lose`, { method: "POST", token, companyId, body, schema: dealSchema }),
+  reopen: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/deals/${id}/reopen`, { method: "POST", token, companyId, body, schema: dealSchema }),
+  archive: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/deals/${id}/archive`, { method: "POST", token, companyId, body, schema: dealSchema }),
+  restore: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/deals/${id}/restore`, { method: "POST", token, companyId, body, schema: dealSchema }),
+
+  /** Lazy: só carregados ao abrir o detalhe. */
+  history: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/deals/${id}/history`, { token, companyId, schema: dealHistoryListSchema }),
+  activities: ({ token, companyId }: Ctx, id: string, params?: Params) =>
+    backendFetch(`/deals/${id}/activities${qs(params)}`, {
+      token,
+      companyId,
+      schema: dealActivityListSchema,
+    }),
+
+  lostReasons: ({ token, companyId }: Ctx) =>
+    backendFetch(`/lost-reasons`, { token, companyId, schema: lostReasonListSchema }),
 };

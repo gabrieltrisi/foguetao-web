@@ -18,6 +18,14 @@ export const queryKeys = {
     pipelines: (filters?: unknown) => ["crm", "pipelines", filters ?? {}] as const,
     pipeline: (id: string) => ["crm", "pipeline", id] as const,
     pipelineStages: (id: string) => ["crm", "pipeline", id, "stages"] as const,
+
+    deals: (filters?: unknown) => ["crm", "deals", filters ?? {}] as const,
+    deal: (id: string) => ["crm", "deal", id] as const,
+    dealHistory: (id: string) => ["crm", "deal", id, "history"] as const,
+    dealActivities: (id: string) => ["crm", "deal", id, "activities"] as const,
+    lostReasons: () => ["crm", "lost-reasons"] as const,
+    /** Board do Kanban de um pipeline (colunas + 1ª página por coluna). */
+    kanban: (pipelineId: string) => ["crm", "kanban", pipelineId] as const,
   },
 } as const;
 
@@ -29,4 +37,7 @@ export const crmInvalidation = {
   organization: (id: string) => ["crm", "organization", id] as const,
   allPipelines: ["crm", "pipelines"] as const,
   pipeline: (id: string) => ["crm", "pipeline", id] as const,
+  allDeals: ["crm", "deals"] as const,
+  deal: (id: string) => ["crm", "deal", id] as const,
+  kanban: (pipelineId: string) => ["crm", "kanban", pipelineId] as const,
 };

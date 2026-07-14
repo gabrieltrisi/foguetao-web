@@ -15,9 +15,9 @@ async function hasHorizontalOverflow(page: Page): Promise<boolean> {
   );
 }
 
-// Contatos/Organizações agora usam dados REAIS (ids dinâmicos); os detalhes
-// são cobertos por navegação real em crm-integration.spec.ts. Deals/tarefas/
-// pipeline seguem mockados (ids estáticos válidos).
+// Contatos/Organizações/Oportunidades usam dados REAIS (ids dinâmicos); os
+// detalhes são cobertos por navegação real em crm-integration.spec.ts e
+// deals.spec.ts. Tarefas seguem mockadas (ids estáticos válidos).
 const routes = [
   "/contacts",
   "/contacts/new",
@@ -25,13 +25,12 @@ const routes = [
   "/organizations/new",
   "/pipeline",
   "/deals",
-  "/deals/deal-1",
   "/deals/new",
   "/tasks",
   "/tasks/task-1",
 ];
 
-const mobileRoutes = ["/contacts", "/organizations", "/pipeline", "/deals/deal-1", "/tasks"];
+const mobileRoutes = ["/contacts", "/organizations", "/pipeline", "/deals", "/tasks"];
 
 test.describe("CRM — desktop 1440", () => {
   for (const route of routes) {
