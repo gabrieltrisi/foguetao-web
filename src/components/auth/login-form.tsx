@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldCheck, TriangleAlert } from "lucide-react";
@@ -13,11 +13,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
-import { mockCredentials } from "@/mocks/account";
+import { useLogin } from "@/hooks/auth/use-login";
+import { isApiError } from "@/types/api/error";
+
+function messageForError(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.isUnavailable) return "Servidor indisponível. Tente novamente em instantes.";
+    if (error.statusCode === 429) return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    if (error.isUnauthorized) return "E-mail ou senha incorretos.";
+  }
+  return "Não foi possível entrar. Tente novamente.";
+}
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+  const login = useLogin();
   const [authError, setAuthError] = React.useState<string | null>(null);
 
   const {
@@ -32,24 +44,18 @@ export function LoginForm() {
 
   async function onSubmit(values: LoginFormValues) {
     setAuthError(null);
-    // Simula latência de rede (sem chamada real ao backend nesta etapa).
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const valid =
-      values.email.trim().toLowerCase() === mockCredentials.email &&
-      values.password === mockCredentials.password;
-
-    if (!valid) {
-      setAuthError("E-mail ou senha incorretos. Verifique os dados mockados de acesso.");
-      return;
+    try {
+      await login.mutateAsync({ email: values.email.trim(), password: values.password });
+      toast({
+        title: "Login realizado",
+        description: "Redirecionando para o painel…",
+        variant: "success",
+      });
+      const next = searchParams.get("next");
+      router.replace(next && next.startsWith("/") ? next : "/dashboard");
+    } catch (error) {
+      setAuthError(messageForError(error));
     }
-
-    toast({
-      title: "Login realizado",
-      description: "Redirecionando para o painel…",
-      variant: "success",
-    });
-    router.push("/dashboard");
   }
 
   return (

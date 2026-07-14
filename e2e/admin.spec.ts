@@ -102,11 +102,11 @@ test.describe("Admin — interações", () => {
     expect(await page.getByRole("progressbar").count()).toBeGreaterThan(4);
   });
 
-  test("navega para criar usuário", async ({ page }) => {
+  test("exibe o formulário de novo usuário", async ({ page }) => {
+    // /team agora lista membros reais (Sprint 1.0A); o formulário mock de
+    // criação segue acessível diretamente em /team/new.
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/team");
-    await page.getByRole("link", { name: "Criar usuário" }).click();
-    await expect(page).toHaveURL(/\/team\/new/);
+    await page.goto("/team/new");
     await expect(page.getByLabel("Nome completo")).toBeVisible();
   });
 

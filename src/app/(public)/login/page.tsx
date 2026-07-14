@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { LoginHero } from "@/components/auth/login-hero";
 import { LoginForm } from "@/components/auth/login-form";
 
@@ -14,7 +15,9 @@ export default function LoginPage() {
       <div className="grid w-full max-w-5xl overflow-hidden border border-line bg-white shadow-sm sm:rounded-2xl lg:grid-cols-2 lg:min-h-[620px]">
         <LoginHero />
         <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
-          <LoginForm />
+          <Suspense>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
     </main>

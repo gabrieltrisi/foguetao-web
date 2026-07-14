@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/providers/session-provider";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
-const links = [
+const links: { href: string; label: string; permission?: string }[] = [
   { href: "/settings", label: "Geral" },
-  { href: "/company", label: "Empresa" },
-  { href: "/team", label: "Equipe" },
-  { href: "/roles", label: "Papéis" },
-  { href: "/permissions", label: "Permissões" },
-  { href: "/invitations", label: "Convites" },
+  { href: "/company", label: "Empresa", permission: PERMISSIONS.COMPANY_READ },
+  { href: "/team", label: "Equipe", permission: PERMISSIONS.COMPANY_MEMBERS_READ },
+  { href: "/roles", label: "Papéis", permission: PERMISSIONS.COMPANY_MEMBERS_READ },
+  { href: "/permissions", label: "Permissões", permission: PERMISSIONS.COMPANY_MEMBERS_READ },
+  { href: "/invitations", label: "Convites", permission: PERMISSIONS.COMPANY_MEMBERS_INVITE },
   { href: "/security", label: "Segurança" },
   { href: "/api-keys", label: "API Keys" },
   { href: "/integrations", label: "Integrações" },
@@ -19,9 +21,11 @@ const links = [
 
 export function AdminNav() {
   const pathname = usePathname();
+  const { can } = useSession();
+  const visible = links.filter((l) => !l.permission || can(l.permission));
   return (
     <nav aria-label="Administração" className="no-scrollbar -mb-px flex items-center gap-1 overflow-x-auto border-b border-line">
-      {links.map((l) => {
+      {visible.map((l) => {
         const active =
           l.href === "/settings"
             ? pathname === "/settings"

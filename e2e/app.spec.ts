@@ -1,13 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
 
+const EMPTY_STATE = { cookies: [], origins: [] };
+
 const viewports = [
   { name: "1440x900", width: 1440, height: 900 },
   { name: "1280x800", width: 1280, height: 800 },
   { name: "768x1024", width: 768, height: 1024 },
   { name: "390x844", width: 390, height: 844 },
 ];
-
-const routes = ["/", "/login", "/dashboard", "/contacts", "/pipeline"];
 
 function trackErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -24,39 +24,26 @@ async function hasHorizontalOverflow(page: Page): Promise<boolean> {
   );
 }
 
-test.describe("Carregamento, responsividade e console", () => {
+/* ---------- Rotas protegidas (sessão autenticada via storageState) ---------- */
+
+test.describe("Rotas protegidas — responsividade e console", () => {
+  const routes = ["/dashboard", "/contacts", "/pipeline"];
   for (const vp of viewports) {
     for (const route of routes) {
-      test(`${route} @ ${vp.name} — sem overflow horizontal e sem erros de console`, async ({
-        page,
-      }) => {
+      test(`${route} @ ${vp.name} — sem overflow e sem erros`, async ({ page }) => {
         const errors = trackErrors(page);
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await page.goto(route);
         await expect(page.locator("body")).toBeVisible();
-        // Aguarda pintura estável.
         await page.waitForLoadState("networkidle");
-
-        expect(await hasHorizontalOverflow(page), "não deve haver overflow horizontal").toBe(false);
+        await expect.poll(() => hasHorizontalOverflow(page), { timeout: 5000 }).toBe(false);
         expect(errors, `erros de console em ${route} @ ${vp.name}`).toEqual([]);
       });
     }
   }
 });
 
-test.describe("Telas principais", () => {
-  test("landing exibe hero e CTA", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Escale sem limites/ })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Começar agora" }).first()).toBeVisible();
-  });
-
-  test("login exibe o formulário", async ({ page }) => {
-    await page.goto("/login");
-    await expect(page.getByRole("heading", { name: "Bem-vindo de volta" })).toBeVisible();
-    await expect(page.getByLabel("E-mail")).toBeVisible();
-  });
-
+test.describe("Telas autenticadas", () => {
   test("dashboard exibe título e métricas", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Visão geral", level: 1 })).toBeVisible();
@@ -87,7 +74,6 @@ test.describe("Drawer mobile", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/dashboard");
 
-    // A sidebar desktop fica oculta; o menu abre o drawer.
     await page.getByRole("button", { name: "Abrir menu" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -98,14 +84,38 @@ test.describe("Drawer mobile", () => {
   });
 });
 
-test.describe("Fluxo de login mockado", () => {
-  test("credenciais válidas redirecionam para o dashboard", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel("E-mail").fill("camila@foguetao.com.br");
-    await page.getByLabel("Senha", { exact: true }).fill("foguetao123");
-    await page.getByRole("button", { name: "Entrar" }).click();
+/* ---------- Rotas públicas (sem sessão) ---------- */
 
-    await page.waitForURL("**/dashboard");
-    await expect(page.getByRole("heading", { name: "Visão geral", level: 1 })).toBeVisible();
+test.describe("Público (sem sessão)", () => {
+  test.use({ storageState: EMPTY_STATE });
+
+  for (const vp of viewports) {
+    test(`landing @ ${vp.name} — sem overflow e sem erros`, async ({ page }) => {
+      const errors = trackErrors(page);
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto("/");
+      await expect(page.locator("body")).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      await expect.poll(() => hasHorizontalOverflow(page), { timeout: 5000 }).toBe(false);
+      expect(errors, `erros de console na landing @ ${vp.name}`).toEqual([]);
+    });
+  }
+
+  test("landing exibe hero e CTA", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Escale sem limites/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Começar agora" }).first()).toBeVisible();
+  });
+
+  test("login exibe o formulário", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("heading", { name: "Bem-vindo de volta" })).toBeVisible();
+    await expect(page.getByLabel("E-mail")).toBeVisible();
+  });
+
+  test("rota protegida sem sessão redireciona para /login", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForURL(/\/login/);
+    await expect(page.getByRole("heading", { name: "Bem-vindo de volta" })).toBeVisible();
   });
 });

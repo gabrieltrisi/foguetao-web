@@ -39,8 +39,11 @@ test.describe("Automações — desktop 1440", () => {
       await page.goto(route);
       await expect(page.locator("body")).toBeVisible();
       await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(200); // estabiliza o canvas/hidratação antes de medir
-      expect(await hasHorizontalOverflow(page), `overflow em ${route}`).toBe(false);
+      // Determinístico: aguarda o layout estabilizar (evita corrida de medição
+      // durante a hidratação do canvas). Overflow real persistente ainda falha.
+      await expect
+        .poll(() => hasHorizontalOverflow(page), { message: `overflow em ${route}`, timeout: 5000 })
+        .toBe(false);
       expect(errors, `console em ${route}`).toEqual([]);
     });
   }
@@ -53,7 +56,9 @@ test.describe("Automações — mobile 390", () => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(route);
       await page.waitForLoadState("networkidle");
-      expect(await hasHorizontalOverflow(page), `overflow em ${route}`).toBe(false);
+      await expect
+        .poll(() => hasHorizontalOverflow(page), { message: `overflow em ${route}`, timeout: 5000 })
+        .toBe(false);
       expect(errors, `console em ${route}`).toEqual([]);
     });
   }

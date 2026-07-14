@@ -8,6 +8,14 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
 }));
 
+// SidebarBody consome a sessão e o logout reais — stubs no ambiente de teste.
+vi.mock("@/providers/session-provider", () => ({
+  useSession: () => ({ user: { name: "Owner Dev", email: "owner@foguetao.dev" } }),
+}));
+vi.mock("@/hooks/auth/use-logout", () => ({
+  useLogout: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 function Harness() {
   const { setMobileOpen } = useSidebar();
   return (

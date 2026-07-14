@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SidebarProvider } from "@/hooks/use-sidebar";
 import { AppShell } from "@/components/layout/app-shell";
+import { SessionProvider } from "@/providers/session-provider";
 
 export const metadata: Metadata = {
   // Área autenticada não deve ser indexada.
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <AppShell>{children}</AppShell>
-    </SidebarProvider>
+    <SessionProvider>
+      <SidebarProvider>
+        <AppShell>{children}</AppShell>
+      </SidebarProvider>
+    </SessionProvider>
   );
 }

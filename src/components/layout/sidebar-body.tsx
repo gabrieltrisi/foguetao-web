@@ -12,7 +12,15 @@ import {
 } from "@/components/ui/tooltip";
 import { SidebarSection } from "@/components/navigation/sidebar-section";
 import { navSections } from "@/config/nav";
-import { currentUser } from "@/mocks/account";
+import { useSession } from "@/providers/session-provider";
+import { useLogout } from "@/hooks/auth/use-logout";
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 /**
  * Conteúdo interno da sidebar (navegação + rodapé).
@@ -30,6 +38,11 @@ export function SidebarBody({
 }) {
   const pathname = usePathname();
   const helpActive = pathname === "/help";
+  const { user } = useSession();
+  const logout = useLogout();
+  const displayName = user?.name ?? "…";
+  const displayEmail = user?.email ?? "";
+  const initials = initialsOf(displayName);
 
   return (
     <div className="flex h-full flex-col">
@@ -75,28 +88,30 @@ export function SidebarBody({
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Avatar initials={currentUser.initials} size="sm" />
+                <Avatar initials={initials} size="sm" />
               </TooltipTrigger>
               <TooltipContent side="right">
-                {currentUser.name} · {currentUser.email}
+                {displayName}
+                {displayEmail ? ` · ${displayEmail}` : ""}
               </TooltipContent>
             </Tooltip>
           ) : (
             <>
-              <Avatar initials={currentUser.initials} size="sm" />
+              <Avatar initials={initials} size="sm" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-body2 font-semibold text-ink">{currentUser.name}</p>
-                <p className="truncate text-caption text-ink-3">{currentUser.email}</p>
+                <p className="truncate text-body2 font-semibold text-ink">{displayName}</p>
+                <p className="truncate text-caption text-ink-3">{displayEmail}</p>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link
-                    href="/login"
+                  <button
+                    type="button"
+                    onClick={() => logout.mutate(false)}
                     aria-label="Sair"
                     className="flex size-8 items-center justify-center rounded-md text-ink-3 transition-colors hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <LogOut className="size-4" aria-hidden />
-                  </Link>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent>Sair</TooltipContent>
               </Tooltip>

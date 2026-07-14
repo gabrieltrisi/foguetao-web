@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Sora } from "next/font/google";
 import { siteConfig } from "@/config/site";
 import { ToastProvider } from "@/components/ui/toast";
+import { QueryProvider } from "@/providers/query-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -54,7 +55,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${sora.variable} h-full`}>
       <body className="min-h-full antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <QueryProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </QueryProvider>
       </body>
     </html>
   );
