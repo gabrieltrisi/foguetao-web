@@ -15,10 +15,8 @@ import {
 import {
   companySummaryListSchema,
   companyContextSchema,
-  memberListSchema,
   type CompanySummary,
   type CompanyContext,
-  type MemberList,
 } from "@/types/api/company";
 
 /** POST /auth/login — retorna tokens + usuário. */
@@ -87,18 +85,3 @@ export function companyContextRequest(token: string, companyId: string): Promise
 }
 
 /** GET /companies/:id/members — membros (paginado). Exige company.members.read. */
-export function listMembersRequest(
-  token: string,
-  companyId: string,
-  query?: { page?: number; limit?: number },
-): Promise<MemberList> {
-  const params = new URLSearchParams();
-  if (query?.page) params.set("page", String(query.page));
-  if (query?.limit) params.set("limit", String(query.limit));
-  const suffix = params.toString() ? `?${params.toString()}` : "";
-  return backendFetch(`${endpoints.companyMembers(companyId)}${suffix}`, {
-    token,
-    companyId,
-    schema: memberListSchema,
-  });
-}

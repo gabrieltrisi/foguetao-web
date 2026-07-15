@@ -75,6 +75,11 @@ export const memberSchema = z.object({
 });
 export type ApiMember = z.infer<typeof memberSchema>;
 
+/**
+ * Paginação de membros/convites. ATENÇÃO: o backend NÃO devolve `totalPages`
+ * aqui (diferente do CRM) — a UI calcula. Inventar o campo faria o Zod
+ * rejeitar a resposta real.
+ */
 export const memberListSchema = z.object({
   items: z.array(memberSchema),
   total: z.number(),
@@ -82,3 +87,82 @@ export const memberListSchema = z.object({
   limit: z.number(),
 });
 export type MemberList = z.infer<typeof memberListSchema>;
+
+/* ---------- Convites ---------- */
+
+/**
+ * InvitationResponseDto. Não existe enum de status: ele é DERIVADO de
+ * acceptedAt/revokedAt/expiresAt (ver `invitationStatus()` em lib/company/team.ts).
+ * `tokenHash` nunca é exposto.
+ */
+export const invitationSchema = z.object({
+  id: z.string(),
+  companyId: z.string(),
+  email: z.string(),
+  role: companyRoleSchema,
+  expiresAt: z.string(),
+  acceptedAt: z.string().nullable(),
+  revokedAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type ApiInvitation = z.infer<typeof invitationSchema>;
+
+export const invitationListSchema = z.object({
+  items: z.array(invitationSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+});
+export type InvitationList = z.infer<typeof invitationListSchema>;
+
+/**
+ * Resposta de POST /invitations. `token` só vem FORA de produção (o backend
+ * ainda não envia e-mail) — por isso é opcional no contrato.
+ */
+export const createInvitationResultSchema = z.object({
+  invitation: invitationSchema,
+  token: z.string().optional(),
+  devToken: z.string().optional(),
+});
+export type ApiCreateInvitationResult = z.infer<typeof createInvitationResultSchema>;
+
+/** Resposta de POST /invitations/:token/accept. */
+export const acceptInvitationResultSchema = z.object({
+  company: companySchema,
+  role: companyRoleSchema,
+});
+export type ApiAcceptInvitationResult = z.infer<typeof acceptInvitationResultSchema>;
+
+export const messageResultSchema = z.object({ message: z.string() });
+
+/* ---------- Inputs ---------- */
+
+/** PATCH member: o backend só aceita ACTIVE|SUSPENDED (REMOVED/INVITED = 400). */
+export const patchableMemberStatus = ["ACTIVE", "SUSPENDED"] as const;
+export type PatchableMemberStatus = (typeof patchableMemberStatus)[number];
+
+export interface UpdateMemberInput {
+  role?: CompanyRole;
+  status?: PatchableMemberStatus;
+}
+
+export interface CreateInvitationInput {
+  email: string;
+  role: CompanyRole;
+}
+
+/** Filtros reais de GET members. NÃO existe sortBy (ordem fixa: createdAt asc). */
+export interface MemberFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: MembershipStatus;
+  role?: CompanyRole;
+}
+
+/** Filtros reais de GET invitations: SOMENTE busca por e-mail + paginação. */
+export interface InvitationFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+}

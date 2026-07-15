@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { TeamForm } from "@/components/admin/team-form";
 
 export const metadata: Metadata = {
-  title: "Criar usuário",
-  description: "Convide um novo membro para a organização.",
+  title: "Convidar membro",
+  description: "Convide alguém para participar desta empresa.",
   robots: { index: false, follow: false },
 };
 

@@ -1,120 +1,250 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { Info, Pause, Play, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
+import { ConfirmDialog } from "@/components/ui/alert-dialog";
+import { ErrorState } from "@/components/ui/error-state";
 import { StatList } from "@/components/business/kpi-block";
 import { EntityAvatar } from "@/components/business/entity-avatar";
 import { DetailPageLayout } from "@/components/patterns/page-patterns";
-import { SessionCard } from "@/components/admin/session-card";
-import { PermissionMatrix } from "@/components/admin/permission-matrix";
 import { useToast } from "@/components/ui/toast";
-import { memberStatusLabel, memberStatusTone } from "@/mocks/admin/team";
-import { sessions, securityHistory } from "@/mocks/admin/security";
-import type { TeamMember } from "@/types/admin";
+import { useSession } from "@/providers/session-provider";
+import {
+  useRemoveMember,
+  useTeamMember,
+  useTeamMembers,
+  useUpdateMember,
+} from "@/hooks/company/use-team";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import {
+  assignableRoles,
+  formatDate,
+  memberAbilities,
+  memberStatusMeta,
+  messageForTeamError,
+  roleLabel,
+} from "@/lib/company/team";
+import { isApiError } from "@/types/api/error";
+import type { CompanyRole } from "@/types/api/company";
 
-const activity = [
-  { id: "a1", text: "Atualizou o contato **Ana Martins**", time: "Hoje, 10:12" },
-  { id: "a2", text: "Fechou a oportunidade **Deal #932**", time: "Ontem, 16:40" },
-  { id: "a3", text: "Publicou a automação **Recuperação de carrinho**", time: "10 jul, 14:05" },
-  { id: "a4", text: "Exportou o relatório **Desempenho de vendas**", time: "09 jul, 09:30" },
-];
-
-function renderBold(text: string) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith("**") ? <strong key={i} className="font-semibold text-ink">{part.slice(2, -2)}</strong> : <span key={i}>{part}</span>,
-  );
-}
-
-export function TeamMemberProfile({ member }: { member: TeamMember }) {
+export function TeamMemberProfile({ memberId }: { memberId: string }) {
+  const router = useRouter();
   const { toast } = useToast();
-  const devices = sessions;
+  const { can, user, role: actorRole } = useSession();
+  const { data: member, isLoading, isError, error, refetch } = useTeamMember(memberId);
+
+  // Serve só para saber se este é o ÚLTIMO OWNER ativo — dica de UI. A
+  // autoridade continua sendo o backend (409 LAST_OWNER_REQUIRED).
+  const owners = useTeamMembers({ limit: 100, role: "OWNER", status: "ACTIVE" });
+
+  const update = useUpdateMember(memberId);
+  const remove = useRemoveMember();
+  const [confirmRemove, setConfirmRemove] = React.useState(false);
+  const [nextRole, setNextRole] = React.useState("");
+
+  if (!can(PERMISSIONS.COMPANY_MEMBERS_READ)) {
+    return (
+      <p className="py-16 text-center text-body2 text-ink-3">
+        Você não tem permissão para ver os membros desta empresa.
+      </p>
+    );
+  }
+  if (isLoading) {
+    return <p className="py-16 text-center text-body2 text-ink-3">Carregando membro…</p>;
+  }
+  if (isError || !member) {
+    const notFound = isApiError(error) && error.statusCode === 404;
+    return (
+      <ErrorState
+        title={notFound ? "Membro não encontrado." : "Não foi possível carregar o membro."}
+        onRetry={notFound ? undefined : () => refetch()}
+      />
+    );
+  }
+
+  const status = memberStatusMeta[member.status];
+  const onError = (e: unknown) => toast({ title: messageForTeamError(e), variant: "error" });
+
+  const abilities = memberAbilities({
+    actorRole: actorRole ?? "VIEWER",
+    actorUserId: user?.id ?? "",
+    target: member,
+    canUpdate: can(PERMISSIONS.COMPANY_MEMBERS_UPDATE),
+    canRemove: can(PERMISSIONS.COMPANY_MEMBERS_REMOVE),
+    members: owners.data?.items ?? [],
+  });
+
+  // Só OWNER concede OWNER — o seletor nem oferece o que seria recusado.
+  const roleOptions = assignableRoles(actorRole ?? "VIEWER")
+    .filter((r) => r !== member.role)
+    .map((r) => ({ value: r, label: roleLabel[r] }));
+
+  const aside = (
+    <div className="flex flex-col gap-4">
+      <Card className="flex flex-col gap-3 p-5">
+        <div className="flex items-center gap-3">
+          <EntityAvatar name={member.user.name} size="lg" />
+          <div className="min-w-0">
+            <p className="truncate font-medium text-ink">{member.user.name}</p>
+            <p className="truncate text-caption text-ink-3">{member.user.email}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone="neutral" className="normal-case">
+            {roleLabel[member.role]}
+          </Badge>
+          <Badge tone={status.tone}>{status.label}</Badge>
+          {abilities.isSelf ? <Badge tone="info">Você</Badge> : null}
+        </div>
+        <StatList
+          items={[
+            { label: "Entrou em", value: formatDate(member.joinedAt) },
+            { label: "Convidado em", value: formatDate(member.createdAt) },
+          ]}
+        />
+      </Card>
+
+      {abilities.blockedReason ? (
+        <Card className="flex items-start gap-2 p-4 text-body2 text-ink-2">
+          <Info className="mt-0.5 size-4 shrink-0 text-info" aria-hidden />
+          <span>{abilities.blockedReason}</span>
+        </Card>
+      ) : null}
+    </div>
+  );
 
   return (
     <DetailPageLayout
-      title={member.name}
-      subtitle={member.email}
+      title={member.user.name}
+      subtitle={member.user.email}
       back={{ href: "/team", label: "Equipe" }}
-      actions={<Button onClick={() => toast({ title: "Editar usuário (mock)" })}><Pencil className="size-4" aria-hidden /> Editar</Button>}
+      actions={
+        <>
+          {abilities.canSuspend ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={update.isPending}
+              onClick={() =>
+                update.mutate(
+                  { status: "SUSPENDED" },
+                  {
+                    onSuccess: () => toast({ title: "Membro suspenso", variant: "success" }),
+                    onError,
+                  },
+                )
+              }
+            >
+              <Pause />
+              Suspender
+            </Button>
+          ) : null}
+          {abilities.canReactivate ? (
+            <Button
+              size="sm"
+              loading={update.isPending}
+              onClick={() =>
+                update.mutate(
+                  { status: "ACTIVE" },
+                  {
+                    onSuccess: () => toast({ title: "Membro reativado", variant: "success" }),
+                    onError,
+                  },
+                )
+              }
+            >
+              <Play />
+              Reativar
+            </Button>
+          ) : null}
+          {abilities.canRemove ? (
+            <Button
+              size="icon-sm"
+              variant="secondary"
+              aria-label="Remover membro"
+              onClick={() => setConfirmRemove(true)}
+            >
+              <Trash2 />
+            </Button>
+          ) : null}
+        </>
+      }
+      aside={aside}
     >
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <EntityAvatar name={member.name} size="lg" />
-        <div>
-          <div className="flex items-center gap-2">
-            <Badge tone="neutral" className="normal-case">{member.role}</Badge>
-            <Badge tone={memberStatusTone[member.status]}>{memberStatusLabel[member.status]}</Badge>
-            {member.twoFactor ? <Badge tone="success">2FA ativo</Badge> : <Badge tone="warning">2FA inativo</Badge>}
+      <div className="flex flex-col gap-4">
+        <Card className="flex flex-col gap-3 p-5">
+          <div>
+            <p className="font-display text-h3 font-semibold text-ink">Papel</p>
+            <p className="text-caption text-ink-3">Define as permissões deste membro na empresa.</p>
           </div>
-          <p className="mt-1 text-caption text-ink-3">{member.company} · Último acesso: {member.lastAccess}</p>
-        </div>
+
+          {abilities.canChangeRole ? (
+            roleOptions.length === 0 ? (
+              <p className="text-body2 text-ink-3">
+                Não há outro papel que você possa conceder a este membro.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <div className="min-w-56 flex-1">
+                  <Combobox
+                    options={roleOptions}
+                    value={nextRole}
+                    onValueChange={setNextRole}
+                    placeholder={`Atual: ${roleLabel[member.role]}`}
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  disabled={!nextRole || update.isPending}
+                  loading={update.isPending}
+                  onClick={() =>
+                    update.mutate(
+                      { role: nextRole as CompanyRole },
+                      {
+                        onSuccess: () => {
+                          toast({ title: "Papel atualizado", variant: "success" });
+                          setNextRole("");
+                        },
+                        onError,
+                      },
+                    )
+                  }
+                >
+                  Alterar papel
+                </Button>
+              </div>
+            )
+          ) : (
+            <p className="text-body2 text-ink-2">
+              Papel atual: <span className="font-medium text-ink">{roleLabel[member.role]}</span>
+            </p>
+          )}
+        </Card>
       </div>
 
-      <Tabs defaultValue="info">
-        <TabsList className="no-scrollbar overflow-x-auto">
-          <TabsTrigger value="info">Informações</TabsTrigger>
-          <TabsTrigger value="sessions">Sessões</TabsTrigger>
-          <TabsTrigger value="devices">Dispositivos</TabsTrigger>
-          <TabsTrigger value="permissions">Permissões</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
-          <TabsTrigger value="activity">Atividade</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="info">
-          <Card className="p-5">
-            <StatList
-              items={[
-                { label: "Nome", value: member.name },
-                { label: "E-mail", value: member.email },
-                { label: "Cargo", value: member.role },
-                { label: "Empresa", value: member.company },
-                { label: "Status", value: memberStatusLabel[member.status] },
-                { label: "2FA", value: member.twoFactor ? "Ativo" : "Inativo" },
-                { label: "Último acesso", value: member.lastAccess },
-              ]}
-            />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="sessions">
-          <div className="flex flex-col gap-3">
-            {sessions.map((s) => <SessionCard key={s.id} session={s} />)}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="devices">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {devices.map((s) => <SessionCard key={s.id} session={s} />)}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="permissions">
-          <PermissionMatrix readOnly />
-        </TabsContent>
-
-        <TabsContent value="logs">
-          <Card className="p-5">
-            <StatList items={securityHistory.map((h) => ({ label: `${h.event} · ${h.actor}`, value: h.time }))} />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="activity">
-          <Card className="p-5">
-            <ol className="flex flex-col gap-4">
-              {activity.map((a) => (
-                <li key={a.id} className="flex gap-3">
-                  <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand" aria-hidden />
-                  <div>
-                    <p className="text-body2 text-ink-2">{renderBold(a.text)}</p>
-                    <p className="text-caption text-ink-3">{a.time}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <ConfirmDialog
+        open={confirmRemove}
+        onOpenChange={setConfirmRemove}
+        title="Remover membro?"
+        description={`${member.user.name} perderá o acesso a esta empresa.`}
+        confirmLabel="Remover"
+        destructive
+        onConfirm={() => {
+          setConfirmRemove(false);
+          remove.mutate(memberId, {
+            onSuccess: () => {
+              toast({ title: "Membro removido", variant: "success" });
+              router.push("/team");
+            },
+            onError,
+          });
+        }}
+      />
     </DetailPageLayout>
   );
 }

@@ -26,7 +26,6 @@ const routes = [
   "/company/limits",
   "/team",
   "/team/new",
-  "/team/usr-1",
   "/roles",
   "/permissions",
   "/invitations",
@@ -102,19 +101,25 @@ test.describe("Admin — interações", () => {
     expect(await page.getByRole("progressbar").count()).toBeGreaterThan(4);
   });
 
-  test("exibe o formulário de novo usuário", async ({ page }) => {
-    // /team agora lista membros reais (Sprint 1.0A); o formulário mock de
-    // criação segue acessível diretamente em /team/new.
+  test("exibe o formulário de convite", async ({ page }) => {
+    // Sprint 1.0D-2: o backend não cria contas por aqui — /team/new emite um
+    // CONVITE, que a pessoa aceita com a própria conta.
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/team/new");
-    await expect(page.getByLabel("Nome completo")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Convidar membro" })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "E-mail", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Enviar convite" })).toBeVisible();
   });
 
-  test("alterna abas no perfil do usuário", async ({ page }) => {
+  test("abre o perfil real de um membro", async ({ page }) => {
+    // O perfil mock tinha abas (Sessões etc.). O real mostra papel, status e
+    // as ações permitidas — cobertura completa em team.spec.ts.
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/team/usr-1");
-    await page.getByRole("tab", { name: "Sessões" }).click();
-    await expect(page.getByText("Este dispositivo")).toBeVisible();
+    await page.goto("/team");
+    await page.locator("tbody").getByText("Commercial Dev").click();
+    await page.waitForURL(/\/team\/[0-9a-f-]{36}/);
+    await expect(page.getByRole("heading", { level: 1, name: "Commercial Dev" })).toBeVisible();
+    await expect(page.getByText("Papel", { exact: true })).toBeVisible();
   });
 
   test("alterna switches na matriz de permissões", async ({ page }) => {

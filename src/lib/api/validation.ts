@@ -297,3 +297,98 @@ export function parseConnectionListQuery(params: Record<string, string | string[
 export function parseLogListQuery(params: Record<string, string | string[]>) {
   return parseQueryWith(logListQuerySchema, params);
 }
+
+/* ---------- Membros e convites (Sprint 1.0D-2) ---------- */
+
+const companyRoleValues = [
+  "OWNER",
+  "ADMIN",
+  "MANAGER",
+  "MARKETING",
+  "COMMERCIAL",
+  "SUPPORT",
+  "FINANCIAL",
+  "AFFILIATE",
+  "VIEWER",
+] as const;
+
+const memberListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+  // o backend limita a busca de membros a 120 chars
+  search: z.string().max(120).optional(),
+  status: z.enum(["INVITED", "ACTIVE", "SUSPENDED", "REMOVED"]).optional(),
+  role: z.enum(companyRoleValues).optional(),
+});
+
+export function parseMemberListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(memberListQuerySchema, params);
+}
+
+/** Convites: o backend só aceita busca + paginação (sem filtro de status). */
+const invitationListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+  search: z.string().max(200).optional(),
+});
+
+export function parseInvitationListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(invitationListQuerySchema, params);
+}
+
+/**
+ * PATCH de membro. `.strict()` porque o backend só aceita role/status — e
+ * `status` é limitado a ACTIVE|SUSPENDED (REMOVED/INVITED viram 400 lá).
+ * Bloqueia de saída qualquer tentativa de mandar companyId/userId pelo corpo.
+ */
+const updateMemberSchema = z
+  .object({
+    role: z.enum(companyRoleValues).optional(),
+    status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+  })
+  .strict()
+  .refine((v) => v.role !== undefined || v.status !== undefined, {
+    message: "informe role e/ou status",
+  });
+
+export function parseUpdateMemberBody(body: unknown): Record<string, unknown> {
+  const parsed = updateMemberSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados do membro inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/** POST de convite. O backend recusa role OWNER (403) — rejeitamos antes. */
+const createInvitationSchema = z
+  .object({
+    email: z.string().trim().min(3).max(255).email(),
+    role: z.enum(companyRoleValues),
+  })
+  .strict();
+
+export function parseCreateInvitationBody(body: unknown): Record<string, unknown> {
+  const parsed = createInvitationSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados do convite inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/**
+ * Token de convite: 64 chars hex opacos (randomBytes(32).toString('hex')).
+ * Allowlist de formato impede path traversal e string arbitrária no path.
+ */
+const inviteTokenSchema = z.string().regex(/^[a-f0-9]{64}$/, "token inválido");
+
+export function requireInviteToken(value: unknown): string {
+  const parsed = inviteTokenSchema.safeParse(value);
+  if (!parsed.success) fail("token inválido", ["token deve ter 64 caracteres hexadecimais"]);
+  return parsed.data;
+}

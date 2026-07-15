@@ -4,6 +4,13 @@ export const queryKeys = {
   sessions: ["auth", "sessions"] as const,
   members: (companyId: string | null) => ["company", companyId, "members"] as const,
 
+  company: {
+    /** Lista de membros por filtro. */
+    members: (filters?: unknown) => ["company", "members", filters ?? {}] as const,
+    member: (id: string) => ["company", "member", id] as const,
+    invitations: (filters?: unknown) => ["company", "invitations", filters ?? {}] as const,
+  },
+
   crm: {
     contacts: (filters?: unknown) => ["crm", "contacts", filters ?? {}] as const,
     contact: (id: string) => ["crm", "contact", id] as const,
@@ -41,6 +48,16 @@ export const queryKeys = {
       ["integrations", "connection", id, "logs", filters ?? {}] as const,
   },
 } as const;
+
+/**
+ * Prefixos de invalidação de empresa (membros/convites). Domínio separado de
+ * `crm` e de `integrations`.
+ */
+export const companyInvalidation = {
+  allMembers: ["company", "members"] as const,
+  member: (id: string) => ["company", "member", id] as const,
+  allInvitations: ["company", "invitations"] as const,
+};
 
 /** Prefixos para invalidação ampla. */
 export const crmInvalidation = {

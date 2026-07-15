@@ -90,18 +90,7 @@ export interface UsageLimit {
   unit?: string;
 }
 
-export type MemberStatus = "active" | "invited" | "suspended";
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  company: string;
-  lastAccess: string;
-  status: MemberStatus;
-  twoFactor: boolean;
-}
+/* Membros e convites agora vêm do contrato real: @/types/api/company. */
 
 export interface Role {
   id: string;
@@ -118,18 +107,6 @@ export interface PermissionModule {
   key: string;
   label: string;
   actions: Record<PermissionAction, boolean>;
-}
-
-export type InvitationStatus = "pending" | "expired" | "accepted";
-
-export interface Invitation {
-  id: string;
-  email: string;
-  role: string;
-  status: InvitationStatus;
-  sentAt: string;
-  expiresAt: string;
-  invitedBy: string;
 }
 
 export interface Session {

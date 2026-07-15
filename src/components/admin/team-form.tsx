@@ -1,63 +1,107 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Combobox } from "@/components/ui/combobox";
 import { FormField } from "@/components/ui/form-field";
+import { Combobox } from "@/components/ui/combobox";
 import { FormPageLayout } from "@/components/patterns/page-patterns";
 import { useToast } from "@/components/ui/toast";
-import { roles } from "@/mocks/admin/roles";
+import { useSession } from "@/providers/session-provider";
+import { useCreateInvitation } from "@/hooks/company/use-team";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { assignableRoles, messageForTeamError, roleLabel } from "@/lib/company/team";
+import type { CompanyRole } from "@/types/api/company";
 
-const companies = ["Matriz SP", "Filial RJ", "Filial MG"].map((v) => ({ value: v, label: v }));
-
+/**
+ * "Criar usuário" na prática é CONVIDAR: o backend não cria contas por aqui —
+ * ele emite um convite que a pessoa aceita com a própria conta.
+ */
 export function TeamForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const [name, setName] = React.useState("");
+  const { can, role: actorRole } = useSession();
+  const create = useCreateInvitation();
+
   const [email, setEmail] = React.useState("");
-  const [role, setRole] = React.useState("comercial");
-  const [org, setOrg] = React.useState("Matriz SP");
-  const [twoFactor, setTwoFactor] = React.useState(true);
-  const [saving, setSaving] = React.useState(false);
+  const [role, setRole] = React.useState<string>("VIEWER");
 
-  const roleOptions = roles.map((r) => ({ value: r.id, label: r.name }));
+  if (!can(PERMISSIONS.COMPANY_MEMBERS_INVITE)) {
+    return (
+      <p className="py-16 text-center text-body2 text-ink-3">
+        Você não tem permissão para convidar membros.
+      </p>
+    );
+  }
 
-  const save = async () => {
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    toast({ title: "Convite enviado (mock)", variant: "success" });
-    router.push("/team");
-  };
+  // O backend recusa convite com papel OWNER (403), qualquer que seja o ator.
+  const roleOptions = assignableRoles(actorRole ?? "VIEWER")
+    .filter((r) => r !== "OWNER")
+    .map((r) => ({ value: r, label: roleLabel[r] }));
+
+  async function handleSave() {
+    try {
+      await create.mutateAsync({ email: email.trim(), role: role as CompanyRole });
+      toast({ title: `Convite enviado para ${email.trim()}`, variant: "success" });
+      router.push("/invitations");
+    } catch (error) {
+      toast({ title: messageForTeamError(error), variant: "error" });
+    }
+  }
 
   return (
     <FormPageLayout
-      title="Criar usuário"
-      description="Convide um novo membro para a organização."
+      title="Convidar membro"
+      description="Envie um convite para alguém participar desta empresa."
       back={{ href: "/team", label: "Equipe" }}
       footer={
         <>
-          <Button variant="secondary" onClick={() => router.push("/team")}>Cancelar</Button>
-          <Button loading={saving} onClick={save} disabled={!name || !email}>Enviar convite</Button>
+          <Button asChild variant="secondary" size="sm">
+            <Link href="/team">Cancelar</Link>
+          </Button>
+          <Button
+            size="sm"
+            loading={create.isPending}
+            disabled={!email.trim() || create.isPending}
+            onClick={handleSave}
+          >
+            Enviar convite
+          </Button>
         </>
       }
     >
-      <Card className="flex flex-col gap-4 p-5">
-        <FormField id="t-name" label="Nome completo" required>{(p) => <Input id={p.id} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Ana Martins" />}</FormField>
-        <FormField id="t-email" label="E-mail" required>{(p) => <Input id={p.id} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ana@empresa.com" />}</FormField>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id="t-role" label="Papel">{(p) => <Combobox id={p.id} options={roleOptions} value={role} onValueChange={setRole} />}</FormField>
-          <FormField id="t-org" label="Empresa">{(p) => <Combobox id={p.id} options={companies} value={org} onValueChange={setOrg} />}</FormField>
+      <Card className="flex flex-col gap-5 p-5">
+        <div className="flex items-start gap-2 rounded-lg bg-surface p-3 text-body2 text-ink-2">
+          <Info className="mt-0.5 size-4 shrink-0 text-info" aria-hidden />
+          <span>
+            O convidado precisa ter uma conta com este mesmo e-mail para aceitar. O papel OWNER não
+            pode ser concedido por convite.
+          </span>
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3">
-          <div>
-            <p className="text-body2 font-medium text-ink">Exigir 2FA</p>
-            <p className="text-caption text-ink-3">O usuário deverá configurar a autenticação em duas etapas no primeiro acesso.</p>
-          </div>
-          <Switch checked={twoFactor} onCheckedChange={setTwoFactor} aria-label="Exigir 2FA" />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormField id="tf-email" label="E-mail" required className="sm:col-span-2">
+            {(p) => (
+              <Input
+                type="email"
+                inputMode="email"
+                placeholder="pessoa@empresa.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                {...p}
+              />
+            )}
+          </FormField>
+
+          <FormField id="tf-role" label="Papel" description="Define as permissões na empresa.">
+            {(p) => (
+              <Combobox id={p.id} options={roleOptions} value={role} onValueChange={setRole} />
+            )}
+          </FormField>
         </div>
       </Card>
     </FormPageLayout>
