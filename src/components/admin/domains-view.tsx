@@ -3,9 +3,9 @@
 import * as React from "react";
 import { Globe, Plus, ShieldCheck, ShieldAlert, RefreshCw, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PreviewNotice } from "@/components/admin/preview-notice";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/toast";
 import {
   domains,
   domainStatusLabel,
@@ -15,7 +15,7 @@ import {
 } from "@/mocks/admin/domains";
 import type { Domain } from "@/types/admin";
 
-function DomainCard({ domain, onVerify }: { domain: Domain; onVerify: () => void }) {
+function DomainCard({ domain }: { domain: Domain }) {
   return (
     <Card className="flex flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
@@ -47,7 +47,7 @@ function DomainCard({ domain, onVerify }: { domain: Domain; onVerify: () => void
       </div>
 
       {domain.status !== "verified" ? (
-        <Button variant="secondary" size="sm" className="w-fit" onClick={onVerify}>
+        <Button variant="secondary" size="sm" className="w-fit" disabled>
           <RefreshCw className="size-4" aria-hidden /> Verificar domínio
         </Button>
       ) : (
@@ -58,18 +58,20 @@ function DomainCard({ domain, onVerify }: { domain: Domain; onVerify: () => void
 }
 
 export function DomainsView() {
-  const { toast } = useToast();
   return (
     <div className="flex flex-col gap-4">
+      <PreviewNotice>
+        Domínios personalizados não existem no backend. Esta tela é uma prévia e não realiza nenhuma chamada.
+      </PreviewNotice>
       <div className="flex items-center justify-between gap-3">
         <p className="text-body2 text-ink-2">{domains.length} domínios configurados</p>
-        <Button size="sm" onClick={() => toast({ title: "Adicionar domínio (mock)" })}>
+        <Button size="sm" disabled>
           <Plus className="size-4" aria-hidden /> Adicionar domínio
         </Button>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {domains.map((d) => (
-          <DomainCard key={d.id} domain={d} onVerify={() => toast({ title: `Verificando ${d.domain}… (mock)` })} />
+          <DomainCard key={d.id} domain={d} />
         ))}
       </div>
     </div>

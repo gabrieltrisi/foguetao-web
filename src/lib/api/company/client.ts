@@ -4,6 +4,7 @@ import { clientFetch } from "@/lib/api/client";
 import { buildQuery, type QueryParams } from "@/lib/api/query-string";
 import type {
   ApiAcceptInvitationResult,
+  ApiCompany,
   ApiCreateInvitationResult,
   ApiMember,
   CreateInvitationInput,
@@ -11,14 +12,20 @@ import type {
   InvitationList,
   MemberFilters,
   MemberList,
+  UpdateCompanyInput,
   UpdateMemberInput,
 } from "@/types/api/company";
 
+const C = "/api/company";
 const M = "/api/company/members";
 const I = "/api/company/invitations";
 
 /** Membros e convites (browser → BFF). Nunca fala com o backend direto. */
 export const companyApi = {
+  /** Empresa ativa (o companyId vem da sessão, no BFF). */
+  get: () => clientFetch<ApiCompany>(C),
+  update: (body: UpdateCompanyInput) => clientFetch<ApiCompany>(C, { method: "PATCH", body }),
+
   listMembers: (filters?: MemberFilters) =>
     clientFetch<MemberList>(`${M}${buildQuery(filters as QueryParams)}`),
   getMember: (memberId: string) => clientFetch<ApiMember>(`${M}/${memberId}`),

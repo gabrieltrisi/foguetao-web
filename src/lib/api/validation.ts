@@ -392,3 +392,45 @@ export function requireInviteToken(value: unknown): string {
   if (!parsed.success) fail("token inválido", ["token deve ter 64 caracteres hexadecimais"]);
   return parsed.data;
 }
+
+/* ---------- Empresa (Sprint 1.0D-3) ---------- */
+
+/**
+ * PATCH /companies/:companyId. `.strict()` espelha o `forbidNonWhitelisted`
+ * do backend: `slug`, `plan` e `status` NÃO são editáveis e devem falhar aqui,
+ * não depois de sair da rede interna.
+ *
+ * `settings` fica de fora de propósito: o backend aceita gravar mas nunca
+ * devolve, então a UI não o oferece (ver limitações na doc).
+ */
+const updateCompanySchema = z
+  .object({
+    name: z.string().trim().min(2).max(120).optional(),
+    legalName: z.string().trim().max(200).optional(),
+    document: z.string().trim().max(64).optional(),
+    email: z.string().trim().email().max(255).optional(),
+    phone: z.string().trim().max(40).optional(),
+    // Validados de fato pelo backend (Intl). Aqui só limitamos tamanho/forma.
+    timezone: z.string().trim().min(1).max(64).optional(),
+    locale: z.string().trim().min(2).max(16).optional(),
+    currency: z
+      .string()
+      .trim()
+      .transform((v) => v.toUpperCase())
+      .pipe(z.string().regex(/^[A-Z]{3}$/, "currency deve ter 3 letras (ISO 4217)"))
+      .optional(),
+    logoUrl: z.string().trim().max(512).optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: "informe ao menos um campo" });
+
+export function parseUpdateCompanyBody(body: unknown): Record<string, unknown> {
+  const parsed = updateCompanySchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da empresa inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}

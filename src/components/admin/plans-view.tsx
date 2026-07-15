@@ -13,12 +13,14 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { PreviewNotice } from "@/components/admin/preview-notice";
+import { useCompany } from "@/hooks/company/use-company";
+import { companyPlanMeta } from "@/lib/company/company";
 import { plans, planComparison } from "@/mocks/admin/plans";
 import type { Plan } from "@/types/admin";
 
-function PlanCard({ plan, onSelect }: { plan: Plan; onSelect: () => void }) {
+function PlanCard({ plan, current }: { plan: Plan; current: boolean }) {
   return (
     <Card className={cn("relative flex flex-col gap-4 p-6", plan.popular && "border-brand ring-1 ring-brand")}>
       {plan.popular ? (
@@ -26,7 +28,7 @@ function PlanCard({ plan, onSelect }: { plan: Plan; onSelect: () => void }) {
       ) : null}
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-display text-h3 font-bold text-ink">{plan.name}</h3>
-        {plan.current ? <Badge tone="success">Plano atual</Badge> : null}
+        {current ? <Badge tone="success">Plano atual</Badge> : null}
       </div>
       <p className="text-body2 text-ink-2">{plan.description}</p>
       <p className="flex items-baseline gap-1">
@@ -40,13 +42,11 @@ function PlanCard({ plan, onSelect }: { plan: Plan; onSelect: () => void }) {
           </li>
         ))}
       </ul>
-      <Button
-        variant={plan.current ? "secondary" : plan.popular ? "primary" : "secondary"}
-        className="mt-auto"
-        disabled={plan.current}
-        onClick={onSelect}
-      >
-        {plan.current ? "Plano atual" : plan.id === "enterprise" ? "Falar com vendas" : "Fazer upgrade"}
+      {/* Sem fluxo de upgrade: o backend não expõe rota para trocar de plano
+          (o campo `plan` não é editável). Um botão que não faz nada seria pior
+          do que dizer a verdade. */}
+      <Button variant="secondary" className="mt-auto" disabled>
+        {current ? "Plano atual" : "Em breve"}
       </Button>
     </Card>
   );
@@ -59,12 +59,27 @@ function Cell({ value }: { value: string | boolean }) {
 }
 
 export function PlansView() {
-  const { toast } = useToast();
+  const { data: company } = useCompany();
+  // O plano ATUAL vem do backend (Company.plan). O catálogo (preços, recursos)
+  // não existe lá — segue ilustrativo e marcado como tal.
+  const currentPlan = company?.plan;
+
   return (
     <div className="flex flex-col gap-6">
+      <PreviewNotice>
+        O plano atual da empresa é real
+        {currentPlan ? <> (<strong>{companyPlanMeta[currentPlan].label}</strong>)</> : null}, mas o
+        catálogo de preços e recursos abaixo é ilustrativo: não existe rota de planos nem de
+        upgrade no backend.
+      </PreviewNotice>
+
       <div className="grid gap-4 lg:grid-cols-3">
         {plans.map((p) => (
-          <PlanCard key={p.id} plan={p} onSelect={() => toast({ title: `Upgrade para ${p.name} (mock)`, variant: "success" })} />
+          <PlanCard
+            key={p.id}
+            plan={p}
+            current={currentPlan ? p.name.toUpperCase() === currentPlan : false}
+          />
         ))}
       </div>
 

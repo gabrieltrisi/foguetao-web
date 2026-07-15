@@ -53,6 +53,33 @@ export const companySchema = z.object({
 });
 export type ApiCompany = z.infer<typeof companySchema>;
 
+/**
+ * Campos que o backend REALMENTE aceita no PATCH /companies/:companyId.
+ *
+ * Fora da lista de propósito, porque o backend recusa (ValidationPipe com
+ * forbidNonWhitelisted → 400):
+ *  - `slug`: imutável após a criação (nem é recalculado ao renomear);
+ *  - `plan` e `status`: não são editáveis por rota alguma.
+ *
+ * `settings` é aceito no PATCH mas NUNCA devolvido por nenhuma resposta
+ * (verificado contra a API): gravar seria um buraco negro, então a UI não o
+ * expõe. Ver limitações na doc.
+ */
+export interface UpdateCompanyInput {
+  name?: string;
+  legalName?: string;
+  document?: string;
+  email?: string;
+  phone?: string;
+  /** IANA (ex.: America/Sao_Paulo). O backend valida via Intl. */
+  timezone?: string;
+  /** BCP 47 (ex.: pt-BR). */
+  locale?: string;
+  /** ISO 4217, 3 letras maiúsculas. */
+  currency?: string;
+  logoUrl?: string;
+}
+
 /** ContextResponseDto: GET /companies/:id/context (role + permissões). */
 export const companyContextSchema = z.object({
   company: companySchema,

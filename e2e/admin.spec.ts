@@ -87,12 +87,16 @@ test.describe("Admin — interações", () => {
     await expect(page.getByText("Minha Marca").first()).toBeVisible();
   });
 
-  test("compara planos e faz upgrade mock", async ({ page }) => {
+  test("compara planos e mostra o plano real", async ({ page }) => {
+    // Sprint 1.0D-3: o plano ATUAL vem do backend. Não existe rota de upgrade
+    // (o campo `plan` não é editável), então o botão foi desativado em vez de
+    // simular um upgrade. Cobertura completa em company.spec.ts.
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/company/plans");
     await expect(page.getByText("Mais popular")).toBeVisible();
-    await page.getByRole("button", { name: "Falar com vendas" }).click();
     await expect(page.getByText(/Enterprise/).first()).toBeVisible();
+    await expect(page.getByText("Plano atual").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Fazer upgrade" })).toHaveCount(0);
   });
 
   test("exibe barras de progresso nos limites", async ({ page }) => {

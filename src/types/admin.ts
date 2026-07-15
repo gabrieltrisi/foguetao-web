@@ -1,27 +1,10 @@
-/** Tipos do módulo de Administração da Plataforma (Sprint 0.9). Tudo mockado. */
-
-export type CompanyStatus = "active" | "trial" | "suspended";
-
-export interface Company {
-  id: string;
-  name: string;
-  legalName: string;
-  document: string;
-  phone: string;
-  email: string;
-  site: string;
-  timezone: string;
-  language: string;
-  currency: string;
-  segment: string;
-  status: CompanyStatus;
-  plan: string;
-}
-
-export interface CompanyKpi {
-  label: string;
-  value: string;
-}
+/**
+ * Tipos do módulo de Administração da Plataforma (Sprint 0.9).
+ *
+ * O que já foi integrado migrou para os contratos reais em `@/types/api/*`:
+ * empresa, membros, convites e integrações. O que resta aqui ainda é mock —
+ * branding, domínios, planos, billing, limites, papéis, API keys e segurança.
+ */
 
 export interface BrandSettings {
   companyName: string;

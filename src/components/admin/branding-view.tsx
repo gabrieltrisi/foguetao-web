@@ -3,11 +3,11 @@
 import * as React from "react";
 import { Rocket, Image as ImageIcon, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PreviewNotice } from "@/components/admin/preview-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { FormField } from "@/components/ui/form-field";
-import { useToast } from "@/components/ui/toast";
 import { brandDefaults, brandColorPresets } from "@/mocks/admin/branding";
 import { cn } from "@/lib/utils";
 
@@ -25,12 +25,16 @@ function ColorField({ id, label, value, onChange }: { id: string; label: string;
 }
 
 export function BrandingView() {
-  const { toast } = useToast();
   const [b, setB] = React.useState(brandDefaults);
   const set = (k: keyof typeof brandDefaults) => (v: string) => setB((s) => ({ ...s, [k]: v }));
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_minmax(320px,420px)]">
+    <div className="flex flex-col gap-5">
+      <PreviewNotice>
+        Cores, favicon e domínio de e-mail não existem no backend — nada aqui é salvo. Do
+        contrato atual, apenas o logotipo (`logoUrl`) da empresa é persistível.
+      </PreviewNotice>
+      <div className="grid gap-5 lg:grid-cols-[1fr_minmax(320px,420px)]">
       {/* Editor */}
       <Card className="flex flex-col gap-5 p-5">
         <div className="flex items-center gap-2">
@@ -41,14 +45,14 @@ export function BrandingView() {
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField id="b-logo" label="Logo">
             {() => (
-              <button type="button" onClick={() => toast({ title: "Upload de logo (mock)" })} className="flex h-10 w-full items-center gap-2 rounded-lg border border-dashed border-line bg-surface px-3 text-body2 text-ink-2 transition-colors hover:border-brand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+              <button type="button" disabled className="flex h-10 w-full items-center gap-2 rounded-lg border border-dashed border-line bg-surface px-3 text-body2 text-ink-2 transition-colors hover:border-brand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
                 <Upload className="size-4" aria-hidden /> {b.logoLabel}
               </button>
             )}
           </FormField>
           <FormField id="b-favicon" label="Favicon">
             {() => (
-              <button type="button" onClick={() => toast({ title: "Upload de favicon (mock)" })} className="flex h-10 w-full items-center gap-2 rounded-lg border border-dashed border-line bg-surface px-3 text-body2 text-ink-2 transition-colors hover:border-brand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+              <button type="button" disabled className="flex h-10 w-full items-center gap-2 rounded-lg border border-dashed border-line bg-surface px-3 text-body2 text-ink-2 transition-colors hover:border-brand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
                 <ImageIcon className="size-4" aria-hidden /> {b.faviconLabel}
               </button>
             )}
@@ -79,7 +83,7 @@ export function BrandingView() {
 
         <div className="flex items-center justify-end gap-2 border-t border-line pt-5">
           <Button variant="secondary" onClick={() => setB(brandDefaults)}>Restaurar</Button>
-          <Button onClick={() => toast({ title: "Branding salvo (mock)", variant: "success" })}>Salvar</Button>
+          <Button disabled>Salvar</Button>
         </div>
       </Card>
 
@@ -103,6 +107,7 @@ export function BrandingView() {
             </p>
           </div>
         </Card>
+        </div>
       </div>
     </div>
   );

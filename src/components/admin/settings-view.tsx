@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   Building2,
@@ -15,7 +17,9 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { company, companyStatusLabel, companyStatusTone } from "@/mocks/admin/company";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCompany } from "@/hooks/company/use-company";
+import { companyPlanMeta, companyStatusMeta } from "@/lib/company/company";
 
 const groups: { title: string; items: { href: string; label: string; description: string; icon: typeof Building2 }[] }[] = [
   {
@@ -48,6 +52,8 @@ const groups: { title: string; items: { href: string; label: string; description
 ];
 
 export function SettingsView() {
+  const { data: company, isLoading } = useCompany();
+
   return (
     <div className="flex flex-col gap-6">
       <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
@@ -55,15 +61,32 @@ export function SettingsView() {
           <span className="flex size-12 items-center justify-center rounded-xl bg-brand-soft text-brand">
             <Building2 className="size-6" aria-hidden />
           </span>
-          <div>
-            <p className="font-display text-h3 font-semibold text-ink">{company.name}</p>
-            <p className="text-caption text-ink-3">{company.document} · {company.segment}</p>
+          <div className="min-w-0">
+            {isLoading ? (
+              <>
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="mt-1.5 h-4 w-32" />
+              </>
+            ) : (
+              <>
+                <p className="truncate font-display text-h3 font-semibold text-ink">
+                  {company?.name ?? "Empresa"}
+                </p>
+                <p className="truncate text-caption text-ink-3">
+                  {company?.document ?? company?.slug ?? "—"}
+                </p>
+              </>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge tone={companyStatusTone[company.status]}>{companyStatusLabel[company.status]}</Badge>
-          <Badge tone="brand">Plano {company.plan}</Badge>
-        </div>
+        {company ? (
+          <div className="flex items-center gap-2">
+            <Badge tone={companyStatusMeta[company.status].tone}>
+              {companyStatusMeta[company.status].label}
+            </Badge>
+            <Badge tone="brand">Plano {companyPlanMeta[company.plan].label}</Badge>
+          </div>
+        ) : null}
       </Card>
 
       {groups.map((g) => (

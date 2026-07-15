@@ -2,10 +2,10 @@
 
 import { CreditCard, Download, CalendarClock } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PreviewNotice } from "@/components/admin/preview-notice";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/format";
 import {
   invoices,
@@ -17,7 +17,6 @@ import {
 import type { Invoice } from "@/types/admin";
 
 export function BillingView() {
-  const { toast } = useToast();
 
   const columns: DataTableColumn<Invoice>[] = [
     { id: "number", header: "Fatura", cell: (i) => <span className="font-mono text-caption text-ink-2">{i.number}</span> },
@@ -26,7 +25,7 @@ export function BillingView() {
     { id: "amount", header: "Valor", className: "text-right", cell: (i) => <span className="tabular-nums font-medium">{formatCurrency(i.amount)}</span> },
     { id: "status", header: "Status", cell: (i) => <Badge tone={invoiceStatusTone[i.status]}>{invoiceStatusLabel[i.status]}</Badge> },
     { id: "download", header: "", hideable: false, className: "text-right", cell: (i) => (
-      <Button size="sm" variant="ghost" onClick={() => toast({ title: `Baixando ${i.number}… (mock)` })} aria-label={`Baixar nota ${i.number}`}>
+      <Button size="sm" variant="ghost" disabled aria-label={`Baixar nota ${i.number}`}>
         <Download className="size-4" aria-hidden />
       </Button>
     ) },
@@ -34,6 +33,10 @@ export function BillingView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewNotice>
+        Faturamento não existe no backend: não há assinatura, fatura nem meio de pagamento
+        modelados. Os valores abaixo são ilustrativos.
+      </PreviewNotice>
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="flex items-start gap-4 p-5">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
@@ -57,14 +60,14 @@ export function BillingView() {
               <p className="text-body2 text-ink-2">Expira {paymentMethod.expiry}</p>
             </div>
           </div>
-          <Button size="sm" variant="secondary" onClick={() => toast({ title: "Alterar cartão (mock)" })}>Alterar</Button>
+          <Button size="sm" variant="secondary" disabled>Alterar</Button>
         </Card>
       </div>
 
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h3 className="font-display text-h3 font-semibold text-ink">Histórico de cobranças</h3>
-          <Button size="sm" variant="secondary" onClick={() => toast({ title: "Exportando faturas… (mock)" })}>
+          <Button size="sm" variant="secondary" disabled>
             <Download className="size-4" aria-hidden /> Exportar
           </Button>
         </div>

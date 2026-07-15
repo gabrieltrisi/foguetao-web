@@ -3,6 +3,7 @@ import { backendFetch } from "@/lib/api/http";
 import { buildQuery, type QueryParams } from "@/lib/api/query-string";
 import {
   acceptInvitationResultSchema,
+  companySchema,
   createInvitationResultSchema,
   invitationListSchema,
   memberListSchema,
@@ -23,6 +24,22 @@ interface Ctx {
  * nunca do corpo ou da query do browser.
  */
 export const companyService = {
+  /** GET /companies/:companyId — exige `company.read`. */
+  get: ({ token, companyId }: Ctx) =>
+    backendFetch(`/companies/${companyId}`, { token, companyId, schema: companySchema }),
+  /**
+   * PATCH /companies/:companyId — exige `company.update`. Só os campos do
+   * UpdateCompanyDto: enviar slug/plan/status resulta em 400 no backend.
+   */
+  update: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/companies/${companyId}`, {
+      method: "PATCH",
+      token,
+      companyId,
+      body,
+      schema: companySchema,
+    }),
+
   listMembers: ({ token, companyId }: Ctx, params?: QueryParams) =>
     backendFetch(`/companies/${companyId}/members${buildQuery(params)}`, {
       token,

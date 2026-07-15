@@ -5,6 +5,8 @@ export const queryKeys = {
   members: (companyId: string | null) => ["company", companyId, "members"] as const,
 
   company: {
+    /** Dados da empresa ativa (GET /companies/:companyId). */
+    current: () => ["company", "current"] as const,
     /** Lista de membros por filtro. */
     members: (filters?: unknown) => ["company", "members", filters ?? {}] as const,
     member: (id: string) => ["company", "member", id] as const,
@@ -54,6 +56,7 @@ export const queryKeys = {
  * `crm` e de `integrations`.
  */
 export const companyInvalidation = {
+  current: ["company", "current"] as const,
   allMembers: ["company", "members"] as const,
   member: (id: string) => ["company", "member", id] as const,
   allInvitations: ["company", "invitations"] as const,
