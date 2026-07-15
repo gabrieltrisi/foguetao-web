@@ -125,3 +125,175 @@ export function parseKanbanQuery(params: Record<string, string | string[]>): {
 
   return out;
 }
+
+/* ---------- Integrações (Sprint 1.0D-1) ---------- */
+
+/**
+ * Chave do catálogo. NÃO é UUID (é estável e legível, ex.: `GOOGLE_ANALYTICS_4`),
+ * então tem allowlist de formato própria: só A-Z, 0-9 e `_`. Impede path
+ * traversal e qualquer string arbitrária de chegar ao backend.
+ */
+const catalogKeySchema = z
+  .string()
+  .min(1)
+  .max(60)
+  .regex(/^[A-Z0-9_]+$/, "deve conter apenas A-Z, 0-9 e _");
+
+export function requireCatalogKey(value: string): string {
+  const parsed = catalogKeySchema.safeParse(value);
+  if (!parsed.success) fail("key inválida", ["key deve conter apenas A-Z, 0-9 e _"]);
+  return parsed.data;
+}
+
+/**
+ * Config PÚBLICA de conexão. O backend já rejeita segredo (schema `.strict()`
+ * por provider + barreira anti-segredo); aqui rejeitamos cedo, para que uma
+ * chave secreta digitada por engano no campo errado nem saia da rede interna.
+ */
+// Separadores opcionais: `privateKey`, `private_key` e `private-key` são o
+// mesmo risco — exigir underscore deixaria camelCase passar.
+const SECRET_LIKE =
+  /(secret|token|passw|api[_-]?key|credential|private[_-]?key|authorization|bearer)/i;
+
+function assertNoSecretKeys(config: Record<string, unknown>): void {
+  const offenders = Object.keys(config).filter((k) => SECRET_LIKE.test(k));
+  if (offenders.length > 0) {
+    fail("A configuração pública não aceita segredos", [
+      `Use o fluxo de credenciais para: ${offenders.join(", ")}`,
+    ]);
+  }
+}
+
+const connectionConfigSchema = z.record(z.string(), z.unknown()).optional();
+
+const createConnectionSchema = z.object({
+  provider: z.string().min(1).max(40),
+  category: z.string().min(1).max(40),
+  name: z.string().trim().min(1).max(160),
+  environment: z.enum(["SANDBOX", "PRODUCTION"]).optional(),
+  config: connectionConfigSchema,
+});
+
+export function parseCreateConnectionBody(body: unknown): Record<string, unknown> {
+  const parsed = createConnectionSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da conexão inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  if (parsed.data.config) assertNoSecretKeys(parsed.data.config);
+  return parsed.data;
+}
+
+/** PATCH: provider e category são imutáveis no backend e nem são aceitos aqui. */
+const updateConnectionSchema = z
+  .object({
+    name: z.string().trim().min(1).max(160).optional(),
+    environment: z.enum(["SANDBOX", "PRODUCTION"]).optional(),
+    config: connectionConfigSchema,
+  })
+  .strict();
+
+export function parseUpdateConnectionBody(body: unknown): Record<string, unknown> {
+  const parsed = updateConnectionSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da conexão inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  if (parsed.data.config) assertNoSecretKeys(parsed.data.config);
+  return parsed.data;
+}
+
+const catalogQuerySchema = z.object({
+  category: z
+    .enum([
+      "MESSAGING",
+      "ADVERTISING",
+      "ANALYTICS",
+      "AUTOMATION",
+      "PRODUCTIVITY",
+      "STORAGE",
+      "WEBHOOKS",
+      "CUSTOM",
+    ])
+    .optional(),
+  availability: z.enum(["AVAILABLE", "COMING_SOON", "DISABLED"]).optional(),
+  search: z.string().max(200).optional(),
+});
+
+const connectionListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+  search: z.string().max(200).optional(),
+  provider: z
+    .enum([
+      "WHATSAPP_CLOUD",
+      "EVOLUTION",
+      "META_ADS",
+      "GOOGLE_ADS",
+      "SMTP",
+      "SENDGRID",
+      "AMAZON_SES",
+      "S3",
+      "CLOUDFLARE_R2",
+      "STRIPE",
+      "CUSTOM_WEBHOOK",
+      "MOCK",
+    ])
+    .optional(),
+  category: z
+    .enum(["MESSAGING", "ADVERTISING", "EMAIL", "STORAGE", "PAYMENT", "AUTOMATION", "CUSTOM"])
+    .optional(),
+  status: z
+    .enum(["DRAFT", "CONNECTING", "CONNECTED", "DEGRADED", "ERROR", "DISCONNECTED", "REVOKED"])
+    .optional(),
+  environment: z.enum(["SANDBOX", "PRODUCTION"]).optional(),
+  sortBy: z.enum(["name", "createdAt", "updatedAt", "lastSuccessfulAt", "lastFailureAt"]).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+
+const logListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+  status: z.enum(["SUCCESS", "FAILURE", "TIMEOUT", "RATE_LIMITED", "CIRCUIT_OPEN"]).optional(),
+  operation: z.string().max(120).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+
+/** Achata e valida uma query contra um schema, descartando vazios e arrays. */
+function parseQueryWith<T extends z.ZodTypeAny>(
+  schema: T,
+  params: Record<string, string | string[]>,
+): Record<string, string | number> {
+  const flat: Record<string, string> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (typeof v === "string" && v !== "") flat[k] = v;
+  }
+  const parsed = schema.safeParse(flat);
+  if (!parsed.success) {
+    fail(
+      "Filtros inválidos",
+      (parsed.error as z.ZodError).issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  const out: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(parsed.data as Record<string, unknown>)) {
+    if (v !== undefined) out[k] = v as string | number;
+  }
+  return out;
+}
+
+export function parseCatalogQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(catalogQuerySchema, params);
+}
+
+export function parseConnectionListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(connectionListQuerySchema, params);
+}
+
+export function parseLogListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(logListQuerySchema, params);
+}

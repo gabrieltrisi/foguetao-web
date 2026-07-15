@@ -30,6 +30,16 @@ export const queryKeys = {
     tasks: (filters?: unknown) => ["crm", "tasks", filters ?? {}] as const,
     task: (id: string) => ["crm", "task", id] as const,
   },
+
+  integrations: {
+    /** Catálogo do produto: muda com deploy, não com uso → staleTime longo. */
+    catalog: (filters?: unknown) => ["integrations", "catalog", filters ?? {}] as const,
+    catalogItem: (key: string) => ["integrations", "catalog-item", key] as const,
+    connections: (filters?: unknown) => ["integrations", "connections", filters ?? {}] as const,
+    connection: (id: string) => ["integrations", "connection", id] as const,
+    logs: (id: string, filters?: unknown) =>
+      ["integrations", "connection", id, "logs", filters ?? {}] as const,
+  },
 } as const;
 
 /** Prefixos para invalidação ampla. */
@@ -46,4 +56,16 @@ export const crmInvalidation = {
   /** Prefixo de TODAS as listas de tarefas (qualquer filtro). */
   allTasks: ["crm", "tasks"] as const,
   task: (id: string) => ["crm", "task", id] as const,
+};
+
+/**
+ * Prefixos de invalidação de integrações. Domínio separado de `crm`: invalidar
+ * integrações NUNCA toca contatos, deals, pipelines ou tarefas.
+ */
+export const integrationsInvalidation = {
+  allCatalog: ["integrations", "catalog"] as const,
+  allConnections: ["integrations", "connections"] as const,
+  connection: (id: string) => ["integrations", "connection", id] as const,
+  /** Prefixo dos logs de UMA conexão (qualquer filtro). */
+  logs: (id: string) => ["integrations", "connection", id, "logs"] as const,
 };

@@ -31,6 +31,15 @@ export const PERMISSIONS = {
   COMPANY_SETTINGS_READ: "company.settings.read",
   COMPANY_SETTINGS_UPDATE: "company.settings.update",
   COMPANY_AUDIT_READ: "company.audit.read",
+
+  // Integrações — nomes REAIS do backend (authz/permissions.ts). Não há
+  // permissão dedicada a ativar/pausar: o backend usa `update` para ambas.
+  INTEGRATIONS_CONNECTIONS_READ: "integrations.connections.read",
+  INTEGRATIONS_CONNECTIONS_CREATE: "integrations.connections.create",
+  INTEGRATIONS_CONNECTIONS_UPDATE: "integrations.connections.update",
+  INTEGRATIONS_CONNECTIONS_DELETE: "integrations.connections.delete",
+  INTEGRATIONS_CONNECTIONS_TEST: "integrations.connections.test",
+  INTEGRATIONS_LOGS_READ: "integrations.logs.read",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

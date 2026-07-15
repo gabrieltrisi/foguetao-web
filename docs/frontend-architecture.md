@@ -39,37 +39,56 @@ Turbopack é o bundler padrão (dev e build). Não há configuração de webpack
 - [`RoutePlaceholder`](../src/components/layout/route-placeholder.tsx): renderiza `PageHeader` +
   `EmptyState` a partir de `routeMeta`.
 
-## Camada de dados (mocks)
+## Camada de dados
 
-Todos os dados vêm de [`src/mocks`](../src/mocks):
+O projeto está em migração de mocks para a API real, domínio a domínio.
 
-- `dashboard.ts` — métricas, funil, KPIs, atividades, tarefas, conversas, períodos.
-- `account.ts` — usuário atual, empresas (workspaces), credenciais de demonstração.
-- `landing.ts` — features e pilares da landing.
+**Domínios reais** (browser → BFF → backend, com Zod validando a resposta):
+autenticação e contexto de empresa, CRM (contatos, organizações, pipelines,
+oportunidades, kanban, tarefas) e **integrações**.
 
-Formatação pt-BR centralizada em [`src/lib/format.ts`](../src/lib/format.ts). Tipos de domínio em
-[`src/types`](../src/types).
+- contratos: [`src/types/api`](../src/types/api) — schemas Zod derivados dos DTOs reais;
+- serviços server-only e clients: [`src/lib/api`](../src/lib/api);
+- BFF: [`src/app/api`](../src/app/api) — `withCompany()`, `requireUuid`, validação de entrada;
+- cache: [`src/lib/query/keys.ts`](../src/lib/query/keys.ts) (keys centralizadas + invalidação escopada).
 
-Regra: **valores não são espalhados** em componentes — sempre importados dos mocks.
+**Ainda em mock** (`src/mocks`): marketing, automações, mensageria, analytics e o
+restante da administração (equipe, papéis, API keys, segurança, marketplace).
+
+Formatação pt-BR centralizada em [`src/lib/format.ts`](../src/lib/format.ts). Tipos de
+mock em [`src/types`](../src/types); contratos reais em [`src/types/api`](../src/types/api).
+
+Regra: nos domínios ainda mockados, **valores não são espalhados** em componentes —
+sempre importados dos mocks.
 
 ## Formulários e validação
 
 React Hook Form + Zod. O schema de login vive em
 [`src/lib/validations/auth.ts`](../src/lib/validations/auth.ts). O `LoginForm` cobre os estados
-`idle`, `loading`, erro de validação, credenciais inválidas (mock) e sucesso (redireciona para
-`/dashboard`). Sem chamada de rede real.
+`idle`, `loading`, erro de validação, credenciais inválidas e sucesso (redireciona para
+`/dashboard`) — hoje contra a API real.
 
-## Futura camada de API
+## Como migrar um domínio de mock para a API real
 
-1. Criar `src/lib/api/` (cliente HTTP + funções tipadas reaproveitando `src/types`).
-2. Mover o data fetching para os Server Components do grupo `(app)` (ou adotar React Query).
-3. Substituir imports de `@/mocks/*` pelas funções de API.
+Roteiro já aplicado em CRM e integrações — repita na mesma ordem:
 
-## Futura autenticação
+1. **Auditar o contrato real** no backend (controller, DTOs, service, enums,
+   erros, guards). Não presuma pela documentação.
+2. `src/types/api/<dominio>.ts` — schemas Zod a partir dos DTOs reais.
+3. `src/lib/api/<dominio>/{service,client}.ts` — service server-only (`backendFetch`
+   com `schema`) e client (`clientFetch` → BFF).
+4. Handlers em `src/app/api/<dominio>/**` com `withCompany()`, `requireUuid` e
+   parser de query dedicado em `src/lib/api/validation.ts`.
+5. Query keys em `src/lib/query/keys.ts` + hooks com `enabled` checando permissão.
+6. Trocar os componentes e **remover o mock**, junto com os tipos órfãos.
+7. Testes unit (schemas, validações do BFF, cache, permissões) + e2e contra o
+   backend real.
 
-1. Trocar o `onSubmit` do `LoginForm` por autenticação real; sessão em cookies httpOnly.
-2. Proteger o grupo `(app)` via middleware/`proxy` (Next 16) com redirecionamento para `/login`.
-3. Popular usuário/empresas a partir da sessão (hoje em `src/mocks/account.ts`).
+## Autenticação
+
+Real: sessão em cookies httpOnly (`fg_at`, `fg_rt`, `fg_cid`), refresh deduplicado,
+o grupo `(app)` protegido por `proxy.ts` (Next 16) e usuário/empresas/permissões
+vindos de `SessionProvider` → `/api/session`.
 
 ## Acessibilidade
 

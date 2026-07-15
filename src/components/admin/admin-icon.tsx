@@ -31,6 +31,11 @@ import {
   Globe,
   Users,
   Plug,
+  FlaskConical,
+  Webhook,
+  Mail,
+  Table,
+  LineChart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -65,6 +70,13 @@ const ICONS: Record<string, LucideIcon> = {
   music: Music2,
   globe: Globe,
   users: Users,
+  // Catálogo de integrações (Sprint 1.0D-1)
+  "flask-conical": FlaskConical,
+  webhook: Webhook,
+  mail: Mail,
+  table: Table,
+  "chart-line": LineChart,
+  "message-square": MessageSquare,
 };
 
 export function getAdminIcon(name: string): LucideIcon {

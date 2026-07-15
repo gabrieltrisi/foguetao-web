@@ -127,10 +127,17 @@ test.describe("Admin — interações", () => {
   });
 
   test("filtra integrações por categoria", async ({ page }) => {
+    // O catálogo agora é real (Sprint 1.0D-1): as categorias vêm do backend,
+    // não do antigo mock com abas fixas. Cobertura completa em integrations.spec.ts.
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/integrations");
-    await page.getByRole("tab", { name: "IA", exact: true }).click();
-    await expect(page.getByText("OpenAI")).toBeVisible();
+    const catalog = page.getByRole("list", { name: "Catálogo de integrações" });
+    await expect(catalog.getByText("Integração MOCK")).toBeVisible();
+
+    await page.getByRole("button", { name: "Todas as categorias" }).click();
+    await page.getByRole("option", { name: "Anúncios" }).click();
+    await expect(catalog.getByText("Meta Ads")).toBeVisible();
+    await expect(catalog.getByText("Integração MOCK")).toHaveCount(0);
   });
 
   test("mascara valores no API Keys", async ({ page }) => {

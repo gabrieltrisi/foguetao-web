@@ -166,17 +166,7 @@ export interface ApiKey {
   status: ApiKeyStatus;
 }
 
-export type IntegrationStatusKey = "connected" | "available" | "error";
-
-export interface Integration {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  status: IntegrationStatusKey;
-  lastSync: string;
-  icon: string;
-}
+/* Os tipos de integração agora vêm do contrato real: @/types/api/integrations. */
 
 export interface MarketplaceItem {
   id: string;

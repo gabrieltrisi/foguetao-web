@@ -1,70 +1,175 @@
 "use client";
 
 import * as React from "react";
-import { RefreshCw, Settings2, Plus } from "lucide-react";
+import Link from "next/link";
+import { Plug, ShieldAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Combobox } from "@/components/ui/combobox";
+import { SearchInput } from "@/components/ui/search-input";
+import { FilterBar } from "@/components/ui/filter-bar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { AdminIcon } from "@/components/admin/admin-icon";
-import { useToast } from "@/components/ui/toast";
-import { cn } from "@/lib/utils";
-import {
-  integrations,
-  integrationStatusLabel,
-  integrationStatusTone,
-  integrationCategories,
-} from "@/mocks/admin/integrations";
-import type { Integration } from "@/types/admin";
+import { useSession } from "@/providers/session-provider";
+import { useIntegrationCatalog } from "@/hooks/integrations/use-integrations";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { availabilityMeta, capabilityLabel, catalogCategoryMeta } from "@/lib/integrations/display";
+import type { ApiCatalogItem, Availability, CatalogCategory } from "@/types/api/integrations";
 
-function IntegrationCard({ integration }: { integration: Integration }) {
-  const { toast } = useToast();
-  const connected = integration.status === "connected";
-  return (
-    <Card className="flex flex-col gap-3 p-5">
-      <div className="flex items-start justify-between gap-2">
-        <span className="flex size-11 items-center justify-center rounded-xl bg-surface text-ink">
-          <AdminIcon name={integration.icon} className="size-6" />
-        </span>
-        <Badge tone={integrationStatusTone[integration.status]}>{integrationStatusLabel[integration.status]}</Badge>
-      </div>
-      <div>
-        <p className="font-medium text-ink">{integration.name}</p>
-        <p className="text-caption text-ink-3">{integration.category}</p>
-      </div>
-      <p className="min-h-[2.5rem] text-body2 text-ink-2">{integration.description}</p>
-      <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
-        <span className={cn("inline-flex items-center gap-1 text-caption", connected ? "text-ink-3" : "text-ink-3")}>
-          {connected ? <><RefreshCw className="size-3.5" aria-hidden /> {integration.lastSync}</> : integration.status === "error" ? <span className="text-danger">{integration.lastSync}</span> : "Não conectado"}
-        </span>
-        <Button size="sm" variant={connected ? "ghost" : "secondary"} onClick={() => toast({ title: `Configurar ${integration.name} (mock)` })}>
-          {connected ? <><Settings2 className="size-4" aria-hidden /> Configurar</> : <><Plus className="size-4" aria-hidden /> Conectar</>}
-        </Button>
-      </div>
-    </Card>
-  );
-}
+const CATEGORY_OPTIONS = [
+  { value: "todas", label: "Todas as categorias" },
+  ...(Object.keys(catalogCategoryMeta) as CatalogCategory[]).map((c) => ({
+    value: c,
+    label: catalogCategoryMeta[c],
+  })),
+];
+
+const AVAILABILITY_OPTIONS = [
+  { value: "todas", label: "Todas as disponibilidades" },
+  ...(["AVAILABLE", "COMING_SOON", "DISABLED"] as Availability[]).map((a) => ({
+    value: a,
+    label: availabilityMeta[a].label,
+  })),
+];
 
 export function IntegrationsView() {
-  const [category, setCategory] = React.useState("Todas");
-  const filtered = integrations.filter((i) => category === "Todas" || i.category === category);
-  const connectedCount = integrations.filter((i) => i.status === "connected").length;
+  const { can } = useSession();
+  const [query, setQuery] = React.useState("");
+  const [search, setSearch] = React.useState("");
+  const [category, setCategory] = React.useState("todas");
+  const [availability, setAvailability] = React.useState("todas");
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setSearch(query), 350);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data, isLoading, isError, refetch } = useIntegrationCatalog({
+    search: search || undefined,
+    category: category === "todas" ? undefined : (category as CatalogCategory),
+    availability: availability === "todas" ? undefined : (availability as Availability),
+  });
+
+  if (!can(PERMISSIONS.INTEGRATIONS_CONNECTIONS_READ)) {
+    return (
+      <p className="py-10 text-center text-body2 text-ink-3">
+        Você não tem permissão para ver integrações.
+      </p>
+    );
+  }
+  if (isError) {
+    return <ErrorState title="Não foi possível carregar o catálogo." onRetry={() => refetch()} />;
+  }
+
+  const items = data?.items ?? [];
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-body2 text-ink-2"><span className="font-medium text-ink">{connectedCount}</span> de {integrations.length} conectadas</p>
-      </div>
-      <div className="no-scrollbar overflow-x-auto">
-        <SegmentedControl
-          options={integrationCategories.map((c) => ({ value: c, label: c }))}
-          value={category}
-          onValueChange={setCategory}
+      {/* Nenhuma integração externa é executada nesta fase — dizer isso é mais
+          honesto do que deixar a UI insinuar que conecta de verdade. */}
+      {data && !data.enabled ? (
+        <Card className="flex items-center gap-2 p-4 text-body2 text-warning">
+          <ShieldAlert className="size-4 shrink-0" aria-hidden />
+          As integrações estão desabilitadas nesta instalação.
+        </Card>
+      ) : data?.mode === "mock" ? (
+        <Card className="flex items-center gap-2 p-4 text-body2 text-ink-2">
+          <ShieldAlert className="size-4 shrink-0 text-info" aria-hidden />
+          Modo estrutural: nenhuma conexão com serviços externos é realizada.
+        </Card>
+      ) : null}
+
+      <FilterBar>
+        <SearchInput
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar integrações…"
+          containerClassName="w-full max-w-xs"
         />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filtered.map((i) => <IntegrationCard key={i.id} integration={i} />)}
-      </div>
+        <div className="w-56">
+          <Combobox options={CATEGORY_OPTIONS} value={category} onValueChange={setCategory} />
+        </div>
+        <div className="w-56">
+          <Combobox
+            options={AVAILABILITY_OPTIONS}
+            value={availability}
+            onValueChange={setAvailability}
+          />
+        </div>
+        <Button asChild size="sm" variant="secondary" className="ml-auto">
+          <Link href="/integrations/connections">Ver conexões</Link>
+        </Button>
+      </FilterBar>
+
+      {isLoading ? (
+        <p className="py-10 text-center text-body2 text-ink-3">Carregando catálogo…</p>
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon={Plug}
+          title="Nenhuma integração encontrada."
+          description="Ajuste os filtros para ver outras integrações."
+        />
+      ) : (
+        // Lista semântica: o grid é uma lista de integrações, e nomeá-la evita
+        // que a navegação lateral se confunda com o catálogo.
+        <ul
+          aria-label="Catálogo de integrações"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          {items.map((item) => (
+            <li key={item.key} className="flex">
+              <IntegrationCard item={item} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
+  );
+}
+
+function IntegrationCard({ item }: { item: ApiCatalogItem }) {
+  const availability = availabilityMeta[item.availability];
+  return (
+    <Card className="flex w-full flex-col gap-3 p-5">
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex size-11 items-center justify-center rounded-xl bg-surface text-ink">
+          <AdminIcon name={item.icon} className="size-6" />
+        </span>
+        <div className="flex flex-wrap justify-end gap-1.5">
+          <Badge tone={availability.tone}>{availability.label}</Badge>
+          {item.mock ? <Badge tone="info">MOCK</Badge> : null}
+        </div>
+      </div>
+
+      <div>
+        <p className="font-medium text-ink">{item.name}</p>
+        <p className="text-caption text-ink-3">{catalogCategoryMeta[item.category]}</p>
+      </div>
+
+      <p className="min-h-[2.5rem] text-body2 text-ink-2">{item.description}</p>
+
+      {item.capabilities.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {item.capabilities.slice(0, 3).map((c) => (
+            <span key={c} className="rounded bg-surface px-1.5 py-0.5 text-micro text-ink-2">
+              {capabilityLabel[c] ?? c}
+            </span>
+          ))}
+          {item.capabilities.length > 3 ? (
+            <span className="rounded bg-surface px-1.5 py-0.5 text-micro text-ink-3">
+              +{item.capabilities.length - 3}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mt-auto flex items-center justify-end border-t border-line pt-3">
+        <Button asChild size="sm" variant="secondary">
+          <Link href={`/integrations/catalog/${item.key}`}>Ver detalhes</Link>
+        </Button>
+      </div>
+    </Card>
   );
 }
