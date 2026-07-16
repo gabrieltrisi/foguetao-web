@@ -21,6 +21,8 @@ import { ErrorState } from "@/components/ui/error-state";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/providers/session-provider";
 import { useOrganization, useOrgContacts, useDeleteOrganization } from "@/hooks/crm/use-organizations";
+import { useOrgCustomFields, useSetOrgCustomFields } from "@/hooks/crm/use-custom-fields";
+import { CustomFieldsSection } from "@/components/crm/custom-fields-section";
 import { organizationSizeLabel, contactStatusMeta, formatDate } from "@/lib/crm/display";
 import { isApiError } from "@/types/api/error";
 
@@ -31,6 +33,9 @@ export function OrganizationDetail({ id }: { id: string }) {
   const { data: o, isLoading, isError, error, refetch } = useOrganization(id);
   const contacts = useOrgContacts(id, { limit: 50 });
   const del = useDeleteOrganization();
+  // A organização não embute os valores no detalhe — leitura por endpoint próprio.
+  const customFields = useOrgCustomFields(id);
+  const setCustomFields = useSetOrgCustomFields(id);
 
   const canUpdate = can("crm.organizations.update");
   const canDelete = can("crm.organizations.delete");
@@ -133,20 +138,32 @@ export function OrganizationDetail({ id }: { id: string }) {
         </TabsList>
 
         <TabsContent value="resumo">
-          <Card className="p-5">
-            <StatList
-              items={[
-                { label: "Razão social", value: o.legalName ?? "—" },
-                { label: "Documento", value: o.document ?? "—" },
-                { label: "E-mail", value: o.email ? <span className="inline-flex items-center gap-1"><Mail className="size-3.5" aria-hidden /> {o.email}</span> : "—" },
-                { label: "Telefone", value: o.phone ? <span className="inline-flex items-center gap-1"><Phone className="size-3.5" aria-hidden /> {o.phone}</span> : "—" },
-                { label: "Website", value: o.website ? <span className="inline-flex items-center gap-1"><Globe className="size-3.5" aria-hidden /> {o.website}</span> : "—" },
-                { label: "Segmento", value: o.industry ?? "—" },
-                { label: "Porte", value: o.size ? organizationSizeLabel[o.size] : "—" },
-                { label: "Criada em", value: formatDate(o.createdAt) },
-              ]}
+          <div className="flex flex-col gap-4">
+            <Card className="p-5">
+              <StatList
+                items={[
+                  { label: "Razão social", value: o.legalName ?? "—" },
+                  { label: "Documento", value: o.document ?? "—" },
+                  { label: "E-mail", value: o.email ? <span className="inline-flex items-center gap-1"><Mail className="size-3.5" aria-hidden /> {o.email}</span> : "—" },
+                  { label: "Telefone", value: o.phone ? <span className="inline-flex items-center gap-1"><Phone className="size-3.5" aria-hidden /> {o.phone}</span> : "—" },
+                  { label: "Website", value: o.website ? <span className="inline-flex items-center gap-1"><Globe className="size-3.5" aria-hidden /> {o.website}</span> : "—" },
+                  { label: "Segmento", value: o.industry ?? "—" },
+                  { label: "Porte", value: o.size ? organizationSizeLabel[o.size] : "—" },
+                  { label: "Criada em", value: formatDate(o.createdAt) },
+                ]}
+              />
+            </Card>
+
+            <CustomFieldsSection
+              entityType="ORGANIZATION"
+              values={customFields.data ?? []}
+              valuesLoading={customFields.isLoading}
+              valuesError={customFields.isError}
+              canEdit={canUpdate}
+              saving={setCustomFields.isPending}
+              onSave={(payload) => setCustomFields.mutateAsync(payload)}
             />
-          </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="contatos">

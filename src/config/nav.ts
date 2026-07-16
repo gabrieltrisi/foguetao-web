@@ -17,6 +17,7 @@ import {
   Settings,
   Share2,
   ShieldCheck,
+  SlidersHorizontal,
   SquareKanban,
   Tags as TagsIcon,
   Target,
@@ -64,6 +65,7 @@ export const navSections: NavSection[] = [
       { label: "Pipeline", href: "/pipeline", icon: SquareKanban },
       { label: "Oportunidades", href: "/deals", icon: Target },
       { label: "Etiquetas", href: "/tags", icon: TagsIcon },
+      { label: "Campos personalizados", href: "/custom-fields", icon: SlidersHorizontal },
     ],
   },
   {

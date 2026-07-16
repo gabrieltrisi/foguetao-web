@@ -496,6 +496,116 @@ export function parseCreateTagBody(body: unknown): Record<string, unknown> {
   return parsed.data;
 }
 
+/* ---------- Campos personalizados (Sprint 1.1C) ---------- */
+
+/** Os 12 tipos REAIS do enum CustomFieldType. Não existe CURRENCY. */
+const customFieldTypes = [
+  "TEXT",
+  "TEXTAREA",
+  "NUMBER",
+  "BOOLEAN",
+  "DATE",
+  "DATETIME",
+  "SELECT",
+  "MULTISELECT",
+  "EMAIL",
+  "PHONE",
+  "URL",
+  "JSON",
+] as const;
+const customFieldEntityTypes = ["CONTACT", "ORGANIZATION"] as const;
+/** Tipos que exigem `options` (mesma regra do CustomFieldsService). */
+const OPTION_TYPES: readonly string[] = ["SELECT", "MULTISELECT"];
+
+/** Filtro de GET /custom-fields — o backend aceita SOMENTE entityType. */
+const customFieldListQuerySchema = z.object({
+  entityType: z.enum(customFieldEntityTypes).optional(),
+});
+
+export function parseCustomFieldListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(customFieldListQuerySchema, params);
+}
+
+/**
+ * Espelha o CreateCustomFieldDto. `validation` é omitido de propósito: o
+ * backend armazena o campo mas não o usa em `validateCustomFieldValue`.
+ */
+const createCustomFieldSchema = z
+  .object({
+    entityType: z.enum(customFieldEntityTypes),
+    name: z.string().min(1).max(120),
+    key: z.string().regex(/^[a-z][a-z0-9_]{0,79}$/, {
+      message: "key deve casar /^[a-z][a-z0-9_]*$/ (minúsculas, dígitos e _)",
+    }),
+    type: z.enum(customFieldTypes),
+    description: z.string().max(255).optional(),
+    required: z.boolean().optional(),
+    active: z.boolean().optional(),
+    options: z.array(z.string().min(1)).optional(),
+    position: z.number().int().min(0).optional(),
+  })
+  .refine((v) => !OPTION_TYPES.includes(v.type) || (v.options?.length ?? 0) > 0, {
+    message: "options é obrigatório para SELECT/MULTISELECT",
+    path: ["options"],
+  });
+
+export function parseCreateCustomFieldBody(body: unknown): Record<string, unknown> {
+  const parsed = createCustomFieldSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Definição de campo inválida",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/**
+ * Espelha o UpdateCustomFieldDto: NÃO aceita `key` (imutável) nem `entityType`.
+ * `type` é aceito aqui, mas o backend recusa (409 CUSTOM_FIELD_TYPE_IMMUTABLE)
+ * quando já existem valores — ele continua sendo a autoridade.
+ */
+const updateCustomFieldSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    description: z.string().max(255),
+    required: z.boolean(),
+    active: z.boolean(),
+    type: z.enum(customFieldTypes),
+    options: z.array(z.string().min(1)),
+    position: z.number().int().min(0),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: "informe ao menos um campo" })
+  .refine((v) => !v.type || !OPTION_TYPES.includes(v.type) || (v.options?.length ?? 0) > 0, {
+    message: "options é obrigatório para SELECT/MULTISELECT",
+    path: ["options"],
+  });
+
+export function parseUpdateCustomFieldBody(body: unknown): Record<string, unknown> {
+  const parsed = updateCustomFieldSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Definição de campo inválida",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/**
+ * Corpo do PUT de valores: `{ values: Record<string, unknown> }`. Os valores em
+ * si NÃO são validados aqui — quem valida por tipo é o backend
+ * (`validateCustomFieldValue`), a autoridade final.
+ */
+const setCustomFieldValuesSchema = z.object({ values: z.record(z.string(), z.unknown()) });
+
+export function parseSetCustomFieldValuesBody(body: unknown): { values: Record<string, unknown> } {
+  const parsed = setCustomFieldValuesSchema.safeParse(body);
+  if (!parsed.success) fail("Valores inválidos", ["values deve ser um objeto key → valor"]);
+  return parsed.data;
+}
+
 /** UpdateTagDto = PartialType(CreateTagDto): exige ao menos um campo. */
 const updateTagSchema = createTagSchema
   .partial()

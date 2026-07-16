@@ -35,7 +35,8 @@ import { DetailPageLayout } from "@/components/patterns/page-patterns";
 import { ErrorState } from "@/components/ui/error-state";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/providers/session-provider";
-import { useContact, useCreateNote, useDeleteNote, useCreateActivity, useAttachTag, useDetachTag } from "@/hooks/crm/use-contact-detail";
+import { useContact, useCreateNote, useDeleteNote, useCreateActivity, useAttachTag, useDetachTag, useSetContactCustomFields } from "@/hooks/crm/use-contact-detail";
+import { CustomFieldsSection } from "@/components/crm/custom-fields-section";
 import { useArchiveContact, useRestoreContact, useDeleteContact } from "@/hooks/crm/use-contacts";
 import { useTags } from "@/hooks/crm/use-crm-meta";
 import { contactStatusMeta, activityTypeLabel, formatDateTime, formatDate } from "@/lib/crm/display";
@@ -61,6 +62,7 @@ export function ContactDetail({ id }: { id: string }) {
   const createActivity = useCreateActivity(id);
   const attachTag = useAttachTag(id);
   const detachTag = useDetachTag(id);
+  const setCustomFields = useSetContactCustomFields(id);
   const archive = useArchiveContact(id);
   const restore = useRestoreContact(id);
   const del = useDeleteContact();
@@ -239,20 +241,31 @@ export function ContactDetail({ id }: { id: string }) {
         </TabsList>
 
         <TabsContent value="resumo">
-          <Card className="p-5">
-            <StatList
-              items={[
-                { label: "E-mail", value: c.email ?? "—" },
-                { label: "Telefone", value: c.phone ?? "—" },
-                { label: "WhatsApp", value: c.whatsappPhone ?? "—" },
-                { label: "Documento", value: c.document ?? "—" },
-                { label: "Organização", value: data.organization?.name ?? "—" },
-                { label: "Responsável", value: data.assignee?.name ?? "—" },
-                { label: "Criado em", value: formatDate(c.createdAt) },
-                { label: "Última atividade", value: formatDateTime(c.lastActivityAt) },
-              ]}
+          <div className="flex flex-col gap-4">
+            <Card className="p-5">
+              <StatList
+                items={[
+                  { label: "E-mail", value: c.email ?? "—" },
+                  { label: "Telefone", value: c.phone ?? "—" },
+                  { label: "WhatsApp", value: c.whatsappPhone ?? "—" },
+                  { label: "Documento", value: c.document ?? "—" },
+                  { label: "Organização", value: data.organization?.name ?? "—" },
+                  { label: "Responsável", value: data.assignee?.name ?? "—" },
+                  { label: "Criado em", value: formatDate(c.createdAt) },
+                  { label: "Última atividade", value: formatDateTime(c.lastActivityAt) },
+                ]}
+              />
+            </Card>
+
+            {/* Valores já vêm embutidos no detalhe do contato (getValues no backend) */}
+            <CustomFieldsSection
+              entityType="CONTACT"
+              values={data.customFields}
+              canEdit={canUpdate}
+              saving={setCustomFields.isPending}
+              onSave={(payload) => setCustomFields.mutateAsync(payload)}
             />
-          </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="atividades">

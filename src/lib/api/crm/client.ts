@@ -11,10 +11,28 @@ import type {
   Paginated,
   ApiTag,
   ApiCustomFieldDef,
+  ApiCustomFieldValue,
   ApiOrgContactSummary,
 } from "@/types/api/crm";
 
 export type ContactFilters = Record<string, string | number | string[] | undefined>;
+
+/**
+ * Corpo de criação/edição de definição — espelha Create/UpdateCustomFieldDto.
+ * `key` e `entityType` só existem na criação (a key é imutável); `validation`
+ * é omitido de propósito: o backend armazena mas NÃO usa na validação real.
+ */
+export interface CustomFieldDefInput {
+  entityType?: string;
+  name?: string;
+  key?: string;
+  type?: string;
+  description?: string;
+  required?: boolean;
+  active?: boolean;
+  options?: string[];
+  position?: number;
+}
 
 /** Corpo de criação/edição de tag — espelha Create/UpdateTagDto. */
 export interface TagInput {
@@ -82,11 +100,23 @@ export const crmApi = {
   detachTag: (id: string, tagId: string) =>
     clientFetch(`${B}/contacts/${id}/tags/${tagId}`, { method: "DELETE" }),
 
-  // Custom fields
+  // Custom fields — definições
   listCustomFieldDefs: (entityType?: string) =>
-    clientFetch<ApiCustomFieldDef[]>(`${B}/custom-fields${crmQs({ entityType, limit: 100 })}`),
+    clientFetch<ApiCustomFieldDef[]>(`${B}/custom-fields${crmQs({ entityType })}`),
+  createCustomFieldDef: (body: CustomFieldDefInput) =>
+    clientFetch<ApiCustomFieldDef>(`${B}/custom-fields`, { method: "POST", body }),
+  updateCustomFieldDef: (id: string, body: CustomFieldDefInput) =>
+    clientFetch<ApiCustomFieldDef>(`${B}/custom-fields/${id}`, { method: "PATCH", body }),
+  deleteCustomFieldDef: (id: string) =>
+    clientFetch(`${B}/custom-fields/${id}`, { method: "DELETE" }),
+
+  // Custom fields — valores (PUT em lote; `null` limpa o valor)
   setContactCustomFields: (id: string, values: Record<string, unknown>) =>
     clientFetch(`${B}/contacts/${id}/custom-fields`, { method: "PUT", body: { values } }),
+  getOrgCustomFields: (id: string) =>
+    clientFetch<ApiCustomFieldValue[]>(`${B}/organizations/${id}/custom-fields`),
+  setOrgCustomFields: (id: string, values: Record<string, unknown>) =>
+    clientFetch(`${B}/organizations/${id}/custom-fields`, { method: "PUT", body: { values } }),
 
   // Organizations
   listOrganizations: (params?: ContactFilters) =>

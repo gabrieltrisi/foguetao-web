@@ -28,6 +28,8 @@ export const queryKeys = {
     tags: (filters?: unknown) => ["crm", "tags", filters ?? {}] as const,
     tag: (id: string) => ["crm", "tag", id] as const,
     customFieldDefs: (entity?: string) => ["crm", "custom-fields", entity ?? "all"] as const,
+    /** Valores da organização — o contato traz os seus no próprio detalhe. */
+    orgCustomFields: (id: string) => ["crm", "organization", id, "custom-fields"] as const,
     organizations: (filters?: unknown) => ["crm", "organizations", filters ?? {}] as const,
     organization: (id: string) => ["crm", "organization", id] as const,
     orgContacts: (id: string) => ["crm", "organization", id, "contacts"] as const,
@@ -87,6 +89,8 @@ export const crmInvalidation = {
   /** Prefixo de TODAS as listas de tags (associação e gestão). */
   allTags: ["crm", "tags"] as const,
   tag: (id: string) => ["crm", "tag", id] as const,
+  /** Prefixo das definições de campos personalizados (todas as entidades). */
+  allCustomFieldDefs: ["crm", "custom-fields"] as const,
 };
 
 /**

@@ -11,7 +11,9 @@ import {
   activityListSchema,
   tagSchema,
   tagListSchema,
+  customFieldDefSchema,
   customFieldDefListSchema,
+  customFieldValueListSchema,
   organizationSchema,
   organizationListSchema,
   orgContactListSchema,
@@ -74,11 +76,25 @@ export const crmService = {
   detachTag: ({ token, companyId }: Ctx, contactId: string, tagId: string) =>
     backendFetch(`/contacts/${contactId}/tags/${tagId}`, { method: "DELETE", token, companyId }),
 
-  /* Custom fields */
+  /* Custom fields — definições */
   listCustomFieldDefs: ({ token, companyId }: Ctx, params?: QueryParams) =>
     backendFetch(`/custom-fields${buildQuery(params)}`, { token, companyId, schema: customFieldDefListSchema }),
+  getCustomFieldDef: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/custom-fields/${id}`, { token, companyId, schema: customFieldDefSchema }),
+  createCustomFieldDef: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/custom-fields`, { method: "POST", token, companyId, body, schema: customFieldDefSchema }),
+  updateCustomFieldDef: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/custom-fields/${id}`, { method: "PATCH", token, companyId, body, schema: customFieldDefSchema }),
+  /** DELETE devolve `{ message }` (soft delete; valores preservados). */
+  deleteCustomFieldDef: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/custom-fields/${id}`, { method: "DELETE", token, companyId }),
+
+  /* Custom fields — valores */
   setContactCustomFields: ({ token, companyId }: Ctx, contactId: string, values: Record<string, unknown>) =>
     backendFetch(`/contacts/${contactId}/custom-fields`, { method: "PUT", token, companyId, body: { values } }),
+  /** Leitura própria da organização (o detalhe do contato já embute os valores). */
+  getOrgCustomFields: ({ token, companyId }: Ctx, orgId: string) =>
+    backendFetch(`/organizations/${orgId}/custom-fields`, { token, companyId, schema: customFieldValueListSchema }),
   setOrgCustomFields: ({ token, companyId }: Ctx, orgId: string, values: Record<string, unknown>) =>
     backendFetch(`/organizations/${orgId}/custom-fields`, { method: "PUT", token, companyId, body: { values } }),
 

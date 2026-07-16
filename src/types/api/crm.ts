@@ -34,6 +34,14 @@ export const organizationSizeSchema = z.enum([
 ]);
 export type OrganizationSizeApi = z.infer<typeof organizationSizeSchema>;
 
+/** Entidades REAIS do enum CustomFieldEntityType. */
+export const customFieldEntitySchema = z.enum(["CONTACT", "ORGANIZATION"]);
+export type CustomFieldEntity = z.infer<typeof customFieldEntitySchema>;
+
+/**
+ * Os 12 tipos REAIS do enum CustomFieldType do backend. Não existe CURRENCY —
+ * moeda não é um tipo suportado.
+ */
 export const customFieldTypeSchema = z.enum([
   "TEXT",
   "TEXTAREA",
@@ -139,10 +147,23 @@ export const customFieldDefSchema = z.object({
 export type ApiCustomFieldDef = z.infer<typeof customFieldDefSchema>;
 export const customFieldDefListSchema = z.array(customFieldDefSchema);
 
-/** Valor de campo personalizado (shape lenient — backend pode evoluir). */
+/**
+ * Valor de campo personalizado exatamente como o backend devolve
+ * (`CustomFieldsService.getValues` → `{ key, name, type, value }`). `value` é
+ * `unknown`: o tipo real depende de `type` (string, number, boolean, ISO date,
+ * array de string em MULTISELECT, objeto/array em JSON). `passthrough` mantém
+ * a leitura tolerante caso o backend passe a devolver campos extras.
+ */
 export const customFieldValueSchema = z
-  .object({ fieldId: z.string().optional(), key: z.string().optional(), value: z.unknown() })
+  .object({
+    key: z.string(),
+    name: z.string(),
+    type: customFieldTypeSchema,
+    value: z.unknown(),
+  })
   .passthrough();
+export type ApiCustomFieldValue = z.infer<typeof customFieldValueSchema>;
+export const customFieldValueListSchema = z.array(customFieldValueSchema);
 
 /** Detalhe do contato (objeto rico agregado). `contact` é lenient (raw prisma). */
 export const contactDetailSchema = z.object({
