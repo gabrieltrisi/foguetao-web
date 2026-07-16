@@ -2,6 +2,7 @@
 
 import { clientFetch } from "@/lib/api/client";
 import { buildQuery, type QueryParams } from "@/lib/api/query-string";
+import type { ApiRolesResponse, ApiPermissionCatalog } from "@/types/api/rbac";
 import type {
   ApiAcceptInvitationResult,
   ApiCompany,
@@ -25,6 +26,10 @@ export const companyApi = {
   /** Empresa ativa (o companyId vem da sessão, no BFF). */
   get: () => clientFetch<ApiCompany>(C),
   update: (body: UpdateCompanyInput) => clientFetch<ApiCompany>(C, { method: "PATCH", body }),
+
+  /** RBAC somente leitura. */
+  listRoles: () => clientFetch<ApiRolesResponse>("/api/admin/roles"),
+  permissionCatalog: () => clientFetch<ApiPermissionCatalog>("/api/admin/permissions"),
 
   listMembers: (filters?: MemberFilters) =>
     clientFetch<MemberList>(`${M}${buildQuery(filters as QueryParams)}`),

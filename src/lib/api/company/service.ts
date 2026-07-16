@@ -1,6 +1,7 @@
 import "server-only";
 import { backendFetch } from "@/lib/api/http";
 import { buildQuery, type QueryParams } from "@/lib/api/query-string";
+import { rolesResponseSchema, permissionCatalogSchema } from "@/types/api/rbac";
 import {
   acceptInvitationResultSchema,
   companySchema,
@@ -39,6 +40,13 @@ export const companyService = {
       body,
       schema: companySchema,
     }),
+
+  /** GET /roles — papéis do sistema (somente leitura, company.roles.read). */
+  listRoles: ({ token, companyId }: Ctx) =>
+    backendFetch(`/roles`, { token, companyId, schema: rolesResponseSchema }),
+  /** GET /permissions/catalog — catálogo agrupado por domínio (somente leitura). */
+  permissionCatalog: ({ token, companyId }: Ctx) =>
+    backendFetch(`/permissions/catalog`, { token, companyId, schema: permissionCatalogSchema }),
 
   listMembers: ({ token, companyId }: Ctx, params?: QueryParams) =>
     backendFetch(`/companies/${companyId}/members${buildQuery(params)}`, {

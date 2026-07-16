@@ -31,6 +31,7 @@ export const PERMISSIONS = {
   COMPANY_SETTINGS_READ: "company.settings.read",
   COMPANY_SETTINGS_UPDATE: "company.settings.update",
   COMPANY_AUDIT_READ: "company.audit.read",
+  COMPANY_ROLES_READ: "company.roles.read",
 
   // Integrações — nomes REAIS do backend (authz/permissions.ts). Não há
   // permissão dedicada a ativar/pausar: o backend usa `update` para ambas.

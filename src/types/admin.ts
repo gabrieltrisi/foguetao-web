@@ -75,22 +75,7 @@ export interface UsageLimit {
 
 /* Membros e convites agora vêm do contrato real: @/types/api/company. */
 
-export interface Role {
-  id: string;
-  name: string;
-  description: string;
-  members: number;
-  tone: "brand" | "info" | "success" | "warning" | "danger" | "neutral";
-  system?: boolean;
-}
-
-export type PermissionAction = "view" | "create" | "edit" | "delete" | "export" | "manage";
-
-export interface PermissionModule {
-  key: string;
-  label: string;
-  actions: Record<PermissionAction, boolean>;
-}
+/* Papéis e permissões agora vêm do contrato real: @/types/api/rbac. */
 
 /* Sessões agora vêm do contrato real: @/types/api/auth (SessionResponseDto). */
 

@@ -126,13 +126,14 @@ test.describe("Admin — interações", () => {
     await expect(page.getByText("Papel", { exact: true })).toBeVisible();
   });
 
-  test("alterna switches na matriz de permissões", async ({ page }) => {
+  test("a matriz de permissões é somente leitura (sem switches)", async ({ page }) => {
+    // Sprint 1.0D-5: a matriz virou real e SOMENTE LEITURA — os switches
+    // editáveis do mock deram lugar a ícones de concedido/não concedido.
+    // Cobertura completa em rbac.spec.ts.
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/permissions");
-    const first = page.getByRole("switch").first();
-    const before = await first.getAttribute("aria-checked");
-    await first.click();
-    await expect(first).not.toHaveAttribute("aria-checked", before ?? "");
+    await expect(page.getByText(/somente leitura/i)).toBeVisible();
+    await expect(page.getByRole("switch")).toHaveCount(0);
   });
 
   test("filtra integrações por categoria", async ({ page }) => {

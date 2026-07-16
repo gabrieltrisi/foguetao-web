@@ -20,20 +20,29 @@ import {
 } from "@/types/api/company";
 
 /** POST /auth/login — retorna tokens + usuário. */
-export function loginRequest(email: string, password: string): Promise<AuthTokens> {
+export function loginRequest(
+  email: string,
+  password: string,
+  userAgent?: string | null,
+): Promise<AuthTokens> {
   return backendFetch(endpoints.login, {
     method: "POST",
     body: { email, password },
     schema: authTokensSchema,
+    userAgent,
   });
 }
 
 /** POST /auth/refresh — rotaciona o par de tokens. */
-export function refreshRequest(refreshToken: string): Promise<TokenPair> {
+export function refreshRequest(
+  refreshToken: string,
+  userAgent?: string | null,
+): Promise<TokenPair> {
   return backendFetch(endpoints.refresh, {
     method: "POST",
     body: { refreshToken },
     schema: tokenPairSchema,
+    userAgent,
   });
 }
 

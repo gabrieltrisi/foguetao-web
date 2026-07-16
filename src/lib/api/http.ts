@@ -15,6 +15,12 @@ export interface BackendRequest<TSchema extends z.ZodTypeAny | undefined> {
   schema?: TSchema;
   /** Sinal de cancelamento opcional. */
   signal?: AbortSignal;
+  /**
+   * User-agent do NAVEGADOR a encaminhar (login/refresh). Sem isto, o backend
+   * registraria o UA do runtime do Next ("node"). Não inventamos SO/dispositivo
+   * — só repassamos o header original, que o backend deriva na exibição.
+   */
+  userAgent?: string | null;
 }
 
 type Result<TSchema> = TSchema extends z.ZodTypeAny ? z.infer<TSchema> : unknown;
@@ -28,12 +34,13 @@ type Result<TSchema> = TSchema extends z.ZodTypeAny ? z.infer<TSchema> : unknown
  */
 export async function backendFetch<TSchema extends z.ZodTypeAny | undefined = undefined>(
   path: string,
-  { method = "GET", body, token, companyId, schema, signal }: BackendRequest<TSchema> = {},
+  { method = "GET", body, token, companyId, schema, signal, userAgent }: BackendRequest<TSchema> = {},
 ): Promise<Result<TSchema>> {
   const headers: Record<string, string> = { accept: "application/json" };
   if (body !== undefined) headers["content-type"] = "application/json";
   if (token) headers.authorization = `Bearer ${token}`;
   if (companyId) headers[COMPANY_ID_HEADER] = companyId;
+  if (userAgent) headers["user-agent"] = userAgent;
 
   let response: Response;
   try {

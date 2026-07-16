@@ -41,6 +41,26 @@ describe("backendFetch", () => {
     expect(init.headers["x-company-id"]).toBeUndefined();
   });
 
+  it("encaminha o user-agent do navegador quando fornecido (hardening de sessão)", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, {}));
+    vi.stubGlobal("fetch", fetchMock);
+    await backendFetch("/auth/login", {
+      method: "POST",
+      body: { email: "a@b.com", password: "x" },
+      userAgent: "Mozilla/5.0 (Windows NT 10.0) Chrome/128",
+    });
+    const [, init] = fetchMock.mock.calls[0] as unknown as FetchCall;
+    expect(init.headers["user-agent"]).toBe("Mozilla/5.0 (Windows NT 10.0) Chrome/128");
+  });
+
+  it("não envia user-agent quando ausente (o Next usaria o seu próprio)", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, {}));
+    vi.stubGlobal("fetch", fetchMock);
+    await backendFetch("/auth/me", { token: "at" });
+    const [, init] = fetchMock.mock.calls[0] as unknown as FetchCall;
+    expect(init.headers["user-agent"]).toBeUndefined();
+  });
+
   it("401 → ApiError isUnauthorized", async () => {
     vi.stubGlobal("fetch", vi.fn(async () =>
       jsonResponse(401, { statusCode: 401, code: "UNAUTHORIZED", message: "Não autenticado" }),

@@ -11,6 +11,9 @@ export const queryKeys = {
     members: (filters?: unknown) => ["company", "members", filters ?? {}] as const,
     member: (id: string) => ["company", "member", id] as const,
     invitations: (filters?: unknown) => ["company", "invitations", filters ?? {}] as const,
+    /** RBAC estático — muda com deploy, não com uso → staleTime longo. */
+    roles: () => ["company", "roles"] as const,
+    permissionCatalog: () => ["company", "permission-catalog"] as const,
   },
 
   crm: {

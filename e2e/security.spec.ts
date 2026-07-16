@@ -177,6 +177,26 @@ test.describe("Tela Security", () => {
   });
 });
 
+test.describe("Hardening do user-agent", () => {
+  test("o backend registra o UA do NAVEGADOR na sessão, não o do runtime", async ({
+    page,
+    browser,
+  }) => {
+    const user = await createUser(page.request, "ua");
+    // Login pela UI: o BFF encaminha o user-agent do Chromium ao backend.
+    const { context, page: userPage } = await loggedContext(browser, user.email);
+
+    const res = await userPage.request.get("/api/auth/sessions");
+    const sessions = (await res.json()) as { userAgent: string | null; current: boolean }[];
+    const current = sessions.find((s) => s.current)!;
+    // O Chromium do Playwright manda um UA com "Chrome" — nunca "node".
+    expect(current.userAgent ?? "").toMatch(/Chrome|Mozilla/);
+    expect(current.userAgent).not.toBe("node");
+
+    await context.close();
+  });
+});
+
 test.describe("Segurança do BFF", () => {
   test("id de sessão não-UUID é barrado antes do backend", async ({ page }) => {
     const res = await page.request.delete("/api/auth/sessions/nao-e-uuid");

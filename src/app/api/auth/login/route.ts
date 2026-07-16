@@ -22,9 +22,13 @@ export function POST(request: Request): Promise<NextResponse> {
       });
     }
 
+    // Encaminha o user-agent do NAVEGADOR para o backend registrar na sessão
+    // (sem isto, ele veria o UA do runtime do Next).
+    const userAgent = request.headers.get("user-agent");
     const { accessToken, refreshToken, user } = await loginRequest(
       parsed.data.email,
       parsed.data.password,
+      userAgent,
     );
     await setSessionCookies({ accessToken, refreshToken });
 
