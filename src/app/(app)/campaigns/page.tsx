@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
-import { CampaignsView } from "@/components/marketing/campaigns-view";
+import { CampaignsView, NewCampaignButton } from "@/components/marketing/campaigns-view";
 
 export const metadata: Metadata = {
   title: "Campanhas",
@@ -17,14 +14,7 @@ export default function CampaignsPage() {
       <PageHeader
         title="Campanhas"
         description="Crie e acompanhe suas campanhas de marketing."
-        actions={
-          <Button asChild size="sm">
-            <Link href="/campaigns/new">
-              <Plus />
-              Nova campanha
-            </Link>
-          </Button>
-        }
+        actions={<NewCampaignButton />}
       />
       <MarketingNav />
       <CampaignsView />

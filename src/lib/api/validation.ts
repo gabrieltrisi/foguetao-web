@@ -496,6 +496,144 @@ export function parseCreateTagBody(body: unknown): Record<string, unknown> {
   return parsed.data;
 }
 
+/* ---------- Marketing / Campanhas (Sprint 1.5A-1) ---------- */
+
+const campaignStatuses = [
+  "DRAFT",
+  "SCHEDULED",
+  "ACTIVE",
+  "PAUSED",
+  "COMPLETED",
+  "CANCELED",
+  "ARCHIVED",
+] as const;
+const campaignChannels = [
+  "INTERNAL",
+  "META_ADS",
+  "GOOGLE_ADS",
+  "TIKTOK_ADS",
+  "WHATSAPP",
+  "EMAIL",
+  "SMS",
+  "LANDING_PAGE",
+  "AFFILIATE",
+  "ORGANIC",
+  "OTHER",
+] as const;
+const campaignObjectives = [
+  "LEAD_GENERATION",
+  "SALES",
+  "TRAFFIC",
+  "ENGAGEMENT",
+  "AWARENESS",
+  "RETENTION",
+  "REACTIVATION",
+  "CUSTOM",
+] as const;
+/** Ordenação: mesma allowlist do backend. */
+const campaignSort = ["createdAt", "updatedAt", "name", "startAt", "endAt", "budget"] as const;
+
+/** Espelha o ListCampaignsQueryDto. */
+const campaignListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+  search: z.string().max(200).optional(),
+  status: z.enum(campaignStatuses).optional(),
+  channel: z.enum(campaignChannels).optional(),
+  objective: z.enum(campaignObjectives).optional(),
+  ownerUserId: uuidSchema.optional(),
+  pipelineId: uuidSchema.optional(),
+  startFrom: z.string().datetime({ offset: true }).optional(),
+  endTo: z.string().datetime({ offset: true }).optional(),
+  sortBy: z.enum(campaignSort).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+
+export function parseCampaignListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(campaignListQuerySchema, params);
+}
+
+/** `budget` é STRING decimal — nunca float. O backend valida o range (>= 0). */
+const budgetSchema = z
+  .string()
+  .regex(/^\d+(\.\d{1,2})?$/, { message: "budget deve ser decimal (ex.: 1500.00)" });
+
+/** Espelha o CreateCampaignDto. `status` NÃO existe aqui: nasce em DRAFT. */
+const createCampaignSchema = z.object({
+  name: z.string().min(1).max(160),
+  description: z.string().max(500).optional(),
+  channel: z.enum(campaignChannels).optional(),
+  objective: z.enum(campaignObjectives).optional(),
+  budget: budgetSchema.optional(),
+  currency: z.string().length(3).optional(),
+  startAt: z.string().datetime({ offset: true }).optional(),
+  endAt: z.string().datetime({ offset: true }).optional(),
+  ownerUserId: uuidSchema.optional(),
+  pipelineId: uuidSchema.optional(),
+  externalProvider: z.string().max(60).optional(),
+  externalId: z.string().max(200).optional(),
+});
+
+export function parseCreateCampaignBody(body: unknown): Record<string, unknown> {
+  const parsed = createCampaignSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da campanha inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/**
+ * Espelha o UpdateCampaignDto: nullable onde o contrato limpa, e SEM `status`
+ * — mudar de estado é só pelas ações, que validam a máquina de estados.
+ */
+const updateCampaignSchema = z
+  .object({
+    name: z.string().min(1).max(160),
+    description: z.string().max(500).nullable(),
+    channel: z.enum(campaignChannels),
+    objective: z.enum(campaignObjectives),
+    budget: budgetSchema.nullable(),
+    currency: z.string().length(3),
+    startAt: z.string().datetime({ offset: true }).nullable(),
+    endAt: z.string().datetime({ offset: true }).nullable(),
+    ownerUserId: uuidSchema.nullable(),
+    pipelineId: uuidSchema.nullable(),
+    externalProvider: z.string().max(60).nullable(),
+    externalId: z.string().max(200).nullable(),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: "informe ao menos um campo" });
+
+export function parseUpdateCampaignBody(body: unknown): Record<string, unknown> {
+  const parsed = updateCampaignSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da campanha inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/** Só as 6 ações reais existem. */
+const campaignActionSchema = z.enum([
+  "activate",
+  "pause",
+  "complete",
+  "cancel",
+  "archive",
+  "restore",
+]);
+
+export function requireCampaignAction(action: string): string {
+  const parsed = campaignActionSchema.safeParse(action);
+  if (!parsed.success) fail("Ação inválida", [`ação desconhecida: ${action}`]);
+  return parsed.data;
+}
+
 /* ---------- Messaging (Sprint 1.3) ---------- */
 
 /** Paginação por cursor do messaging: cursor opaco + limit 1..100. */

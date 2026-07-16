@@ -33,6 +33,14 @@ export const PERMISSIONS = {
   COMPANY_AUDIT_READ: "company.audit.read",
   COMPANY_ROLES_READ: "company.roles.read",
 
+  // Campanhas — nomes REAIS do backend (authz/permissions.ts). `publish` cobre
+  // apenas ativar; as demais ações de status usam `update`.
+  CAMPAIGNS_READ: "campaigns.read",
+  CAMPAIGNS_CREATE: "campaigns.create",
+  CAMPAIGNS_UPDATE: "campaigns.update",
+  CAMPAIGNS_DELETE: "campaigns.delete",
+  CAMPAIGNS_PUBLISH: "campaigns.publish",
+
   // Integrações — nomes REAIS do backend (authz/permissions.ts). Não há
   // permissão dedicada a ativar/pausar: o backend usa `update` para ambas.
   INTEGRATIONS_CONNECTIONS_READ: "integrations.connections.read",

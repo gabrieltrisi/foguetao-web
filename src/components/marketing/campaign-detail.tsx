@@ -1,49 +1,170 @@
 "use client";
 
 import * as React from "react";
-import { CirclePause, CirclePlay, Megaphone, Pencil, Target, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Archive,
+  ArchiveRestore,
+  Ban,
+  CircleCheck,
+  CirclePause,
+  CirclePlay,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { KPIBlock, StatList } from "@/components/business/kpi-block";
-import { Timeline } from "@/components/business/timeline";
-import { DetailPageLayout, DashboardSection } from "@/components/patterns/page-patterns";
-import { ChannelBadge, CampaignStatusBadge } from "@/components/marketing/badges";
-import { PerformanceChartMock } from "@/components/marketing/performance-chart";
+import { ErrorState } from "@/components/ui/error-state";
+import { StatList } from "@/components/business/kpi-block";
+import { DetailPageLayout } from "@/components/patterns/page-patterns";
+import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/toast";
-import { formatCurrency, formatNumber } from "@/lib/format";
-import { objectiveLabel } from "@/mocks/marketing/campaigns";
-import { monthlySeries } from "@/mocks/marketing/performance";
-import type { Campaign } from "@/types/marketing";
-import { PreviewBanner } from "@/components/ui/preview-banner";
+import { useSession } from "@/providers/session-provider";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { usePipelines } from "@/hooks/crm/use-pipelines";
+import { useCampaign, useCampaignAction, useDeleteCampaign } from "@/hooks/marketing/use-campaigns";
+import { useCampaignOwnerOptions } from "@/hooks/marketing/use-campaign-owners";
+import {
+  availableActions,
+  campaignActionLabel,
+  channelLabel,
+  formatBudget,
+  formatDate,
+  formatPeriod,
+  messageForCampaignError,
+  objectiveLabel,
+  statusMeta,
+} from "@/lib/marketing/campaigns";
+import { isApiError } from "@/types/api/error";
+import type { CampaignAction } from "@/types/api/marketing";
 
-export function CampaignDetail({ campaign: c }: { campaign: Campaign }) {
+/**
+ * Detalhe da campanha — apenas campos do contrato.
+ *
+ * NÃO há aba de métricas nem gráfico: investido, leads, CPL, conversões,
+ * receita e ROAS não existem no domínio de campanhas. Exibi-los exigiria mock,
+ * então os blocos foram removidos.
+ */
+const ACTION_ICON: Record<CampaignAction, LucideIcon> = {
+  activate: CirclePlay,
+  pause: CirclePause,
+  complete: CircleCheck,
+  cancel: Ban,
+  archive: Archive,
+  restore: ArchiveRestore,
+};
+
+export function CampaignDetail({ campaignId }: { campaignId: string }) {
+  const router = useRouter();
   const { toast } = useToast();
-  const [paused, setPaused] = React.useState(c.status === "pausada");
+  const { can } = useSession();
+  const detail = useCampaign(campaignId);
+  const action = useCampaignAction(campaignId);
+  const remove = useDeleteCampaign();
+  const owners = useCampaignOwnerOptions();
+  const pipelines = usePipelines({ limit: 100 });
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
 
-  const metrics = [
-    { label: "Investido", value: formatCurrency(c.spent) },
-    { label: "Leads", value: formatNumber(c.leads) },
-    { label: "CPL", value: formatCurrency(c.cpl) },
-    { label: "Conversões", value: formatNumber(c.conversions) },
-    { label: "Receita", value: formatCurrency(c.revenue) },
-    { label: "ROAS", value: `${c.roas}x` },
-  ];
+  if (!can(PERMISSIONS.CAMPAIGNS_READ)) {
+    return (
+      <p className="text-body2 text-ink-3 py-16 text-center">
+        Você não tem permissão para ver campanhas.
+      </p>
+    );
+  }
+  if (detail.isLoading) {
+    return <p className="text-body2 text-ink-3 py-16 text-center">Carregando…</p>;
+  }
+  if (detail.isError || !detail.data) {
+    const notFound = isApiError(detail.error) && detail.error.statusCode === 404;
+    return (
+      <ErrorState
+        title={notFound ? "Campanha não encontrada." : "Falha ao carregar a campanha."}
+        onRetry={notFound ? undefined : () => detail.refetch()}
+      />
+    );
+  }
+
+  const c = detail.data;
+  const meta = statusMeta(c.status);
+  const archived = c.status === "ARCHIVED";
+
+  /**
+   * A UI só oferece transições válidas; `activate` exige `campaigns.publish`, as
+   * demais `campaigns.update`. O backend continua sendo a autoridade.
+   */
+  const actions = availableActions(c.status).filter((a) =>
+    a === "activate" ? can(PERMISSIONS.CAMPAIGNS_PUBLISH) : can(PERMISSIONS.CAMPAIGNS_UPDATE),
+  );
+
+  async function runAction(a: CampaignAction) {
+    try {
+      await action.mutateAsync(a);
+      toast({ title: `${campaignActionLabel[a]}: concluído`, variant: "success" });
+    } catch (error) {
+      toast({ title: messageForCampaignError(error), variant: "error" });
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      await remove.mutateAsync(campaignId);
+      toast({ title: "Campanha excluída", variant: "success" });
+      router.push("/campaigns");
+    } catch (error) {
+      toast({ title: messageForCampaignError(error), variant: "error" });
+    }
+  }
+
+  const ownerName = c.ownerUserId ? (owners.nameById.get(c.ownerUserId) ?? "—") : "—";
+  const pipelineName = c.pipelineId
+    ? ((pipelines.data?.items ?? []).find((p) => p.id === c.pipelineId)?.name ?? "—")
+    : "—";
 
   const aside = (
     <div className="flex flex-col gap-4">
-      <Card className="p-5">
-        <KPIBlock label="Receita" value={formatCurrency(c.revenue)} delta={`ROAS ${c.roas}x`} trend="up" />
-        <div className="mt-4"><CampaignStatusBadge status={paused ? "pausada" : c.status} /></div>
-      </Card>
       <Card className="p-4">
-        <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-ink-3">Detalhes</p>
+        <p className="text-caption text-ink-3 mb-3 font-semibold tracking-wide uppercase">
+          Campanha
+        </p>
         <StatList
           items={[
-            { label: "Canal", value: <ChannelBadge channel={c.channel} /> },
-            { label: "Objetivo", value: objectiveLabel[c.objective] },
-            { label: "Orçamento", value: formatCurrency(c.budget) },
-            { label: "Período", value: `${c.startDate} – ${c.endDate}` },
+            { label: "Status", value: <Badge tone={meta.tone}>{meta.label}</Badge> },
+            { label: "Canal", value: channelLabel(c.channel) },
+            { label: "Objetivo", value: objectiveLabel(c.objective) },
+            { label: "Orçamento", value: formatBudget(c.budget, c.currency) },
+            { label: "Moeda", value: c.currency },
+            { label: "Período", value: formatPeriod(c.startAt, c.endAt) },
+            { label: "Responsável", value: ownerName },
+            { label: "Pipeline", value: pipelineName },
+          ]}
+        />
+      </Card>
+      {c.externalProvider ? (
+        <Card className="p-4">
+          <p className="text-caption text-ink-3 mb-3 font-semibold tracking-wide uppercase">
+            Provider externo
+          </p>
+          <StatList
+            items={[
+              { label: "Provider", value: c.externalProvider },
+              { label: "ID externo", value: c.externalId ?? "—" },
+            ]}
+          />
+        </Card>
+      ) : null}
+      <Card className="p-4">
+        <p className="text-caption text-ink-3 mb-3 font-semibold tracking-wide uppercase">
+          Registro
+        </p>
+        <StatList
+          items={[
+            { label: "Criada em", value: formatDate(c.createdAt) },
+            { label: "Atualizada em", value: formatDate(c.updatedAt) },
+            ...(c.archivedAt ? [{ label: "Arquivada em", value: formatDate(c.archivedAt) }] : []),
           ]}
         />
       </Card>
@@ -53,81 +174,75 @@ export function CampaignDetail({ campaign: c }: { campaign: Campaign }) {
   return (
     <DetailPageLayout
       title={c.name}
-      subtitle={`${objectiveLabel[c.objective]} · ${c.startDate}`}
+      subtitle={`${objectiveLabel(c.objective)} · ${channelLabel(c.channel)}`}
       back={{ href: "/campaigns", label: "Campanhas" }}
       actions={
         <>
-          <Button size="sm" variant="secondary">
-            <Pencil />
-            Editar
-          </Button>
-          <Button
-            size="sm"
-            variant={paused ? "primary" : "secondary"}
-            onClick={() => {
-              setPaused((p) => !p);
-              toast({ title: paused ? "Campanha ativada (mock)" : "Campanha pausada (mock)", variant: paused ? "success" : "warning" });
-            }}
-          >
-            {paused ? <CirclePlay /> : <CirclePause />}
-            {paused ? "Ativar" : "Pausar"}
-          </Button>
+          {can(PERMISSIONS.CAMPAIGNS_UPDATE) && !archived ? (
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/campaigns/${c.id}/edit`}>
+                <Pencil />
+                Editar
+              </Link>
+            </Button>
+          ) : null}
+          {actions.map((a) => {
+            const Icon = ACTION_ICON[a];
+            return (
+              <Button
+                key={a}
+                size="sm"
+                variant={a === "activate" || a === "restore" ? "primary" : "secondary"}
+                loading={action.isPending && action.variables === a}
+                disabled={action.isPending}
+                onClick={() => runAction(a)}
+              >
+                <Icon />
+                {campaignActionLabel[a]}
+              </Button>
+            );
+          })}
+          {can(PERMISSIONS.CAMPAIGNS_DELETE) ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-label="Excluir campanha"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 />
+            </Button>
+          ) : null}
         </>
       }
       aside={aside}
     >
-      <PreviewBanner feature="Campanhas" />
-      <Tabs defaultValue="resumo">
-        <TabsList className="overflow-x-auto">
-          <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="metricas">Métricas</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="resumo">
-          <div className="flex flex-col gap-5">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {metrics.map((m) => (
-                <Card key={m.label} className="p-4"><KPIBlock label={m.label} value={m.value} /></Card>
-              ))}
-            </div>
-            <Card className="p-5">
-              <p className="mb-2 font-display text-h3 font-semibold text-ink">Investimento x Receita</p>
-              <PerformanceChartMock data={monthlySeries} />
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="metricas">
-          <Card className="p-5">
-            <StatList
-              items={[
-                { label: "Orçamento", value: formatCurrency(c.budget) },
-                { label: "Investido", value: formatCurrency(c.spent) },
-                { label: "Leads", value: formatNumber(c.leads) },
-                { label: "CPL", value: formatCurrency(c.cpl) },
-                { label: "Conversões", value: formatNumber(c.conversions) },
-                { label: "Receita", value: formatCurrency(c.revenue) },
-                { label: "ROAS", value: `${c.roas}x` },
-              ]}
-            />
+      <div className="flex flex-col gap-5">
+        {archived ? (
+          <Card className="border-line bg-surface p-4">
+            <p className="text-body2 text-ink-2">
+              Campanha arquivada — somente leitura. Restaure para voltar a editá-la (ela volta como
+              rascunho).
+            </p>
           </Card>
-        </TabsContent>
+        ) : null}
 
-        <TabsContent value="historico">
-          <DashboardSection title="Histórico">
-            <Card className="p-5">
-              <Timeline
-                items={[
-                  { id: "h1", icon: Megaphone, title: "Campanha criada", time: c.startDate },
-                  { id: "h2", icon: Target, title: "Orçamento ajustado", description: `Novo orçamento: ${formatCurrency(c.budget)}`, time: "há 5 dias" },
-                  { id: "h3", icon: TrendingUp, title: "ROAS atingiu meta", description: `ROAS ${c.roas}x`, time: "há 2 dias" },
-                ]}
-              />
-            </Card>
-          </DashboardSection>
-        </TabsContent>
-      </Tabs>
+        <Card className="p-5">
+          <p className="font-display text-h3 text-ink mb-2 font-semibold">Descrição</p>
+          <p className="text-body2 text-ink-2 whitespace-pre-wrap">
+            {c.description ?? "Sem descrição."}
+          </p>
+        </Card>
+      </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Excluir campanha?"
+        description={`A campanha “${c.name}” deixará de aparecer nas listagens. Esta ação não pode ser desfeita pela interface.`}
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={handleDelete}
+      />
     </DetailPageLayout>
   );
 }

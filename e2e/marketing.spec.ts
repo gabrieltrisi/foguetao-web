@@ -1,11 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
 
 /**
- * Sprint 1.4: a auditoria provou que NÃO existe backend de Marketing — nenhum
- * model no Prisma, nenhum controller, nenhum endpoint. As permissões
- * (campaigns.*, ads.*, affiliates.*) existem no catálogo RBAC, mas são órfãs.
- * Por isso todas as telas do módulo seguem como PREVIEW, claramente
- * identificadas e sem simular persistência. A UI foi preservada.
+ * Marketing — telas SEM contrato de backend.
+ *
+ * A Sprint 1.4 provou que não existia domínio de Marketing. A Sprint 1.5A-1
+ * criou APENAS o core de campanhas; por isso /campaigns, /campaigns/new e
+ * /campaigns/[id] saíram do Preview e são cobertas por `campaigns.spec.ts`.
+ * TODAS as demais telas continuam Preview, sem simular persistência.
  */
 
 function trackErrors(page: Page): string[] {
@@ -24,9 +25,6 @@ async function hasHorizontalOverflow(page: Page): Promise<boolean> {
 }
 
 const routes = [
-  "/campaigns",
-  "/campaigns/camp-1",
-  "/campaigns/new",
   "/meta-ads",
   "/google-ads",
   "/tiktok-ads",
@@ -42,7 +40,7 @@ const routes = [
   "/performance",
 ];
 
-const mobileRoutes = ["/campaigns", "/campaigns/camp-1", "/meta-ads", "/landing-pages", "/utm-builder", "/affiliates", "/performance"];
+const mobileRoutes = ["/meta-ads", "/landing-pages", "/utm-builder", "/affiliates", "/performance"];
 
 test.describe("Marketing — desktop 1440", () => {
   for (const route of routes) {
@@ -72,22 +70,6 @@ test.describe("Marketing — mobile 390", () => {
 });
 
 test.describe("Marketing — interações", () => {
-  test("alterna campanhas para visão de cards", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/campaigns");
-    await expect(page.getByRole("table")).toBeVisible();
-    await page.getByRole("tab", { name: "Cards" }).click();
-    await expect(page.getByRole("table")).toHaveCount(0);
-  });
-
-  test("navega para o detalhe de uma campanha", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/campaigns");
-    await page.getByRole("link", { name: "Black Week — Conversão" }).first().click();
-    await page.waitForURL("**/campaigns/**");
-    await expect(page.getByRole("heading", { level: 1, name: "Black Week — Conversão" })).toBeVisible();
-  });
-
   test("copia link no UTM Builder", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/utm-builder");
@@ -104,10 +86,8 @@ test.describe("Marketing — interações", () => {
 });
 
 test.describe("Marketing — Preview (sem backend)", () => {
-  /** Toda tela de Marketing avisa que é Preview e que nada é salvo. */
+  /** As telas que continuam sem contrato avisam que são Preview. */
   const previewRoutes = [
-    "/campaigns",
-    "/campaigns/camp-1",
     "/performance",
     "/meta-ads",
     "/google-ads",
@@ -131,7 +111,7 @@ test.describe("Marketing — Preview (sem backend)", () => {
     });
   }
 
-  test("nenhuma tela de Marketing chama o BFF (não há contrato)", async ({ page }) => {
+  test("as telas ainda em Preview não chamam o BFF (não há contrato)", async ({ page }) => {
     const calls: string[] = [];
     page.on("request", (r) => {
       const u = r.url();
@@ -140,10 +120,10 @@ test.describe("Marketing — Preview (sem backend)", () => {
         calls.push(u);
       }
     });
-    await page.goto("/campaigns");
+    await page.goto("/performance");
     await page.waitForLoadState("networkidle");
     await page.goto("/affiliates");
     await page.waitForLoadState("networkidle");
-    expect(calls, `Marketing não deveria chamar backend: ${calls.join(", ")}`).toEqual([]);
+    expect(calls, `estas telas não deveriam chamar backend: ${calls.join(", ")}`).toEqual([]);
   });
 });

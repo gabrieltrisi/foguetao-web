@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { CampaignDetail } from "@/components/marketing/campaign-detail";
-import { campaigns, getCampaignById } from "@/mocks/marketing/campaigns";
 
-export function generateStaticParams() {
-  return campaigns.map((c) => ({ id: c.id }));
-}
+export const metadata: Metadata = {
+  title: "Campanha",
+  description: "Detalhe da campanha.",
+};
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const c = getCampaignById(id);
-  return { title: c ? c.name : "Campanha" };
-}
-
+/**
+ * Os dados reais vêm do BFF no cliente (a sessão é httpOnly), então não há
+ * `generateStaticParams` sobre mock nem `notFound()` local: o 404 é o real do
+ * backend e a tela o trata.
+ */
 export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const campaign = getCampaignById(id);
-  if (!campaign) notFound();
-  return <CampaignDetail campaign={campaign} />;
+  return <CampaignDetail campaignId={id} />;
 }

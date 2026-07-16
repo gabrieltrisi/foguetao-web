@@ -53,6 +53,12 @@ export const queryKeys = {
     metricsSummary: (filters?: unknown) => ["crm", "metrics", "summary", filters ?? {}] as const,
   },
 
+  /** Marketing (Sprint 1.5A-1). Campanhas: paginação por offset. */
+  marketing: {
+    campaigns: (filters?: unknown) => ["marketing", "campaigns", filters ?? {}] as const,
+    campaign: (id: string) => ["marketing", "campaign", id] as const,
+  },
+
   /** Messaging (Sprint 1.3). Conversas e mensagens paginam por cursor. */
   messaging: {
     conversations: (filters?: unknown) => ["messaging", "conversations", filters ?? {}] as const,
@@ -104,6 +110,16 @@ export const crmInvalidation = {
   tag: (id: string) => ["crm", "tag", id] as const,
   /** Prefixo das definições de campos personalizados (todas as entidades). */
   allCustomFieldDefs: ["crm", "custom-fields"] as const,
+};
+
+/**
+ * Prefixos de invalidação de marketing. Domínio separado: campanhas nunca
+ * invalidam CRM, messaging ou integrações.
+ */
+export const marketingInvalidation = {
+  /** Prefixo de TODAS as listas de campanhas (qualquer filtro). */
+  allCampaigns: ["marketing", "campaigns"] as const,
+  campaign: (id: string) => ["marketing", "campaign", id] as const,
 };
 
 /**

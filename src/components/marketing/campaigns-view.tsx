@@ -2,127 +2,329 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LayoutGrid, Megaphone, Table2, TrendingUp } from "lucide-react";
+import { LayoutGrid, Megaphone, Plus, Table2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { KPIBlock } from "@/components/business/kpi-block";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Combobox } from "@/components/ui/combobox";
 import { FilterBar, ActiveFilters } from "@/components/ui/filter-bar";
+import { Pagination } from "@/components/ui/pagination";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { ChannelBadge, CampaignStatusBadge } from "@/components/marketing/badges";
-import { formatCurrency, formatNumber } from "@/lib/format";
-import { campaigns, campaignStatusLabel, objectiveLabel } from "@/mocks/marketing/campaigns";
-import { channelLabels } from "@/mocks/marketing/performance";
-import type { Campaign, CampaignStatus } from "@/types/marketing";
-import { PreviewBanner } from "@/components/ui/preview-banner";
+import { ErrorState } from "@/components/ui/error-state";
+import { useSession } from "@/providers/session-provider";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { useCampaigns } from "@/hooks/marketing/use-campaigns";
+import {
+  CAMPAIGN_CHANNELS,
+  CAMPAIGN_OBJECTIVES,
+  CAMPAIGN_STATUSES,
+  channelLabel,
+  formatBudget,
+  formatPeriod,
+  objectiveLabel,
+  statusMeta,
+} from "@/lib/marketing/campaigns";
+import type { ApiCampaign } from "@/types/api/marketing";
 
-const STATUS_OPTIONS = [
-  { value: "todas", label: "Todos os status" },
-  { value: "ativa", label: "Ativa" },
-  { value: "pausada", label: "Pausada" },
-  { value: "encerrada", label: "Encerrada" },
-  { value: "rascunho", label: "Rascunho" },
-];
-const CHANNEL_OPTIONS = [
-  { value: "todos", label: "Todos os canais" },
-  { value: "meta", label: "Meta" },
-  { value: "google", label: "Google" },
-  { value: "tiktok", label: "TikTok" },
-  { value: "instagram", label: "Instagram" },
-  { value: "email", label: "E-mail" },
-  { value: "afiliado", label: "Afiliado" },
-];
+/**
+ * Campanhas — dados REAIS de `GET /campaigns`.
+ *
+ * O contrato não tem métrica de mídia (investido, leads, CPL, ROAS…): esses
+ * números pertencem a providers externos e ao domínio de Performance. Os
+ * blocos que os exibiam foram REMOVIDOS em vez de mantidos com mock.
+ */
+const PAGE_SIZE = 20;
+const ALL = "__all__";
+
+/** Só quem pode criar vê o atalho — VIEWER não recebe um caminho para o 403. */
+export function NewCampaignButton() {
+  const { can } = useSession();
+  if (!can(PERMISSIONS.CAMPAIGNS_CREATE)) return null;
+  return (
+    <Button asChild size="sm">
+      <Link href="/campaigns/new">
+        <Plus />
+        Nova campanha
+      </Link>
+    </Button>
+  );
+}
 
 export function CampaignsView() {
+  const { can } = useSession();
   const [view, setView] = React.useState<"table" | "cards">("table");
   const [query, setQuery] = React.useState("");
-  const [status, setStatus] = React.useState("todas");
-  const [channel, setChannel] = React.useState("todos");
+  const [search, setSearch] = React.useState("");
+  const [status, setStatus] = React.useState(ALL);
+  const [channel, setChannel] = React.useState(ALL);
+  const [objective, setObjective] = React.useState(ALL);
+  const [page, setPage] = React.useState(1);
 
-  const filtered = campaigns.filter((c) => {
-    const ms = status === "todas" || c.status === status;
-    const mc = channel === "todos" || c.channel === channel;
-    const q = query.trim().toLowerCase();
-    return ms && mc && (!q || c.name.toLowerCase().includes(q));
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(query);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data, isLoading, isError, isFetching, refetch } = useCampaigns({
+    page,
+    limit: PAGE_SIZE,
+    search: search || undefined,
+    status: status === ALL ? undefined : status,
+    channel: channel === ALL ? undefined : channel,
+    objective: objective === ALL ? undefined : objective,
+    sortBy: "createdAt",
+    sortOrder: "desc",
   });
 
-  const active = campaigns.filter((c) => c.status === "ativa");
-  const invested = campaigns.reduce((s, c) => s + c.spent, 0);
-  const totalLeads = campaigns.reduce((s, c) => s + c.leads, 0);
-  const avgRoas = Math.round((campaigns.reduce((s, c) => s + c.roas, 0) / campaigns.length) * 10) / 10;
+  if (!can(PERMISSIONS.CAMPAIGNS_READ)) {
+    return (
+      <p className="text-body2 text-ink-3 py-10 text-center">
+        Você não tem permissão para ver campanhas.
+      </p>
+    );
+  }
+  if (isError) {
+    return <ErrorState title="Não foi possível carregar as campanhas." onRetry={() => refetch()} />;
+  }
 
-  const columns: DataTableColumn<Campaign>[] = [
-    { id: "name", header: "Campanha", sortable: true, sortAccessor: (c) => c.name, cell: (c) => <Link href={`/campaigns/${c.id}`} className="font-medium text-ink hover:text-brand">{c.name}</Link> },
-    { id: "channel", header: "Canal", cell: (c) => <ChannelBadge channel={c.channel} /> },
-    { id: "objective", header: "Objetivo", defaultHidden: true, cell: (c) => objectiveLabel[c.objective] },
-    { id: "status", header: "Status", cell: (c) => <CampaignStatusBadge status={c.status} /> },
-    { id: "budget", header: "Orçamento", defaultHidden: true, className: "text-right tabular-nums", cell: (c) => formatCurrency(c.budget) },
-    { id: "spent", header: "Investido", sortable: true, sortAccessor: (c) => c.spent, className: "text-right tabular-nums", cell: (c) => formatCurrency(c.spent) },
-    { id: "leads", header: "Leads", sortable: true, sortAccessor: (c) => c.leads, className: "text-right tabular-nums", cell: (c) => formatNumber(c.leads) },
-    { id: "cpl", header: "CPL", className: "text-right tabular-nums", cell: (c) => formatCurrency(c.cpl) },
-    { id: "conv", header: "Conversões", defaultHidden: true, className: "text-right tabular-nums", cell: (c) => formatNumber(c.conversions) },
-    { id: "revenue", header: "Receita", sortable: true, sortAccessor: (c) => c.revenue, className: "text-right tabular-nums", cell: (c) => formatCurrency(c.revenue) },
-    { id: "roas", header: "ROAS", sortable: true, sortAccessor: (c) => c.roas, className: "text-right", cell: (c) => <span className={cn("font-semibold", c.roas >= 3 ? "text-success" : "text-ink")}>{c.roas}x</span> },
+  const items = data?.items ?? [];
+  const totalPages = data ? Math.max(1, data.totalPages) : 1;
+  const reset = () => setPage(1);
+
+  const columns: DataTableColumn<ApiCampaign>[] = [
+    {
+      id: "name",
+      header: "Campanha",
+      cell: (c) => (
+        <div className="flex flex-col">
+          <Link href={`/campaigns/${c.id}`} className="text-ink hover:text-brand font-medium">
+            {c.name}
+          </Link>
+          {c.description ? (
+            <span className="text-caption text-ink-3 truncate">{c.description}</span>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: "channel",
+      header: "Canal",
+      cell: (c) => (
+        <Badge tone="neutral" className="normal-case">
+          {channelLabel(c.channel)}
+        </Badge>
+      ),
+    },
+    {
+      id: "objective",
+      header: "Objetivo",
+      hideable: true,
+      cell: (c) => <span className="text-ink-2">{objectiveLabel(c.objective)}</span>,
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (c) => {
+        const meta = statusMeta(c.status);
+        return <Badge tone={meta.tone}>{meta.label}</Badge>;
+      },
+    },
+    {
+      id: "budget",
+      header: "Orçamento",
+      className: "text-right tabular-nums",
+      cell: (c) => formatBudget(c.budget, c.currency),
+    },
+    {
+      id: "period",
+      header: "Período",
+      hideable: true,
+      cell: (c) => (
+        <span className="text-ink-2 whitespace-nowrap">{formatPeriod(c.startAt, c.endAt)}</span>
+      ),
+    },
+    {
+      id: "provider",
+      header: "Provider",
+      hideable: true,
+      defaultHidden: true,
+      cell: (c) =>
+        c.externalProvider ? (
+          <span className="text-ink-2">
+            {c.externalProvider}
+            {c.externalId ? (
+              <code className="text-caption text-ink-3 ml-1 font-mono">{c.externalId}</code>
+            ) : null}
+          </span>
+        ) : (
+          <span className="text-ink-3">—</span>
+        ),
+    },
   ];
 
   const activeFilters = [
-    ...(status !== "todas" ? [{ id: "status", label: "Status", value: campaignStatusLabel[status as CampaignStatus] }] : []),
-    ...(channel !== "todos" ? [{ id: "channel", label: "Canal", value: channelLabels[channel as keyof typeof channelLabels] }] : []),
+    ...(status !== ALL ? [{ id: "status", label: "Status", value: statusMeta(status).label }] : []),
+    ...(channel !== ALL ? [{ id: "channel", label: "Canal", value: channelLabel(channel) }] : []),
+    ...(objective !== ALL
+      ? [{ id: "objective", label: "Objetivo", value: objectiveLabel(objective) }]
+      : []),
   ];
 
   return (
     <div className="flex flex-col gap-5">
-      <PreviewBanner feature="Campanhas" />
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card className="flex items-center gap-3 p-5"><span className="flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand"><Megaphone className="size-5" aria-hidden /></span><KPIBlock label="Ativas" value={formatNumber(active.length)} /></Card>
-        <Card className="p-5"><KPIBlock label="Investido" value={formatCurrency(invested)} delta="+8,2%" trend="up" /></Card>
-        <Card className="p-5"><KPIBlock label="Leads" value={formatNumber(totalLeads)} delta="+14,8%" trend="up" /></Card>
-        <Card className="flex items-center gap-3 p-5"><span className="flex size-10 items-center justify-center rounded-lg bg-success/10 text-success"><TrendingUp className="size-5" aria-hidden /></span><KPIBlock label="ROAS médio" value={`${avgRoas}x`} /></Card>
-      </div>
-
       <FilterBar>
-        <SearchInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar campanhas…" containerClassName="w-full max-w-xs" />
-        <div className="w-44"><Combobox options={CHANNEL_OPTIONS} value={channel} onValueChange={setChannel} /></div>
-        <div className="w-44"><Combobox options={STATUS_OPTIONS} value={status} onValueChange={setStatus} /></div>
-        <SegmentedControl className="ml-auto" options={[{ value: "table", label: "Tabela", icon: <Table2 className="size-4" /> }, { value: "cards", label: "Cards", icon: <LayoutGrid className="size-4" /> }]} value={view} onValueChange={setView} />
+        <SearchInput
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar campanhas…"
+          containerClassName="w-full max-w-xs"
+        />
+        <div className="w-44">
+          <Combobox
+            options={[
+              { value: ALL, label: "Todos os canais" },
+              ...CAMPAIGN_CHANNELS.map((c) => ({ value: c, label: channelLabel(c) })),
+            ]}
+            value={channel}
+            onValueChange={(v) => {
+              setChannel(v);
+              reset();
+            }}
+          />
+        </div>
+        <div className="w-44">
+          <Combobox
+            options={[
+              { value: ALL, label: "Todos os status" },
+              ...CAMPAIGN_STATUSES.map((s) => ({ value: s, label: statusMeta(s).label })),
+            ]}
+            value={status}
+            onValueChange={(v) => {
+              setStatus(v);
+              reset();
+            }}
+          />
+        </div>
+        <div className="w-44">
+          <Combobox
+            options={[
+              { value: ALL, label: "Todos os objetivos" },
+              ...CAMPAIGN_OBJECTIVES.map((o) => ({ value: o, label: objectiveLabel(o) })),
+            ]}
+            value={objective}
+            onValueChange={(v) => {
+              setObjective(v);
+              reset();
+            }}
+          />
+        </div>
+        <SegmentedControl
+          className="ml-auto"
+          options={[
+            { value: "table", label: "Tabela", icon: <Table2 className="size-4" /> },
+            { value: "cards", label: "Cards", icon: <LayoutGrid className="size-4" /> },
+          ]}
+          value={view}
+          onValueChange={setView}
+        />
       </FilterBar>
 
       {activeFilters.length > 0 ? (
-        <ActiveFilters filters={activeFilters} onRemove={(id) => (id === "status" ? setStatus("todas") : setChannel("todos"))} onClear={() => { setStatus("todas"); setChannel("todos"); }} />
+        <ActiveFilters
+          filters={activeFilters}
+          onRemove={(id) => {
+            if (id === "status") setStatus(ALL);
+            if (id === "channel") setChannel(ALL);
+            if (id === "objective") setObjective(ALL);
+            reset();
+          }}
+          onClear={() => {
+            setStatus(ALL);
+            setChannel(ALL);
+            setObjective(ALL);
+            reset();
+          }}
+        />
       ) : null}
 
       {view === "table" ? (
-        <DataTable data={filtered} columns={columns} getRowId={(c) => c.id} empty={{ icon: Megaphone, title: "Nenhuma campanha encontrada." }} />
+        <DataTable
+          data={items}
+          columns={columns}
+          getRowId={(c) => c.id}
+          loading={isLoading}
+          pageSize={PAGE_SIZE}
+          empty={{
+            icon: Megaphone,
+            title: "Nenhuma campanha encontrada.",
+            description: "Crie a primeira campanha da sua operação.",
+          }}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c) => <CampaignCard key={c.id} campaign={c} />)}
-          {filtered.length === 0 ? <p className="col-span-full py-10 text-center text-body2 text-ink-3">Nenhuma campanha encontrada.</p> : null}
+          {items.map((c) => (
+            <CampaignCard key={c.id} campaign={c} />
+          ))}
+          {items.length === 0 && !isLoading ? (
+            <p className="text-body2 text-ink-3 col-span-full py-10 text-center">
+              Nenhuma campanha encontrada.
+            </p>
+          ) : null}
         </div>
       )}
+
+      {totalPages > 1 ? (
+        <div className={cn("flex items-center justify-between gap-3", isFetching && "opacity-60")}>
+          <span className="text-small text-ink-3">
+            {data?.total ?? 0} campanha(s) · página {data?.page ?? 1} de {totalPages}
+          </span>
+          <Pagination page={data?.page ?? 1} totalPages={totalPages} onPageChange={setPage} />
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function CampaignCard({ campaign: c }: { campaign: Campaign }) {
-  const pct = Math.min(100, Math.round((c.spent / c.budget) * 100));
+/** Card sem barra de investimento: `spent` não existe no contrato. */
+function CampaignCard({ campaign: c }: { campaign: ApiCampaign }) {
+  const meta = statusMeta(c.status);
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
-        <Link href={`/campaigns/${c.id}`} className="min-w-0 truncate font-display text-h3 font-semibold text-ink hover:text-brand">{c.name}</Link>
-        <CampaignStatusBadge status={c.status} />
+        <Link
+          href={`/campaigns/${c.id}`}
+          className="font-display text-h3 text-ink hover:text-brand min-w-0 truncate font-semibold"
+        >
+          {c.name}
+        </Link>
+        <Badge tone={meta.tone}>{meta.label}</Badge>
       </div>
-      <ChannelBadge channel={c.channel} />
-      <div>
-        <div className="flex items-center justify-between text-caption text-ink-3"><span>Investido</span><span>{formatCurrency(c.spent)} / {formatCurrency(c.budget)}</span></div>
-        <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-surface" aria-hidden><span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} /></span>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge tone="neutral" className="normal-case">
+          {channelLabel(c.channel)}
+        </Badge>
+        <Badge tone="neutral" className="normal-case">
+          {objectiveLabel(c.objective)}
+        </Badge>
       </div>
-      <div className="grid grid-cols-3 gap-2 border-t border-line pt-3 text-center">
-        <div><p className="font-display text-body font-bold text-ink">{formatNumber(c.leads)}</p><p className="text-caption text-ink-3">Leads</p></div>
-        <div><p className="font-display text-body font-bold text-ink">{formatCurrency(c.cpl)}</p><p className="text-caption text-ink-3">CPL</p></div>
-        <div><p className="font-display text-body font-bold text-success">{c.roas}x</p><p className="text-caption text-ink-3">ROAS</p></div>
-      </div>
+      <dl className="border-line grid grid-cols-2 gap-2 border-t pt-3">
+        <div>
+          <dt className="text-caption text-ink-3">Orçamento</dt>
+          <dd className="font-display text-body text-ink font-bold">
+            {formatBudget(c.budget, c.currency)}
+          </dd>
+        </div>
+        <div className="text-right">
+          <dt className="text-caption text-ink-3">Período</dt>
+          <dd className="text-body2 text-ink-2">{formatPeriod(c.startAt, c.endAt)}</dd>
+        </div>
+      </dl>
     </Card>
   );
 }

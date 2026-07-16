@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Playwright auth state (sessão real de teste)
 e2e/.auth/
+
+# Screenshots geradas pelos e2e (artefato de execução, não fonte)
+e2e/screenshots/
