@@ -78,31 +78,6 @@ export type ForecastRep = {
   target: number;
 };
 
-export type AuditStatus = "success" | "failure";
-
-export type AuditEvent = {
-  id: string;
-  user: string;
-  action: string;
-  entity: string;
-  module: string;
-  date: string;
-  ip: string;
-  requestId: string;
-  status: AuditStatus;
-  metadata: { label: string; value: string }[];
-};
-
-export type ActivityModule = "crm" | "mensagens" | "campanhas" | "automacoes" | "integracoes" | "equipe";
-
-export type ActivityEntry = {
-  id: string;
-  module: ActivityModule;
-  actor: string;
-  text: string;
-  time: string;
-};
-
 export type ExportFormat = "csv" | "xlsx" | "pdf";
 export type ExportStatus = "ready" | "processing" | "failed" | "expired";
 

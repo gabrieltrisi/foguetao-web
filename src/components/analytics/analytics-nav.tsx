@@ -3,24 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/providers/session-provider";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
-const links = [
+/** `permission` opcional: link só aparece se o usuário tiver a permissão. */
+const links: { href: string; label: string; permission?: string }[] = [
   { href: "/reports", label: "Relatórios" },
   { href: "/analytics", label: "Analytics" },
   { href: "/funnels", label: "Funis" },
   { href: "/attribution", label: "Atribuição" },
   { href: "/cohorts", label: "Cohorts" },
   { href: "/forecast", label: "Forecast" },
-  { href: "/audit", label: "Auditoria" },
-  { href: "/activity-log", label: "Atividades" },
+  { href: "/audit", label: "Auditoria", permission: PERMISSIONS.COMPANY_AUDIT_READ },
+  { href: "/activity-log", label: "Atividades", permission: PERMISSIONS.COMPANY_AUDIT_READ },
   { href: "/export-center", label: "Exportações" },
 ];
 
 export function AnalyticsNav() {
   const pathname = usePathname();
+  const { can } = useSession();
+  const visible = links.filter((l) => !l.permission || can(l.permission));
   return (
     <nav aria-label="Analytics" className="no-scrollbar -mb-px flex items-center gap-1 overflow-x-auto border-b border-line">
-      {links.map((l) => {
+      {visible.map((l) => {
         const active = pathname === l.href || pathname.startsWith(`${l.href}/`);
         return (
           <Link

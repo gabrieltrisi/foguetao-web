@@ -1,7 +1,7 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { reportStatusLabel, reportStatusTone } from "@/mocks/analytics/reports";
 import { exportStatusLabel, exportStatusTone } from "@/mocks/analytics/exports";
-import type { AuditStatus, ExportStatus, ReportStatus } from "@/types/analytics";
+import type { ExportStatus, ReportStatus } from "@/types/analytics";
 
 export function ReportStatusBadge({ status, size }: { status: ReportStatus; size?: BadgeProps["size"] }) {
   return <Badge tone={reportStatusTone[status]} size={size}>{reportStatusLabel[status]}</Badge>;
@@ -14,8 +14,4 @@ export function ExportStatusBadge({ status, size }: { status: ExportStatus; size
       {exportStatusLabel[status]}
     </Badge>
   );
-}
-
-export function AuditStatusBadge({ status, size }: { status: AuditStatus; size?: BadgeProps["size"] }) {
-  return <Badge tone={status === "success" ? "success" : "danger"} size={size}>{status === "success" ? "Sucesso" : "Falha"}</Badge>;
 }

@@ -14,6 +14,9 @@ export const queryKeys = {
     /** RBAC estático — muda com deploy, não com uso → staleTime longo. */
     roles: () => ["company", "roles"] as const,
     permissionCatalog: () => ["company", "permission-catalog"] as const,
+    /** Auditoria: lista por filtro e detalhe. */
+    audit: (filters?: unknown) => ["company", "audit", filters ?? {}] as const,
+    auditEntry: (id: string) => ["company", "audit", "entry", id] as const,
   },
 
   crm: {

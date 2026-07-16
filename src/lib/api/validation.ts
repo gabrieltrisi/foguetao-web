@@ -434,3 +434,26 @@ export function parseUpdateCompanyBody(body: unknown): Record<string, unknown> {
   }
   return parsed.data;
 }
+
+/* ---------- Auditoria (Sprint 1.0D-6) ---------- */
+
+/**
+ * Filtros de GET /audit. `action` e `entity` são strings livres validadas por
+ * tamanho (o backend valida o enum de action e o where de entity); datas ISO;
+ * busca curta. sortOrder em allowlist. Espelha o ListAuditQueryDto.
+ */
+const auditListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+  action: z.string().max(64).optional(),
+  entity: z.string().max(64).optional(),
+  userId: uuidSchema.optional(),
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
+  search: z.string().max(128).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+
+export function parseAuditListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(auditListQuerySchema, params);
+}
