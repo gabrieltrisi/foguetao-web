@@ -81,9 +81,15 @@ test.describe("Sessão autenticada (owner, read-only)", () => {
     await expect(page.locator("table").getByText("owner@foguetao.dev")).toBeVisible();
   });
 
-  test("sessões lista a sessão atual", async ({ page }) => {
+  test("sessões lista as sessões ativas reais", async ({ page }) => {
+    // A tela de sessões foi consolidada num único componente (Sprint 1.0D-4):
+    // dados reais de /auth/sessions, com IP mascarado. Cobertura completa em
+    // security.spec.ts.
     await page.goto("/sessions");
-    await expect(page.getByText("Esta sessão")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Sessões e dispositivos", level: 1 }),
+    ).toBeVisible();
+    await expect(page.getByText(/sess(ão|ões).*ativa/i).first()).toBeVisible();
   });
 
   test("trocar para empresa inacessível é rejeitado", async ({ page }) => {

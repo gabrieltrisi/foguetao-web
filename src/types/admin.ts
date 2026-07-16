@@ -92,26 +92,7 @@ export interface PermissionModule {
   actions: Record<PermissionAction, boolean>;
 }
 
-export interface Session {
-  id: string;
-  device: string;
-  browser: string;
-  os: string;
-  ip: string;
-  location: string;
-  current: boolean;
-  lastActive: string;
-}
-
-export type SecurityLevel = "info" | "warning" | "danger";
-
-export interface SecurityAlert {
-  id: string;
-  level: SecurityLevel;
-  title: string;
-  description: string;
-  time: string;
-}
+/* Sessões agora vêm do contrato real: @/types/api/auth (SessionResponseDto). */
 
 export type ApiKeyStatus = "active" | "expired" | "revoked";
 

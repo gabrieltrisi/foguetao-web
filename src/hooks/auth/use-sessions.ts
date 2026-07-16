@@ -13,11 +13,15 @@ export function useSessions() {
   });
 }
 
-/** Revoga uma sessão específica (outra que não a atual). */
+/**
+ * Revoga uma sessão específica. Invalida SÓ a lista de sessões — nada de CRM,
+ * empresa ou integrações é tocado.
+ */
 export function useRevokeSession() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => clientFetch(`/api/auth/sessions/${id}`, { method: "DELETE" }),
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: (id: string) =>
+      clientFetch<{ message: string }>(`/api/auth/sessions/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.sessions }),
   });
 }

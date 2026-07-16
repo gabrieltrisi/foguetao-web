@@ -43,7 +43,7 @@ export function logoutRequest(token: string): Promise<unknown> {
 }
 
 /** POST /auth/logout-all — revoga todas as sessões. */
-export function logoutAllRequest(token: string): Promise<unknown> {
+export function logoutAllRequest(token: string): Promise<{ message: string }> {
   return backendFetch(endpoints.logoutAll, {
     method: "POST",
     token,
@@ -62,7 +62,7 @@ export function listSessionsRequest(token: string): Promise<ApiSession[]> {
 }
 
 /** DELETE /auth/sessions/:id — revoga uma sessão específica. */
-export function revokeSessionRequest(token: string, id: string): Promise<unknown> {
+export function revokeSessionRequest(token: string, id: string): Promise<{ message: string }> {
   return backendFetch(endpoints.session(id), {
     method: "DELETE",
     token,

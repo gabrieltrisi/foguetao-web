@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/page-header";
-import { SessionsLive } from "@/components/auth/sessions-live";
+import { SessionsView } from "@/components/admin/sessions-view";
 
 export const metadata: Metadata = {
   title: "Sessões",
@@ -11,8 +11,11 @@ export const metadata: Metadata = {
 export default function SessionsPage() {
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="Sessões e dispositivos" description="Gerencie onde sua conta está conectada." />
-      <SessionsLive />
+      <PageHeader
+        title="Sessões e dispositivos"
+        description="Gerencie onde sua conta está conectada."
+      />
+      <SessionsView />
     </div>
   );
 }
