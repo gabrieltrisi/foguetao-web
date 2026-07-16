@@ -457,3 +457,57 @@ const auditListQuerySchema = z.object({
 export function parseAuditListQuery(params: Record<string, string | string[]>) {
   return parseQueryWith(auditListQuerySchema, params);
 }
+
+/* ---------- Tags (Sprint 1.1B) ---------- */
+
+/** HEX #RGB ou #RRGGBB — mesma regra do @Matches do CreateTagDto. */
+const tagColorSchema = z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, {
+  message: "color deve ser HEX (#RGB ou #RRGGBB)",
+});
+
+/** Filtros de GET /tags — espelha o ListTagsQueryDto (sortBy: createdAt|name). */
+const tagListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+  search: z.string().max(200).optional(),
+  sortBy: z.enum(["createdAt", "name"]).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+
+export function parseTagListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(tagListQuerySchema, params);
+}
+
+/** Espelha o CreateTagDto: name 1..80, color HEX opcional, description <=255. */
+const createTagSchema = z.object({
+  name: z.string().min(1).max(80),
+  color: tagColorSchema.optional(),
+  description: z.string().max(255).optional(),
+});
+
+export function parseCreateTagBody(body: unknown): Record<string, unknown> {
+  const parsed = createTagSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da tag inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/** UpdateTagDto = PartialType(CreateTagDto): exige ao menos um campo. */
+const updateTagSchema = createTagSchema
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: "informe ao menos um campo" });
+
+export function parseUpdateTagBody(body: unknown): Record<string, unknown> {
+  const parsed = updateTagSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da tag inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}

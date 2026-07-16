@@ -9,6 +9,7 @@ import {
   noteListSchema,
   activitySchema,
   activityListSchema,
+  tagSchema,
   tagListSchema,
   customFieldDefListSchema,
   organizationSchema,
@@ -59,6 +60,15 @@ export const crmService = {
   /* Tags */
   listTags: ({ token, companyId }: Ctx, params?: QueryParams) =>
     backendFetch(`/tags${buildQuery(params)}`, { token, companyId, schema: tagListSchema }),
+  getTag: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/tags/${id}`, { token, companyId, schema: tagSchema }),
+  createTag: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/tags`, { method: "POST", token, companyId, body, schema: tagSchema }),
+  updateTag: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/tags/${id}`, { method: "PATCH", token, companyId, body, schema: tagSchema }),
+  /** DELETE devolve `{ message }` — repassado sem reescrita. */
+  deleteTag: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/tags/${id}`, { method: "DELETE", token, companyId }),
   attachTag: ({ token, companyId }: Ctx, contactId: string, tagId: string) =>
     backendFetch(`/contacts/${contactId}/tags/${tagId}`, { method: "POST", token, companyId }),
   detachTag: ({ token, companyId }: Ctx, contactId: string, tagId: string) =>

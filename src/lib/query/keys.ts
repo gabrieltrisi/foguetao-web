@@ -24,7 +24,9 @@ export const queryKeys = {
     contact: (id: string) => ["crm", "contact", id] as const,
     contactNotes: (id: string) => ["crm", "contact", id, "notes"] as const,
     contactActivities: (id: string) => ["crm", "contact", id, "activities"] as const,
-    tags: () => ["crm", "tags"] as const,
+    /** Sem filtros → lista de associação; com filtros → gestão de tags. */
+    tags: (filters?: unknown) => ["crm", "tags", filters ?? {}] as const,
+    tag: (id: string) => ["crm", "tag", id] as const,
     customFieldDefs: (entity?: string) => ["crm", "custom-fields", entity ?? "all"] as const,
     organizations: (filters?: unknown) => ["crm", "organizations", filters ?? {}] as const,
     organization: (id: string) => ["crm", "organization", id] as const,
@@ -82,6 +84,9 @@ export const crmInvalidation = {
   /** Prefixo de TODAS as listas de tarefas (qualquer filtro). */
   allTasks: ["crm", "tasks"] as const,
   task: (id: string) => ["crm", "task", id] as const,
+  /** Prefixo de TODAS as listas de tags (associação e gestão). */
+  allTags: ["crm", "tags"] as const,
+  tag: (id: string) => ["crm", "tag", id] as const,
 };
 
 /**

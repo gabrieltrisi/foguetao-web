@@ -18,6 +18,7 @@ import {
   Share2,
   ShieldCheck,
   SquareKanban,
+  Tags as TagsIcon,
   Target,
   UserCog,
   Users,
@@ -62,6 +63,7 @@ export const navSections: NavSection[] = [
       { label: "Organizações", href: "/organizations", icon: Building2 },
       { label: "Pipeline", href: "/pipeline", icon: SquareKanban },
       { label: "Oportunidades", href: "/deals", icon: Target },
+      { label: "Etiquetas", href: "/tags", icon: TagsIcon },
     ],
   },
   {

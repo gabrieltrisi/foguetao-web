@@ -16,6 +16,23 @@ import type {
 
 export type ContactFilters = Record<string, string | number | string[] | undefined>;
 
+/** Corpo de criação/edição de tag — espelha Create/UpdateTagDto. */
+export interface TagInput {
+  name?: string;
+  color?: string;
+  description?: string;
+}
+
+/** Filtros de GET /tags (paginação + busca + ordenação reais). */
+export interface TagFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: "createdAt" | "name";
+  sortOrder?: "asc" | "desc";
+  [key: string]: string | number | undefined;
+}
+
 /** Mantido como alias tipado de `buildQuery` para os filtros de CRM. */
 export function crmQs(params?: ContactFilters): string {
   return buildQuery(params);
@@ -51,7 +68,15 @@ export const crmApi = {
     clientFetch<ApiActivity>(`${B}/contacts/${id}/activities`, { method: "POST", body }),
 
   // Tags
+  /** Lista enxuta para associação em contatos (combobox). */
   listTags: () => clientFetch<Paginated<ApiTag>>(`${B}/tags?limit=100`),
+  /** Lista paginada para a gestão de tags (busca/ordenação do servidor). */
+  listTagsPaged: (params?: TagFilters) =>
+    clientFetch<Paginated<ApiTag>>(`${B}/tags${crmQs(params)}`),
+  createTag: (body: TagInput) => clientFetch<ApiTag>(`${B}/tags`, { method: "POST", body }),
+  updateTag: (id: string, body: TagInput) =>
+    clientFetch<ApiTag>(`${B}/tags/${id}`, { method: "PATCH", body }),
+  deleteTag: (id: string) => clientFetch(`${B}/tags/${id}`, { method: "DELETE" }),
   attachTag: (id: string, tagId: string) =>
     clientFetch(`${B}/contacts/${id}/tags/${tagId}`, { method: "POST" }),
   detachTag: (id: string, tagId: string) =>
