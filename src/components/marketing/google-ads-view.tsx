@@ -17,10 +17,12 @@ import { AdAccountCard } from "@/components/marketing/ad-account-card";
 import { AdMetricsTable } from "@/components/marketing/ad-metrics-table";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { googleAccounts, googleAds, googleCampaigns, googleConversions, googleGroups, googleKeywords } from "@/mocks/marketing/google-ads";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function GoogleAdsView() {
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="A integração com Google Ads" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {googleAccounts.map((a) => <AdAccountCard key={a.id} account={a} />)}
       </div>

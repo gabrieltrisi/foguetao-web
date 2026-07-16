@@ -13,7 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { labelColorClasses } from "@/components/messaging/label-chip";
 import { labels as initialLabels } from "@/mocks/messaging/labels";
 import type { Label, LabelColor } from "@/types/messaging";
-import { PreviewBanner } from "@/components/messaging/preview-banner";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 const COLORS: LabelColor[] = ["brand", "info", "success", "warning", "danger", "neutral"];
 
@@ -99,7 +99,7 @@ export function LabelsView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PreviewBanner feature="Etiquetas de conversa" />
+      <PreviewBanner feature="Etiquetas de conversa" note="Conversas, chat e contas de mensageria já usam dados reais." />
       <div className="flex justify-end">
         <LabelDialog
           trigger={

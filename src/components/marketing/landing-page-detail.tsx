@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import { formatNumber } from "@/lib/format";
 import { landingStatusLabel, landingStatusTone } from "@/mocks/marketing/landing-pages";
 import type { LandingPage } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function LandingPageDetail({ page }: { page: LandingPage }) {
   const { toast } = useToast();
@@ -57,6 +58,7 @@ export function LandingPageDetail({ page }: { page: LandingPage }) {
       }
       aside={aside}
     >
+      <PreviewBanner feature="Landing pages" />
       <div className="flex flex-col gap-5">
         <div className="grid grid-cols-3 gap-4">
           <Card className="p-4"><KPIBlock label="Views" value={formatNumber(page.views)} /></Card>

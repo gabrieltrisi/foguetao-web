@@ -4,10 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { AdAccountCard } from "@/components/marketing/ad-account-card";
 import { AdMetricsTable } from "@/components/marketing/ad-metrics-table";
 import { tiktokAccounts, tiktokCampaigns } from "@/mocks/marketing/tiktok-ads";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function TikTokAdsView() {
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="A integração com TikTok Ads" />
       <Card className="flex flex-col items-start gap-4 border-brand/20 bg-brand-soft/40 p-5 sm:flex-row sm:items-center">
         <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-ink text-white">
           <Music2 className="size-6" aria-hidden />

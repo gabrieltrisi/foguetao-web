@@ -12,6 +12,7 @@ import { CommissionStatusBadge } from "@/components/marketing/badges";
 import { formatCurrency } from "@/lib/format";
 import { commissions, commissionStatusLabel } from "@/mocks/marketing/affiliates";
 import type { Commission, CommissionStatus } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 const STATUS_OPTIONS = [
   { value: "todas", label: "Todos os status" },
@@ -38,6 +39,7 @@ export function CommissionsView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="Comissões" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="flex items-center gap-3 p-5"><span className="flex size-10 items-center justify-center rounded-lg bg-success/10 text-success"><DollarSign className="size-5" aria-hidden /></span><KPIBlock label="Pago" value={formatCurrency(totalPaid)} /></Card>
         <Card className="p-5"><KPIBlock label="A pagar" value={formatCurrency(totalPending)} /></Card>

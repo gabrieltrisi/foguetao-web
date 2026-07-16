@@ -16,6 +16,7 @@ import { formatCurrency, formatNumber } from "@/lib/format";
 import { campaigns, campaignStatusLabel, objectiveLabel } from "@/mocks/marketing/campaigns";
 import { channelLabels } from "@/mocks/marketing/performance";
 import type { Campaign, CampaignStatus } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 const STATUS_OPTIONS = [
   { value: "todas", label: "Todos os status" },
@@ -73,6 +74,7 @@ export function CampaignsView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="Campanhas" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="flex items-center gap-3 p-5"><span className="flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand"><Megaphone className="size-5" aria-hidden /></span><KPIBlock label="Ativas" value={formatNumber(active.length)} /></Card>
         <Card className="p-5"><KPIBlock label="Investido" value={formatCurrency(invested)} delta="+8,2%" trend="up" /></Card>

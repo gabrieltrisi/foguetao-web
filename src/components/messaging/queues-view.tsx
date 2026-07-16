@@ -6,7 +6,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/business/badges";
 import { queues } from "@/mocks/messaging/queues";
 import type { Queue, QueueStatus } from "@/types/messaging";
-import { PreviewBanner } from "@/components/messaging/preview-banner";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 const statusTone: Record<QueueStatus, "success" | "warning" | "neutral"> = {
   online: "success",
@@ -38,7 +38,7 @@ export function QueuesView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PreviewBanner feature="Filas de atendimento" />
+      <PreviewBanner feature="Filas de atendimento" note="Conversas, chat e contas de mensageria já usam dados reais." />
       <DataTable
       data={queues}
       columns={columns}

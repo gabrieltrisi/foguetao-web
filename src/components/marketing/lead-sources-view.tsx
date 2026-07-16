@@ -12,6 +12,7 @@ import { MetricComparison } from "@/components/marketing/comparison";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { leadSources } from "@/mocks/marketing/lead-sources";
 import type { LeadSource } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function LeadSourcesView() {
   const [view, setView] = React.useState<"table" | "cards">("table");
@@ -27,6 +28,7 @@ export function LeadSourcesView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="Origens de lead" />
       <Card className="p-5">
         <p className="mb-4 font-display text-h3 font-semibold text-ink">Leads por origem</p>
         <MetricComparison items={leadSources.map((s) => ({ id: s.id, label: s.name, barValue: s.leads, value: formatNumber(s.leads), sub: `${s.conversion}%` }))} />

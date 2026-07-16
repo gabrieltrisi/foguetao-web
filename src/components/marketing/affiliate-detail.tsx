@@ -22,6 +22,7 @@ import { useToast } from "@/components/ui/toast";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { affiliateStatusLabel, affiliateStatusTone, commissions } from "@/mocks/marketing/affiliates";
 import type { Affiliate } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function AffiliateDetail({ affiliate: a }: { affiliate: Affiliate }) {
   const { toast } = useToast();
@@ -64,6 +65,7 @@ export function AffiliateDetail({ affiliate: a }: { affiliate: Affiliate }) {
       actions={<Button size="sm" onClick={copy}>{copied ? <Check /> : <Link2 />}{copied ? "Copiado!" : "Copiar link"}</Button>}
       aside={aside}
     >
+      <PreviewBanner feature="Afiliados" />
       <Tabs defaultValue="resumo">
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>

@@ -5,10 +5,12 @@ import { PerformanceChartMock } from "@/components/marketing/performance-chart";
 import { MetricComparison, AttributionCard } from "@/components/marketing/comparison";
 import { formatCurrency } from "@/lib/format";
 import { channelLabels, channelPerformance, monthlySeries, performanceMetrics } from "@/mocks/marketing/performance";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function PerformanceView() {
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="A performance de marketing (investimento, receita e atribuição por canal)" />
       <PeriodFilterStrip />
 
       {/* KPIs completos */}

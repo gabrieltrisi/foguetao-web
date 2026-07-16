@@ -1,3 +1,11 @@
+/**
+ * MOCK DE PREVIEW - Afiliados e comissoes NAO existe no backend.
+ *
+ * Auditado na Sprint 1.4: nao ha model no Prisma, controller nem endpoint
+ * para nenhum dominio de Marketing. As permissoes (campaigns.*, ads.*,
+ * affiliates.*) existem no catalogo RBAC, mas sao ORFAS - permissao nao e
+ * contrato. Estes dados sao apenas demonstracao e NADA e persistido.
+ */
 import type { Affiliate, AffiliateStatus, Commission, CommissionStatus } from "@/types/marketing";
 
 const TIERS: Affiliate["tier"][] = ["Diamante", "Ouro", "Ouro", "Prata", "Prata", "Bronze", "Bronze", "Bronze"];

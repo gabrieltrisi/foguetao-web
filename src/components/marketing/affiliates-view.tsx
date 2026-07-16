@@ -13,6 +13,7 @@ import { AffiliateRanking } from "@/components/marketing/affiliate-ranking";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { affiliates, affiliateStatusLabel, affiliateStatusTone } from "@/mocks/marketing/affiliates";
 import type { Affiliate } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function AffiliatesView() {
   const totalRevenue = affiliates.reduce((s, a) => s + a.revenue, 0);
@@ -44,6 +45,7 @@ export function AffiliatesView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="Afiliados" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="flex items-center gap-3 p-5"><span className="flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand"><Users className="size-5" aria-hidden /></span><KPIBlock label="Afiliados" value={formatNumber(affiliates.length)} /></Card>
         <Card className="p-5"><KPIBlock label="Vendas" value={formatNumber(totalSales)} delta="+11%" trend="up" /></Card>

@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { formatNumber } from "@/lib/format";
 import { marketingForms, formStatusLabel, formStatusTone } from "@/mocks/marketing/forms";
 import type { MarketingForm } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function FormsView() {
   const { toast } = useToast();
@@ -30,6 +31,7 @@ export function FormsView() {
 
   return (
     <div className="flex flex-col gap-4">
+      <PreviewBanner feature="Formulários" />
       <div className="flex justify-end">
         <Sheet>
           <SheetTrigger asChild>

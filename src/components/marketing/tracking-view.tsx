@@ -17,6 +17,7 @@ import { ChannelBadge } from "@/components/marketing/badges";
 import { formatNumber } from "@/lib/format";
 import { pixels, trackingDomains, trackingEvents } from "@/mocks/marketing/tracking";
 import type { Pixel } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 const pixelStatus: Record<Pixel["status"], { label: string; tone: "success" | "neutral" | "danger" }> = {
   active: { label: "Ativo", tone: "success" },
@@ -27,6 +28,7 @@ const pixelStatus: Record<Pixel["status"], { label: string; tone: "success" | "n
 export function TrackingView() {
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="O rastreamento (pixels e eventos)" />
       {/* Pixels */}
       <div>
         <p className="mb-3 font-display text-h3 font-semibold text-ink">Pixels & tags</p>

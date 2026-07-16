@@ -15,6 +15,7 @@ import { formatCurrency, formatNumber } from "@/lib/format";
 import { objectiveLabel } from "@/mocks/marketing/campaigns";
 import { monthlySeries } from "@/mocks/marketing/performance";
 import type { Campaign } from "@/types/marketing";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function CampaignDetail({ campaign: c }: { campaign: Campaign }) {
   const { toast } = useToast();
@@ -75,6 +76,7 @@ export function CampaignDetail({ campaign: c }: { campaign: Campaign }) {
       }
       aside={aside}
     >
+      <PreviewBanner feature="Campanhas" />
       <Tabs defaultValue="resumo">
         <TabsList className="overflow-x-auto">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>

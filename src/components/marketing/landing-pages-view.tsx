@@ -8,6 +8,7 @@ import { FilterBar } from "@/components/ui/filter-bar";
 import { LandingPageCard } from "@/components/marketing/landing-page-card";
 import { formatNumber } from "@/lib/format";
 import { landingPages } from "@/mocks/marketing/landing-pages";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 export function LandingPagesView() {
   const [query, setQuery] = React.useState("");
@@ -19,6 +20,7 @@ export function LandingPagesView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="Landing pages" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="p-5"><KPIBlock label="Páginas" value={formatNumber(landingPages.length)} /></Card>
         <Card className="p-5"><KPIBlock label="Visualizações" value={formatNumber(views)} delta="+9,4%" trend="up" /></Card>

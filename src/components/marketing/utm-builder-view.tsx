@@ -11,6 +11,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { QRCodeMock } from "@/components/messaging/qr-mock";
 import { useToast } from "@/components/ui/toast";
 import { utmHistory, utmMediums, utmSources } from "@/mocks/marketing/utm";
+import { PreviewBanner } from "@/components/ui/preview-banner";
 
 function slugify(v: string) {
   return v.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "");
@@ -50,6 +51,7 @@ export function UTMBuilderView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="O histórico de UTMs" />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Form */}
         <Card className="p-5">

@@ -1,3 +1,11 @@
+/**
+ * MOCK DE PREVIEW - A performance de marketing NAO existe no backend.
+ *
+ * Auditado na Sprint 1.4: nao ha model no Prisma, controller nem endpoint
+ * para nenhum dominio de Marketing. As permissoes (campaigns.*, ads.*,
+ * affiliates.*) existem no catalogo RBAC, mas sao ORFAS - permissao nao e
+ * contrato. Estes dados sao apenas demonstracao e NADA e persistido.
+ */
 import { formatCurrency, formatNumber } from "@/lib/format";
 import type { ChannelPerformance, MarketingChannel, PerformanceMetric } from "@/types/marketing";
 import type { Trend } from "@/types";
