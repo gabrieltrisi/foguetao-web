@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { PeriodFilter } from "@/components/ui/period-filter";
-import { periodOptions } from "@/mocks/dashboard";
+import { periodOptions } from "@/lib/period";
 import type { PeriodValue } from "@/types";
 
 /** Filtro de período reutilizável para páginas de performance. */

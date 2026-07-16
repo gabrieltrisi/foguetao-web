@@ -496,6 +496,22 @@ export function parseCreateTagBody(body: unknown): Record<string, unknown> {
   return parsed.data;
 }
 
+/* ---------- Métricas comerciais (Sprint 1.2) ---------- */
+
+/**
+ * Filtros de GET /metrics/summary — espelha o MetricsSummaryQueryDto: só
+ * `pipelineId`, `from` e `to`. Nada de agrupamento ou métrica extra.
+ */
+const metricsSummaryQuerySchema = z.object({
+  pipelineId: uuidSchema.optional(),
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
+});
+
+export function parseMetricsSummaryQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(metricsSummaryQuerySchema, params);
+}
+
 /* ---------- Campos personalizados (Sprint 1.1C) ---------- */
 
 /** Os 12 tipos REAIS do enum CustomFieldType. Não existe CURRENCY. */

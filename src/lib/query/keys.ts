@@ -48,6 +48,9 @@ export const queryKeys = {
 
     tasks: (filters?: unknown) => ["crm", "tasks", filters ?? {}] as const,
     task: (id: string) => ["crm", "task", id] as const,
+
+    /** Resumo comercial do dashboard, por filtro (pipeline + período). */
+    metricsSummary: (filters?: unknown) => ["crm", "metrics", "summary", filters ?? {}] as const,
   },
 
   integrations: {

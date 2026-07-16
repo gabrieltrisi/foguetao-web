@@ -1,7 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
-import { recentConversations } from "@/mocks/dashboard";
+import { recentConversations } from "@/mocks/messaging/recent-conversations";
 
+/**
+ * Widget do módulo MESSAGING exibido no Dashboard — ainda MOCKADO, porque
+ * Messaging não tem contrato integrado. Está desacoplado de propósito: não
+ * recebe nem mistura nenhum dado do CRM. Será substituído integralmente na
+ * Sprint 1.3. Ver `@/mocks/messaging/recent-conversations`.
+ */
 export function RecentConversations() {
   return (
     <Card className="flex flex-col p-5">

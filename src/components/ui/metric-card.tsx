@@ -28,10 +28,13 @@ export function MetricCard({ metric }: { metric: Metric }) {
         ) : null}
       </div>
       <p className="mt-2 font-display text-h1 font-bold text-ink">{metric.value}</p>
-      <div className="mt-2 flex items-center gap-1">
-        <TrendIndicator value={metric.deltaPercent} trend={metric.trend} />
-        <span className="text-small text-ink-3">vs. período anterior</span>
-      </div>
+      {/* Sem delta no contrato → o card omite a tendência em vez de inventá-la. */}
+      {metric.deltaPercent !== undefined && metric.trend ? (
+        <div className="mt-2 flex items-center gap-1">
+          <TrendIndicator value={metric.deltaPercent} trend={metric.trend} />
+          <span className="text-small text-ink-3">vs. período anterior</span>
+        </div>
+      ) : null}
     </Card>
   );
 }

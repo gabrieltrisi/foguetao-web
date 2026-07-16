@@ -8,9 +8,13 @@ export type Metric = {
   label: string;
   /** Valor já formatado para exibição. */
   value: string;
-  /** Variação percentual vs. período anterior. */
-  deltaPercent: number;
-  trend: Trend;
+  /**
+   * Variação percentual vs. período anterior. OPCIONAL: `GET /metrics/summary`
+   * não devolve comparação entre períodos, então métricas reais do CRM não têm
+   * delta. Sem `deltaPercent`/`trend`, o card simplesmente não exibe tendência.
+   */
+  deltaPercent?: number;
+  trend?: Trend;
   hint?: string;
 };
 
@@ -18,15 +22,17 @@ export type FunnelStage = {
   id: string;
   label: string;
   count: number;
-  amount: number;
+  /** Opcional: `byStage` devolve apenas `{ stageId, count }` — não há valor por etapa. */
+  amount?: number;
 };
 
 export type PerformanceKpi = {
   id: string;
   label: string;
   value: string;
-  delta: string;
-  trend: Trend;
+  /** Opcional pelo mesmo motivo de `Metric.deltaPercent`: não há comparação no contrato. */
+  delta?: string;
+  trend?: Trend;
 };
 
 export type ActivityItem = {

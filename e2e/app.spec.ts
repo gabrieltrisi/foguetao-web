@@ -47,7 +47,10 @@ test.describe("Telas autenticadas", () => {
   test("dashboard exibe título e métricas", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Visão geral", level: 1 })).toBeVisible();
-    await expect(page.getByText("12.482")).toBeVisible();
+    // Os KPIs vêm de /metrics/summary (Sprint 1.2). Antes este teste checava
+    // "12.482", um valor do mock que não existe mais.
+    await expect(page.getByText("Oportunidades abertas", { exact: true })).toBeVisible();
+    await expect(page.getByText("Win rate", { exact: true })).toBeVisible();
     await expect(page.getByText("Funil de vendas")).toBeVisible();
   });
 });
