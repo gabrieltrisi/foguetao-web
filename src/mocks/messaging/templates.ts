@@ -1,3 +1,9 @@
+/**
+ * MOCK DE PREVIEW - Templates de mensagem NAO existe no backend: nao ha model, endpoint
+ * nem permissao (auditado na Sprint 1.3). Estes dados sao apenas de
+ * demonstracao e NADA e persistido. Serao substituidos quando o dominio for
+ * criado no backend. Nenhum dado real de Conversas/Chat/Contas passa por aqui.
+ */
 import type { Template } from "@/types/messaging";
 
 export const templateCategories = ["Todos", "Saudação", "Vendas", "Suporte", "Financeiro", "Pós-venda"];

@@ -53,6 +53,16 @@ export const queryKeys = {
     metricsSummary: (filters?: unknown) => ["crm", "metrics", "summary", filters ?? {}] as const,
   },
 
+  /** Messaging (Sprint 1.3). Conversas e mensagens paginam por cursor. */
+  messaging: {
+    conversations: (filters?: unknown) => ["messaging", "conversations", filters ?? {}] as const,
+    conversation: (id: string) => ["messaging", "conversation", id] as const,
+    messages: (conversationId: string, filters?: unknown) =>
+      ["messaging", "conversation", conversationId, "messages", filters ?? {}] as const,
+    message: (id: string) => ["messaging", "message", id] as const,
+    accounts: () => ["messaging", "accounts"] as const,
+  },
+
   integrations: {
     /** Catálogo do produto: muda com deploy, não com uso → staleTime longo. */
     catalog: (filters?: unknown) => ["integrations", "catalog", filters ?? {}] as const,
@@ -94,6 +104,20 @@ export const crmInvalidation = {
   tag: (id: string) => ["crm", "tag", id] as const,
   /** Prefixo das definições de campos personalizados (todas as entidades). */
   allCustomFieldDefs: ["crm", "custom-fields"] as const,
+};
+
+/**
+ * Prefixos de invalidação de messaging. Domínio separado: invalidar conversas
+ * nunca toca CRM nem integrações.
+ */
+export const messagingInvalidation = {
+  /** Prefixo de TODAS as listas de conversas (qualquer filtro/cursor). */
+  allConversations: ["messaging", "conversations"] as const,
+  conversation: (id: string) => ["messaging", "conversation", id] as const,
+  /** Prefixo das mensagens de UMA conversa (qualquer filtro). */
+  messages: (conversationId: string) =>
+    ["messaging", "conversation", conversationId, "messages"] as const,
+  allAccounts: ["messaging", "accounts"] as const,
 };
 
 /**

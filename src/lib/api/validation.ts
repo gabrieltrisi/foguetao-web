@@ -496,6 +496,82 @@ export function parseCreateTagBody(body: unknown): Record<string, unknown> {
   return parsed.data;
 }
 
+/* ---------- Messaging (Sprint 1.3) ---------- */
+
+/** Paginação por cursor do messaging: cursor opaco + limit 1..100. */
+const MESSAGING_MAX_PAGE = 100;
+
+/** Espelha o ListConversationsQueryDto (cursor + filtros reais). */
+const conversationListQuerySchema = z.object({
+  cursor: z.string().max(500).optional(),
+  limit: z.coerce.number().int().min(1).max(MESSAGING_MAX_PAGE).optional(),
+  messagingAccountId: uuidSchema.optional(),
+  status: z.enum(["OPEN", "PENDING", "RESOLVED", "ARCHIVED", "BLOCKED"]).optional(),
+  type: z.enum(["DIRECT", "GROUP", "BROADCAST"]).optional(),
+  assignedToUserId: uuidSchema.optional(),
+  contactId: uuidSchema.optional(),
+  unreadOnly: z.coerce.boolean().optional(),
+  search: z.string().max(200).optional(),
+  updatedFrom: z.string().max(40).optional(),
+  updatedTo: z.string().max(40).optional(),
+});
+
+export function parseConversationListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(conversationListQuerySchema, params);
+}
+
+/** Espelha o ListMessagesQueryDto. */
+const messageListQuerySchema = z.object({
+  cursor: z.string().max(500).optional(),
+  limit: z.coerce.number().int().min(1).max(MESSAGING_MAX_PAGE).optional(),
+  direction: z.enum(["INBOUND", "OUTBOUND", "SYSTEM"]).optional(),
+  type: z.string().max(40).optional(),
+  status: z.string().max(40).optional(),
+  before: z.string().max(40).optional(),
+  after: z.string().max(40).optional(),
+});
+
+export function parseMessageListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(messageListQuerySchema, params);
+}
+
+/**
+ * Espelha o SendMessageDto. Só os 3 tipos FUNCIONAIS podem ser enviados; o
+ * `clientMessageId` é a chave de idempotência e tem formato restrito.
+ */
+const sendMessageSchema = z.object({
+  messagingAccountId: uuidSchema,
+  to: z.string().min(3).max(40),
+  type: z.enum(["TEXT", "IMAGE", "DOCUMENT"]),
+  content: z.record(z.string(), z.unknown()),
+  clientMessageId: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[a-zA-Z0-9._:-]+$/, { message: "clientMessageId contém caracteres inválidos" }),
+  replyToMessageId: uuidSchema.optional(),
+  contactId: uuidSchema.optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export function parseSendMessageBody(body: unknown): Record<string, unknown> {
+  const parsed = sendMessageSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Mensagem inválida",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/** Corpo de POST /messaging/conversations/:id/assign. */
+export function parseAssignConversationBody(body: unknown): { assignedToUserId: string } {
+  const parsed = z.object({ assignedToUserId: uuidSchema }).safeParse(body);
+  if (!parsed.success) fail("assignedToUserId inválido", ["assignedToUserId deve ser um UUID"]);
+  return parsed.data;
+}
+
 /* ---------- Métricas comerciais (Sprint 1.2) ---------- */
 
 /**

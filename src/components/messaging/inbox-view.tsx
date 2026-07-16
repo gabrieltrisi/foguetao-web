@@ -10,6 +10,7 @@ import { EntityAvatar } from "@/components/business/entity-avatar";
 import { useToast } from "@/components/ui/toast";
 import { inboxQueue, queues } from "@/mocks/messaging/queues";
 import type { Priority } from "@/types";
+import { PreviewBanner } from "@/components/messaging/preview-banner";
 
 type Row = {
   id: string;
@@ -63,6 +64,7 @@ export function InboxView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PreviewBanner feature="A caixa de entrada por filas" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="flex items-center gap-3 p-5">
           <span className="flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand"><Inbox className="size-5" aria-hidden /></span>

@@ -1,0 +1,123 @@
+import "server-only";
+import { backendFetch } from "@/lib/api/http";
+import { buildQuery, type QueryParams } from "@/lib/api/query-string";
+import {
+  conversationListSchema,
+  conversationDetailSchema,
+  conversationSummarySchema,
+  messageListSchema,
+  messageDetailSchema,
+  messagingAccountSchema,
+  messagingAccountListSchema,
+} from "@/types/api/messaging";
+
+interface Ctx {
+  token: string;
+  companyId: string;
+}
+
+/** Envio/cancelamento devolvem a mensagem; só o detalhe traz `content`. */
+const messageSummaryOrDetail = messageDetailSchema.partial({ content: true });
+
+/** Messaging (Sprint 1.3) — server → backend, validado por Zod. */
+export const messagingService = {
+  /* Conversas */
+  listConversations: ({ token, companyId }: Ctx, params?: QueryParams) =>
+    backendFetch(`/messaging/conversations${buildQuery(params)}`, {
+      token,
+      companyId,
+      schema: conversationListSchema,
+    }),
+  getConversation: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}`, {
+      token,
+      companyId,
+      schema: conversationDetailSchema,
+    }),
+  assignConversation: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/messaging/conversations/${id}/assign`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+      schema: conversationSummarySchema,
+    }),
+  resolveConversation: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}/resolve`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: conversationSummarySchema,
+    }),
+  reopenConversation: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}/reopen`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: conversationSummarySchema,
+    }),
+  archiveConversation: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}/archive`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: conversationSummarySchema,
+    }),
+  markConversationRead: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}/read`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: conversationSummarySchema,
+    }),
+
+  /* Mensagens */
+  listMessages: ({ token, companyId }: Ctx, conversationId: string, params?: QueryParams) =>
+    backendFetch(`/messaging/conversations/${conversationId}/messages${buildQuery(params)}`, {
+      token,
+      companyId,
+      schema: messageListSchema,
+    }),
+  getMessage: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/messages/${id}`, { token, companyId, schema: messageDetailSchema }),
+  /** 202 ACCEPTED — envio é assíncrono. */
+  sendMessage: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/messaging/messages`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+      schema: messageSummaryOrDetail,
+    }),
+  cancelMessage: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/messages/${id}/cancel`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: messageSummaryOrDetail,
+    }),
+
+  /* Contas */
+  listAccounts: ({ token, companyId }: Ctx, params?: QueryParams) =>
+    backendFetch(`/messaging/accounts${buildQuery(params)}`, {
+      token,
+      companyId,
+      schema: messagingAccountListSchema,
+    }),
+  connectAccount: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/accounts/${id}/connect`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: messagingAccountSchema,
+    }),
+  disconnectAccount: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/accounts/${id}/disconnect`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: messagingAccountSchema,
+    }),
+  testAccount: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/accounts/${id}/test`, { method: "POST", token, companyId }),
+};

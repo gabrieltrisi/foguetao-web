@@ -1,3 +1,9 @@
+/**
+ * MOCK DE PREVIEW - Filas de atendimento NAO existe no backend: nao ha model, endpoint
+ * nem permissao (auditado na Sprint 1.3). Estes dados sao apenas de
+ * demonstracao e NADA e persistido. Serao substituidos quando o dominio for
+ * criado no backend. Nenhum dado real de Conversas/Chat/Contas passa por aqui.
+ */
 import type { Queue } from "@/types/messaging";
 
 export const queues: Queue[] = [

@@ -1,53 +1,19 @@
-/** Tipos do módulo de Comunicação (dados mockados). */
+/**
+ * Tipos das telas de Comunicação que seguem em PREVIEW.
+ *
+ * Conversas, chat e contas de mensageria passaram a usar os contratos reais —
+ * os tipos deles vivem em `@/types/api/messaging` (Zod, shape do backend). O
+ * que restou aqui pertence a Etiquetas, Filas e Templates, que ainda NÃO têm
+ * backend (nem model, nem endpoint — auditado na Sprint 1.3) e por isso são
+ * telas de demonstração, sem persistência.
+ *
+ * Os tipos antigos de Conversation/Message/WhatsAppAccount foram REMOVIDOS:
+ * eram pré-formatados para a UI (`time: "10:42"`, `lastSync: "há 2 min"`) e não
+ * correspondiam a contrato nenhum.
+ */
 import type { Channel } from "@/components/business/badges";
 
 export type { Channel };
-
-export type ConversationStatus = "open" | "pending" | "closed";
-
-export type ConversationLabel = { id: string; name: string; color: LabelColor };
-
-export type Conversation = {
-  id: string;
-  name: string;
-  channel: Channel;
-  preview: string;
-  time: string;
-  unread: number;
-  status: ConversationStatus;
-  labelIds: string[];
-  assignee: string;
-  online: boolean;
-};
-
-export type MessageAuthor = "contact" | "agent" | "system";
-export type MessageType = "text" | "image" | "document" | "audio" | "system";
-
-export type Message = {
-  id: string;
-  conversationId: string;
-  author: MessageAuthor;
-  type: MessageType;
-  /** Texto (text/system) ou legenda. */
-  content: string;
-  time: string;
-  /** document */
-  fileName?: string;
-  fileSize?: string;
-  /** audio */
-  duration?: string;
-  read?: boolean;
-};
-
-export type AccountStatus = "connected" | "disconnected" | "pending";
-
-export type WhatsAppAccount = {
-  id: string;
-  name: string;
-  number: string;
-  status: AccountStatus;
-  lastSync: string;
-};
 
 export type Template = {
   id: string;

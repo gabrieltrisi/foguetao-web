@@ -13,6 +13,7 @@ import { Modal, ModalClose, ModalContent, ModalTrigger } from "@/components/ui/m
 import { useToast } from "@/components/ui/toast";
 import { templateCategories, templates } from "@/mocks/messaging/templates";
 import type { Template } from "@/types/messaging";
+import { PreviewBanner } from "@/components/messaging/preview-banner";
 
 export function TemplatesView() {
   const { toast } = useToast();
@@ -32,6 +33,7 @@ export function TemplatesView() {
 
   return (
     <div className="flex flex-col gap-4">
+      <PreviewBanner feature="Templates de mensagem" />
       <FilterBar>
         <SearchInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar templates…" containerClassName="w-full max-w-xs" />
         <Pill active={onlyFav} onClick={() => setOnlyFav((v) => !v)} className="ml-auto">

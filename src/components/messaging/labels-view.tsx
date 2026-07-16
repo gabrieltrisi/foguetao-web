@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { labelColorClasses } from "@/components/messaging/label-chip";
 import { labels as initialLabels } from "@/mocks/messaging/labels";
 import type { Label, LabelColor } from "@/types/messaging";
+import { PreviewBanner } from "@/components/messaging/preview-banner";
 
 const COLORS: LabelColor[] = ["brand", "info", "success", "warning", "danger", "neutral"];
 
@@ -92,11 +93,13 @@ function LabelDialog({
 
 export function LabelsView() {
   const { toast } = useToast();
+  // Estado LOCAL: não há endpoint de etiquetas — nada é persistido (Preview).
   const [labels, setLabels] = React.useState<Label[]>(initialLabels);
   const maxCount = Math.max(...labels.map((l) => l.count), 1);
 
   return (
     <div className="flex flex-col gap-4">
+      <PreviewBanner feature="Etiquetas de conversa" />
       <div className="flex justify-end">
         <LabelDialog
           trigger={
