@@ -53,10 +53,23 @@ export const queryKeys = {
     metricsSummary: (filters?: unknown) => ["crm", "metrics", "summary", filters ?? {}] as const,
   },
 
-  /** Marketing (Sprint 1.5A-1). Campanhas: paginação por offset. */
+  /** Marketing (Sprints 1.5A-1 e 1.5A-2). Campanhas: paginação por offset. */
   marketing: {
     campaigns: (filters?: unknown) => ["marketing", "campaigns", filters ?? {}] as const,
     campaign: (id: string) => ["marketing", "campaign", id] as const,
+    /** Catálogo de origens: pequeno e ordenado, sem paginação. */
+    leadSources: (filters?: unknown) => ["marketing", "lead-sources", filters ?? {}] as const,
+    leadSource: (id: string) => ["marketing", "lead-source", id] as const,
+    /**
+     * Histórico de atribuição de UM contato. Fica sob `marketing` (e não `crm`)
+     * porque o dono do domínio é Marketing — invalidar contatos não deve
+     * refazer esta query, e vice-versa.
+     */
+    contactAttributions: (contactId: string) =>
+      ["marketing", "attributions", "contact", contactId] as const,
+    /** Leads de UMA campanha (contagem de contatos, sem métrica de mídia). */
+    campaignAttributions: (campaignId: string, filters?: unknown) =>
+      ["marketing", "attributions", "campaign", campaignId, filters ?? {}] as const,
   },
 
   /** Messaging (Sprint 1.3). Conversas e mensagens paginam por cursor. */
@@ -120,6 +133,15 @@ export const marketingInvalidation = {
   /** Prefixo de TODAS as listas de campanhas (qualquer filtro). */
   allCampaigns: ["marketing", "campaigns"] as const,
   campaign: (id: string) => ["marketing", "campaign", id] as const,
+  /** Prefixo do catálogo de origens (qualquer filtro). */
+  allLeadSources: ["marketing", "lead-sources"] as const,
+  leadSource: (id: string) => ["marketing", "lead-source", id] as const,
+  /** Prefixo de TODA atribuição — contatos e campanhas. */
+  allAttributions: ["marketing", "attributions"] as const,
+  contactAttributions: (contactId: string) =>
+    ["marketing", "attributions", "contact", contactId] as const,
+  campaignAttributions: (campaignId: string) =>
+    ["marketing", "attributions", "campaign", campaignId] as const,
 };
 
 /**

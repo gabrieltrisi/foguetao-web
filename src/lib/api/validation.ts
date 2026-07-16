@@ -251,7 +251,9 @@ const connectionListQuerySchema = z.object({
     .enum(["DRAFT", "CONNECTING", "CONNECTED", "DEGRADED", "ERROR", "DISCONNECTED", "REVOKED"])
     .optional(),
   environment: z.enum(["SANDBOX", "PRODUCTION"]).optional(),
-  sortBy: z.enum(["name", "createdAt", "updatedAt", "lastSuccessfulAt", "lastFailureAt"]).optional(),
+  sortBy: z
+    .enum(["name", "createdAt", "updatedAt", "lastSuccessfulAt", "lastFailureAt"])
+    .optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
 });
 
@@ -850,4 +852,153 @@ export function parseUpdateTagBody(body: unknown): Record<string, unknown> {
     );
   }
   return parsed.data;
+}
+
+/* ---------- Marketing / Origens de lead e atribuição (Sprint 1.5A-2) ---------- */
+
+const leadSourceKinds = [
+  "INSTAGRAM",
+  "FACEBOOK",
+  "GOOGLE",
+  "TIKTOK",
+  "WHATSAPP",
+  "EMAIL",
+  "WEBSITE",
+  "LANDING_PAGE",
+  "FORM",
+  "REFERRAL",
+  "AFFILIATE",
+  "ORGANIC",
+  "DIRECT",
+  "IMPORT",
+  "OTHER",
+] as const;
+
+const leadSourceListQuerySchema = z.object({
+  active: z.enum(["true", "false"]).optional(),
+  kind: z.enum(leadSourceKinds).optional(),
+});
+
+export function parseLeadSourceListQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(leadSourceListQuerySchema, params);
+}
+
+const createLeadSourceSchema = z.object({
+  name: z.string().min(1).max(120),
+  kind: z.enum(leadSourceKinds).optional(),
+  description: z.string().max(255).optional(),
+  active: z.boolean().optional(),
+  position: z.number().int().min(0).max(9999).optional(),
+});
+
+export function parseCreateLeadSourceBody(body: unknown): Record<string, unknown> {
+  const parsed = createLeadSourceSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da origem inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+const updateLeadSourceSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    kind: z.enum(leadSourceKinds),
+    description: z.string().max(255).nullable(),
+    active: z.boolean(),
+    position: z.number().int().min(0).max(9999),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: "informe ao menos um campo" });
+
+export function parseUpdateLeadSourceBody(body: unknown): Record<string, unknown> {
+  const parsed = updateLeadSourceSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da origem inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/** URL de captura: http(s) absoluta. O backend ainda normaliza e valida. */
+const captureUrlSchema = z
+  .string()
+  .max(1024)
+  .refine(
+    (raw) => {
+      try {
+        return ["http:", "https:"].includes(new URL(raw).protocol);
+      } catch {
+        return false;
+      }
+    },
+    { message: "deve ser uma URL http(s) absoluta" },
+  );
+
+/**
+ * Espelha o CreateAttributionDto. NÃO aceita cookie, header, token, IP,
+ * user-agent nem payload bruto: o que não está aqui não sai da rede interna.
+ */
+const createAttributionSchema = z.object({
+  leadSourceId: uuidSchema,
+  campaignId: uuidSchema.optional(),
+  medium: z.string().max(120).optional(),
+  utmSource: z.string().max(200).optional(),
+  utmMedium: z.string().max(200).optional(),
+  utmCampaign: z.string().max(200).optional(),
+  utmTerm: z.string().max(200).optional(),
+  utmContent: z.string().max(200).optional(),
+  referrerUrl: captureUrlSchema.optional(),
+  landingUrl: captureUrlSchema.optional(),
+  externalClickId: z.string().max(255).optional(),
+  capturedAt: z.string().datetime({ offset: true }).optional(),
+});
+
+export function parseCreateAttributionBody(body: unknown): Record<string, unknown> {
+  const parsed = createAttributionSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da atribuição inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+/**
+ * Só o VÍNCULO. UTMs, URLs e `capturedAt` são imutáveis — não estão aqui, então
+ * `strict()` rejeita quem tentar enviá-los, sem chegar ao backend.
+ */
+const updateAttributionSchema = z
+  .object({
+    leadSourceId: uuidSchema,
+    campaignId: uuidSchema.nullable(),
+    medium: z.string().max(120).nullable(),
+  })
+  .partial()
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: "informe ao menos um campo" });
+
+export function parseUpdateAttributionBody(body: unknown): Record<string, unknown> {
+  const parsed = updateAttributionSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Só o vínculo pode ser corrigido: UTMs e data de captura são imutáveis",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
+const campaignAttributionsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(CRM_MAX_LIMIT).optional(),
+});
+
+export function parseCampaignAttributionsQuery(params: Record<string, string | string[]>) {
+  return parseQueryWith(campaignAttributionsQuerySchema, params);
 }

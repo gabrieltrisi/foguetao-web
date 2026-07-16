@@ -5,14 +5,17 @@ import { UTMBuilderView } from "@/components/marketing/utm-builder-view";
 
 export const metadata: Metadata = {
   title: "UTM Builder",
-  description: "Monte links rastreáveis com UTM.",
+  description: "Monte URLs com parâmetros UTM.",
   robots: { index: false, follow: false },
 };
 
 export default function Page() {
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="UTM Builder" description="Monte links rastreáveis com UTM." />
+      <PageHeader
+        title="UTM Builder"
+        description="Monte URLs com parâmetros UTM para identificar a origem dos leads."
+      />
       <MarketingNav />
       <UTMBuilderView />
     </div>

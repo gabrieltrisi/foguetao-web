@@ -1,7 +1,16 @@
 import "server-only";
 import { backendFetch } from "@/lib/api/http";
 import { buildQuery, type QueryParams } from "@/lib/api/query-string";
-import { campaignListSchema, campaignSchema, type CampaignAction } from "@/types/api/marketing";
+import {
+  campaignAttributionsSchema,
+  campaignListSchema,
+  campaignSchema,
+  contactAttributionsSchema,
+  attributionSchema,
+  leadSourceListSchema,
+  leadSourceSchema,
+  type CampaignAction,
+} from "@/types/api/marketing";
 
 interface Ctx {
   token: string;
@@ -38,5 +47,80 @@ export const marketingService = {
       token,
       companyId,
       schema: campaignSchema,
+    }),
+};
+
+/** Origens de lead e atribuição (Sprint 1.5A-2) — server → backend. */
+export const attributionService = {
+  listLeadSources: ({ token, companyId }: Ctx, params?: QueryParams) =>
+    backendFetch(`/lead-sources${buildQuery(params)}`, {
+      token,
+      companyId,
+      schema: leadSourceListSchema,
+    }),
+  getLeadSource: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/lead-sources/${id}`, { token, companyId, schema: leadSourceSchema }),
+  /** Cria as 15 origens padrão. Idempotente no backend. */
+  setupLeadSources: ({ token, companyId }: Ctx) =>
+    backendFetch(`/lead-sources/setup`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: leadSourceListSchema,
+    }),
+  createLeadSource: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/lead-sources`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+      schema: leadSourceSchema,
+    }),
+  updateLeadSource: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/lead-sources/${id}`, {
+      method: "PATCH",
+      token,
+      companyId,
+      body,
+      schema: leadSourceSchema,
+    }),
+  deleteLeadSource: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/lead-sources/${id}`, { method: "DELETE", token, companyId }),
+
+  /** Histórico do contato + primeiro/último toque (derivados pelo backend). */
+  listContactAttributions: ({ token, companyId }: Ctx, contactId: string) =>
+    backendFetch(`/contacts/${contactId}/attributions`, {
+      token,
+      companyId,
+      schema: contactAttributionsSchema,
+    }),
+  /** 201 nova captura, 200 se idêntica já existia — o backend deduplica. */
+  createAttribution: ({ token, companyId }: Ctx, contactId: string, body: unknown) =>
+    backendFetch(`/contacts/${contactId}/attributions`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+      schema: attributionSchema,
+    }),
+  getAttribution: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/attributions/${id}`, { token, companyId, schema: attributionSchema }),
+  /** Só corrige o vínculo: UTMs são imutáveis. */
+  updateAttribution: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/attributions/${id}`, {
+      method: "PATCH",
+      token,
+      companyId,
+      body,
+      schema: attributionSchema,
+    }),
+  deleteAttribution: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/attributions/${id}`, { method: "DELETE", token, companyId }),
+  /** Leads da campanha: contagem de contatos, nunca métrica de mídia. */
+  listCampaignAttributions: ({ token, companyId }: Ctx, campaignId: string, params?: QueryParams) =>
+    backendFetch(`/campaigns/${campaignId}/attributions${buildQuery(params)}`, {
+      token,
+      companyId,
+      schema: campaignAttributionsSchema,
     }),
 };

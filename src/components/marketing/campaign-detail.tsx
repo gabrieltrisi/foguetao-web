@@ -21,6 +21,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { StatList } from "@/components/business/kpi-block";
 import { DetailPageLayout } from "@/components/patterns/page-patterns";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
+import { CampaignLeadsSection } from "@/components/marketing/campaign-leads-section";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/providers/session-provider";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -232,6 +233,9 @@ export function CampaignDetail({ campaignId }: { campaignId: string }) {
             {c.description ?? "Sem descrição."}
           </p>
         </Card>
+
+        {/* Leads REAIS atribuídos (Sprint 1.5A-2). Contagem de contatos, sem métrica de mídia. */}
+        <CampaignLeadsSection campaignId={c.id} />
       </div>
 
       <ConfirmDialog

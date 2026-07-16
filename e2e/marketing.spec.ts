@@ -3,10 +3,12 @@ import { test, expect, type Page } from "@playwright/test";
 /**
  * Marketing — telas SEM contrato de backend.
  *
- * A Sprint 1.4 provou que não existia domínio de Marketing. A Sprint 1.5A-1
- * criou APENAS o core de campanhas; por isso /campaigns, /campaigns/new e
- * /campaigns/[id] saíram do Preview e são cobertas por `campaigns.spec.ts`.
- * TODAS as demais telas continuam Preview, sem simular persistência.
+ * A Sprint 1.4 provou que não existia domínio de Marketing. Desde então:
+ * - 1.5A-1 tirou /campaigns, /campaigns/new e /campaigns/[id] do Preview
+ *   (cobertas por `campaigns.spec.ts`);
+ * - 1.5A-2 tirou /lead-sources (contrato real) e /utm-builder (é 100%
+ *   client-side e honesto sobre isso) — cobertas por `attribution.spec.ts`.
+ * As demais telas continuam Preview, sem simular persistência.
  */
 
 function trackErrors(page: Page): string[] {
@@ -31,8 +33,6 @@ const routes = [
   "/landing-pages",
   "/landing-pages/lp-1",
   "/tracking",
-  "/utm-builder",
-  "/lead-sources",
   "/forms",
   "/affiliates",
   "/affiliates/aff-1",
@@ -40,7 +40,7 @@ const routes = [
   "/performance",
 ];
 
-const mobileRoutes = ["/meta-ads", "/landing-pages", "/utm-builder", "/affiliates", "/performance"];
+const mobileRoutes = ["/meta-ads", "/landing-pages", "/affiliates", "/performance"];
 
 test.describe("Marketing — desktop 1440", () => {
   for (const route of routes) {
@@ -70,13 +70,6 @@ test.describe("Marketing — mobile 390", () => {
 });
 
 test.describe("Marketing — interações", () => {
-  test("copia link no UTM Builder", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/utm-builder");
-    await page.getByRole("button", { name: "Copiar link" }).click();
-    await expect(page.getByText("Link copiado")).toBeVisible();
-  });
-
   test("exibe ranking de afiliados", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/affiliates");
@@ -95,8 +88,6 @@ test.describe("Marketing — Preview (sem backend)", () => {
     "/landing-pages",
     "/landing-pages/lp-1",
     "/tracking",
-    "/utm-builder",
-    "/lead-sources",
     "/forms",
     "/affiliates",
     "/affiliates/aff-1",

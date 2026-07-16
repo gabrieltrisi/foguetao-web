@@ -92,26 +92,10 @@ export type TrackingEvent = {
 
 export type TrackingDomain = { id: string; domain: string; status: "verified" | "pending" };
 
-export type UTMRecord = {
-  id: string;
-  url: string;
-  source: string;
-  medium: string;
-  campaign: string;
-  createdAt: string;
-};
-
-export type LeadSource = {
-  id: string;
-  name: string;
-  channel: MarketingChannel;
-  leads: number;
-  conversion: number;
-  cpl: number;
-  revenue: number;
-  trend: Trend;
-  delta: string;
-};
+// UTMRecord e LeadSource viviam aqui para os mocks de Preview. Ambos saíram na
+// Sprint 1.5A-2: origem virou contrato real (`@/types/api/marketing`), e o UTM
+// Builder não persiste nada — não havia o que tipar. O LeadSource mockado ainda
+// carregava leads/conversion/cpl/revenue, que não existem em contrato algum.
 
 export type MarketingForm = {
   id: string;

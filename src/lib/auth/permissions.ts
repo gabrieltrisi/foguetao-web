@@ -41,6 +41,14 @@ export const PERMISSIONS = {
   CAMPAIGNS_DELETE: "campaigns.delete",
   CAMPAIGNS_PUBLISH: "campaigns.publish",
 
+  // Origens de lead e atribuição — nomes REAIS do backend (Sprint 1.5A-2).
+  MARKETING_LEAD_SOURCES_READ: "marketing.lead_sources.read",
+  MARKETING_LEAD_SOURCES_MANAGE: "marketing.lead_sources.manage",
+  MARKETING_ATTRIBUTION_READ: "marketing.attribution.read",
+  MARKETING_ATTRIBUTION_CREATE: "marketing.attribution.create",
+  MARKETING_ATTRIBUTION_UPDATE: "marketing.attribution.update",
+  MARKETING_ATTRIBUTION_DELETE: "marketing.attribution.delete",
+
   // Integrações — nomes REAIS do backend (authz/permissions.ts). Não há
   // permissão dedicada a ativar/pausar: o backend usa `update` para ambas.
   INTEGRATIONS_CONNECTIONS_READ: "integrations.connections.read",
