@@ -1,47 +1,68 @@
-import { Rocket } from "lucide-react";
+import * as React from "react";
 import { Logo } from "@/components/brand/logo";
-import { siteConfig } from "@/config/site";
+import { RadarCanvas } from "@/components/site/radar-canvas";
+import { TelemetryLabel } from "@/components/site/primitives";
 
-/** Painel esquerdo do login (marca) — visível apenas em telas médias+. */
-export function LoginHero() {
+interface AuthHeroProps {
+  eyebrow?: string;
+  status?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+}
+
+/**
+ * Painel lateral de autenticação — mesmo idioma do console da landing. Sem
+ * foguete, sem blobs, sem `bg-brand`. Um terminal escuro: o radar autoral
+ * rastreando ao fundo, telemetria e a frase de comando. Só em telas médias+.
+ * Parametrizável para reuso entre login e cadastro.
+ */
+export function LoginHero({
+  eyebrow = "Missão 001 — Autenticação",
+  status = "Terminal · Online",
+  title = (
+    <>
+      Identifique-se para
+      <br />
+      assumir o <span className="text-brand">comando</span>.
+    </>
+  ),
+  description = (
+    <>
+      Acesso restrito ao centro de comando. Suas credenciais abrem o radar, o
+      pipeline e a operação inteira.
+    </>
+  ),
+}: AuthHeroProps) {
   return (
-    <div className="relative hidden overflow-hidden bg-brand p-10 text-white lg:flex lg:flex-col">
-      {/* Formas geométricas discretas derivadas da identidade */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-white/5"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-32 -right-10 size-96 rounded-full bg-brand-dark/40"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute bottom-24 left-16 size-40 rounded-full bg-white/5"
-      />
-
-      <div className="relative z-10">
-        <Logo variant="mono" white />
+    <div className="relative hidden overflow-hidden border-r border-white/8 lg:flex lg:flex-col lg:justify-between lg:p-10">
+      {/* Radar ao fundo, atmosférico */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 opacity-70">
+          <RadarCanvas className="h-full w-full" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-[#08080a]/40" />
       </div>
 
-      <div className="relative z-10 mt-auto">
-        <span
-          aria-hidden
-          className="mb-6 flex size-11 items-center justify-center rounded-xl bg-white/15"
-        >
-          <Rocket className="size-5" />
-        </span>
-        <h2 className="max-w-sm font-display text-[32px] font-bold leading-tight">
-          Sua operação em um só lugar.
+      <div className="relative z-10 flex items-center justify-between">
+        <Logo variant="mono" white className="h-6 w-auto" />
+        <TelemetryLabel live>{status}</TelemetryLabel>
+      </div>
+
+      <div className="relative z-10 max-w-sm">
+        <TelemetryLabel className="mb-5">{eyebrow}</TelemetryLabel>
+        <h2 className="font-display text-[clamp(1.8rem,3vw,2.6rem)] leading-[1.05] font-bold tracking-[-0.03em] text-white">
+          {title}
         </h2>
-        <p className="mt-3 max-w-sm text-body text-white/80">
-          Gerencie contatos, oportunidades, mensagens, campanhas e performance com mais clareza.
-        </p>
+        <p className="mt-4 text-sm leading-relaxed text-white/55">{description}</p>
       </div>
 
-      <p className="relative z-10 mt-10 text-small text-white/70">
-        © 2026 {siteConfig.name} · CRM de performance
-      </p>
+      <div className="relative z-10 flex items-center gap-4 font-mono text-[10px] tracking-[0.25em] text-white/40 uppercase">
+        <span>LAT -23.55</span>
+        <span className="h-3 w-px bg-white/15" />
+        <span>LON -46.63</span>
+        <span className="h-3 w-px bg-white/15" />
+        <span>SEC · TLS 1.3</span>
+      </div>
     </div>
   );
 }

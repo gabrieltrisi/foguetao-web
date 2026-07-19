@@ -11,3 +11,30 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
+
+/**
+ * Cadastro. As regras de senha espelham a política do backend
+ * (validatePasswordPolicy): mín. 10, maiúscula, minúscula, número e especial.
+ * Validar aqui evita um round-trip só pra receber 400 do servidor.
+ */
+export const registerSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Informe seu nome.")
+    .max(120, "Nome muito longo."),
+  email: z
+    .string()
+    .min(1, "Informe seu e-mail.")
+    .email("Digite um e-mail válido.")
+    .max(255, "E-mail muito longo."),
+  password: z
+    .string()
+    .min(10, "A senha precisa de ao menos 10 caracteres.")
+    .regex(/[A-Z]/, "Inclua ao menos uma letra maiúscula.")
+    .regex(/[a-z]/, "Inclua ao menos uma letra minúscula.")
+    .regex(/[0-9]/, "Inclua ao menos um número.")
+    .regex(/[^A-Za-z0-9]/, "Inclua ao menos um caractere especial."),
+});
+
+export type RegisterFormValues = z.infer<typeof registerSchema>;

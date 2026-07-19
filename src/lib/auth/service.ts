@@ -19,6 +19,19 @@ import {
   type CompanyContext,
 } from "@/types/api/company";
 
+/** POST /auth/register — cria o usuário (201). Não retorna tokens. */
+export function registerRequest(
+  input: { name: string; email: string; password: string },
+  userAgent?: string | null,
+): Promise<ApiUser> {
+  return backendFetch(endpoints.register, {
+    method: "POST",
+    body: input,
+    schema: userSchema,
+    userAgent,
+  });
+}
+
 /** POST /auth/login — retorna tokens + usuário. */
 export function loginRequest(
   email: string,

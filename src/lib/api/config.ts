@@ -15,6 +15,7 @@ export function backendUrl(path: string): string {
 
 /** Endpoints do backend usados nesta sprint (auth + empresas). */
 export const endpoints = {
+  register: "/auth/register",
   login: "/auth/login",
   refresh: "/auth/refresh",
   logout: "/auth/logout",

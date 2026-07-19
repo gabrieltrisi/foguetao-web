@@ -122,3 +122,35 @@
     display: none;
   }
 }
+
+/* ===========================================================================
+ * Landing "Console de Missão" (src/components/site/*)
+ * Bloco isolado: só afeta a landing. A fonte mono só resolve para JetBrains
+ * onde `--font-jetbrains-mono` está definida (o wrapper da landing); no resto
+ * do app o var() cai no fallback ui-monospace de sempre.
+ * ========================================================================= */
+@theme {
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Ângulo animável para a borda que "carrega" (ChargeBorder). */
+@property --charge {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes charge-spin {
+  to {
+    --charge: 360deg;
+  }
+}
+
+/* Revelação de fase de missão (fallback CSS; o principal é via framer-motion). */
+@keyframes hud-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}

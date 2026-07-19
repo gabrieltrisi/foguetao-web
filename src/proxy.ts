@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Rotas públicas (não exigem sessão). */
-const PUBLIC_PATHS = new Set<string>(["/", "/login"]);
+const PUBLIC_PATHS = new Set<string>(["/", "/login", "/register"]);
+
+/** Rotas de autenticação: já logado, não faz sentido revê-las. */
+const AUTH_PATHS = new Set<string>(["/login", "/register"]);
 
 const ACCESS_COOKIE = "fg_at";
 const REFRESH_COOKIE = "fg_rt";
@@ -17,7 +20,7 @@ export function proxy(request: NextRequest): NextResponse {
   const hasSession =
     request.cookies.has(ACCESS_COOKIE) || request.cookies.has(REFRESH_COOKIE);
 
-  if (pathname === "/login" && hasSession) {
+  if (AUTH_PATHS.has(pathname) && hasSession) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
