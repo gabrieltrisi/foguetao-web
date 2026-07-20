@@ -8,13 +8,16 @@ import { cn } from "@/lib/utils";
  * intrínsecas de cada arquivo; o tamanho de exibição vem das classes.
  */
 
-type LogoVariant = "horizontal" | "sidebar" | "mono";
+type LogoVariant = "horizontal" | "sidebar" | "sidebar-balanced" | "mono";
 
 const LOGO_ASSETS: Record<LogoVariant, { src: string; width: number; height: number }> = {
   // F vermelho + wordmark preto (fundo claro)
   horizontal: { src: "/brand/logo-horizontal.svg", width: 4000, height: 1200 },
   // Versão para a sidebar (transparente)
   sidebar: { src: "/brand/logo-sidebar.png", width: 2400, height: 600 },
+  // Mesmo logo colorido, re-emoldurado com o mesmo "respiro" do mono (conteúdo
+  // a ~67,7% da altura) para casar de tamanho com o logo branco no modo escuro.
+  "sidebar-balanced": { src: "/brand/logo-sidebar-balanced.png", width: 1141, height: 359 },
   // Versão monocromática (aplicada em branco sobre fundos vermelhos/escuros)
   mono: { src: "/brand/logo-mono.png", width: 4000, height: 1200 },
 };

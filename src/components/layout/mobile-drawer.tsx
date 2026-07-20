@@ -48,7 +48,7 @@ export function MobileDrawer() {
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center rounded-md"
               >
-                <Logo variant="sidebar" className="h-9 w-auto dark:hidden" />
+                <Logo variant="sidebar-balanced" className="h-9 w-auto dark:hidden" />
                 <Logo variant="mono" white className="hidden h-9 w-auto dark:block" />
               </Link>
               <DialogPrimitive.Close

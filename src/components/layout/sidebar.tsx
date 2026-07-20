@@ -35,8 +35,9 @@ export function Sidebar() {
               <LogoSymbol className="size-9" />
             ) : (
               <>
-                {/* Claro: logo colorido; escuro: versão branca (troca por CSS). */}
-                <Logo variant="sidebar" className="h-9 w-auto dark:hidden" />
+                {/* Claro: logo colorido; escuro: versão branca (troca por CSS).
+                    Ambos a h-9 com o mesmo respiro → tamanho idêntico. */}
+                <Logo variant="sidebar-balanced" className="h-9 w-auto dark:hidden" />
                 <Logo variant="mono" white className="hidden h-9 w-auto dark:block" />
               </>
             )}
