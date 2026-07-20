@@ -53,8 +53,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${sora.variable} h-full`}>
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} ${sora.variable} h-full`}
+      suppressHydrationWarning
+    >
       <body className="min-h-full antialiased">
+        {/* Aplica o tema salvo antes da hidratação (evita flash claro→escuro). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('fg_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}",
+          }}
+        />
         <QueryProvider>
           <ToastProvider>{children}</ToastProvider>
         </QueryProvider>

@@ -154,3 +154,43 @@
     transform: translateX(100%);
   }
 }
+
+/* ===========================================================================
+ * Modo noturno (dark) — alternado pela classe `.dark` em <html>.
+ *
+ * Estratégia: só redefinimos os TOKENS semânticos. Como o app usa `text-ink`,
+ * `bg-surface`, `border-line` e `bg-white` em toda parte, ele vira sozinho —
+ * sem reescrever cada tela. `text-white` (literal, sobre o vermelho da marca)
+ * NÃO é tocado, então botões/badges continuam legíveis.
+ * ========================================================================= */
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --color-ink: #f3f3f5;
+  --color-ink-2: #a6a6ae;
+  --color-ink-3: #74747d;
+  --color-surface: #202127;
+  --color-line: #2b2c33;
+  --color-brand-soft: #2a1012;
+  color-scheme: dark;
+}
+
+/* Fundo geral da página. */
+.dark body {
+  background-color: #0c0c0f;
+}
+
+/* `bg-white` = superfície de card no app → escurece no dark. Regra fora de
+   `@layer` de propósito, para vencer o utilitário `.bg-white`. */
+.dark .bg-white {
+  background-color: #16171c;
+}
+
+/* Sombras claras somem no escuro; um leve realce de borda separa as camadas. */
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.03),
+    0 10px 30px -14px rgb(0 0 0 / 0.7);
+}

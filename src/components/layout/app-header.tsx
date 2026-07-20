@@ -8,6 +8,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { CreateMenu } from "@/components/layout/create-menu";
 import { Notifications } from "@/components/layout/notifications";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { getRouteTitle } from "@/lib/route-title";
@@ -77,6 +78,7 @@ export function AppHeader() {
           <CompanySwitcher />
         </div>
         <CreateMenu compact />
+        <ThemeToggle />
         <Notifications />
         <UserMenu />
       </div>
