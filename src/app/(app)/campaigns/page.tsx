@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/page-header";
-import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { CampaignsView, NewCampaignButton } from "@/components/marketing/campaigns-view";
 
 export const metadata: Metadata = {
@@ -16,7 +15,8 @@ export default function CampaignsPage() {
         description="Crie e acompanhe suas campanhas de marketing."
         actions={<NewCampaignButton />}
       />
-      <MarketingNav />
+      {/* Sprint MVP 1: MarketingNav ocultado — expunha módulos não-MVP
+          (Meta/Google/TikTok Ads, Landing Pages, etc.) fora do escopo. */}
       <CampaignsView />
     </div>
   );

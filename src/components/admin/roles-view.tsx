@@ -66,8 +66,8 @@ export function RolesView() {
       <Card className="flex items-start gap-2 p-4 text-body2 text-ink-2">
         <Info className="mt-0.5 size-4 shrink-0 text-info" aria-hidden />
         <span>
-          Os papéis atuais são definidos pelo sistema. Papéis customizados serão disponibilizados
-          futuramente.
+          Os papéis são definidos pelo sistema e cobrem os principais níveis de acesso da sua
+          operação.
         </span>
       </Card>
 

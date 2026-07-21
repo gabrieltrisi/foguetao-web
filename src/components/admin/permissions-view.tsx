@@ -117,8 +117,7 @@ function PermissionsMatrix({
       <Card className="flex items-start gap-2 p-4 text-body2 text-ink-2">
         <Info className="mt-0.5 size-4 shrink-0 text-info" aria-hidden />
         <span>
-          Os papéis atuais são definidos pelo sistema. Papéis customizados serão disponibilizados
-          futuramente. Esta matriz é somente leitura.
+          Os papéis são definidos pelo sistema. Esta matriz de permissões é somente leitura.
         </span>
       </Card>
 

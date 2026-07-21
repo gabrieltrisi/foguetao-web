@@ -156,14 +156,13 @@ test.describe("Admin — interações", () => {
     await expect(page.getByText(/sk_live_••••/).first()).toBeVisible();
   });
 
-  test("percorre o wizard de onboarding", async ({ page }) => {
+  test("redireciona ao dashboard quando o usuário já tem empresa", async ({ page }) => {
+    // Sprint MVP 1: o onboarding agora cria a PRIMEIRA empresa. O SessionGate
+    // impede que um usuário que já possui empresa (caso deste e2e autenticado)
+    // fique preso no onboarding — ele é levado direto ao dashboard.
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/onboarding");
-    await page.getByRole("button", { name: "Academia" }).click();
-    await page.getByRole("button", { name: "Próximo" }).click();
-    await expect(page.getByRole("heading", { name: /objetivo/i })).toBeVisible();
-    await page.getByRole("button", { name: "Vender" }).click();
-    await page.getByRole("button", { name: "Próximo" }).click();
-    await expect(page.getByRole("heading", { name: "Principais canais" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Visão geral", level: 1 })).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 });

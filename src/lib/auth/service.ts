@@ -7,27 +7,91 @@ import {
   userSchema,
   sessionListSchema,
   messageResponseSchema,
+  registerResponseSchema,
   type AuthTokens,
   type TokenPair,
   type ApiUser,
   type ApiSession,
+  type RegisterResponse,
 } from "@/types/api/auth";
 import {
   companySummaryListSchema,
   companyContextSchema,
+  companySchema,
   type CompanySummary,
   type CompanyContext,
+  type ApiCompany,
 } from "@/types/api/company";
 
-/** POST /auth/register — cria o usuário (201). Não retorna tokens. */
+export interface CreateCompanyBody {
+  name: string;
+  phone?: string;
+  timezone?: string;
+}
+
+/** POST /auth/register — cria a conta (201). Envia e-mail de confirmação; não loga. */
 export function registerRequest(
   input: { name: string; email: string; password: string },
   userAgent?: string | null,
-): Promise<ApiUser> {
+): Promise<RegisterResponse> {
   return backendFetch(endpoints.register, {
     method: "POST",
     body: input,
-    schema: userSchema,
+    schema: registerResponseSchema,
+    userAgent,
+  });
+}
+
+/** POST /auth/verify-email — confirma o e-mail e retorna tokens (auto-login). */
+export function verifyEmailRequest(token: string, userAgent?: string | null): Promise<AuthTokens> {
+  return backendFetch(endpoints.verifyEmail, {
+    method: "POST",
+    body: { token },
+    schema: authTokensSchema,
+    userAgent,
+  });
+}
+
+/** POST /auth/resend-verification — reenvia o e-mail de confirmação (genérico). */
+export function resendVerificationRequest(
+  email: string,
+  userAgent?: string | null,
+): Promise<{ message: string }> {
+  return backendFetch(endpoints.resendVerification, {
+    method: "POST",
+    body: { email },
+    schema: messageResponseSchema,
+    userAgent,
+  });
+}
+
+/**
+ * POST /auth/forgot-password — solicita recuperação de senha. Resposta sempre
+ * genérica (não revela se o e-mail existe). O `resetToken` que o backend possa
+ * devolver em dev é descartado pelo schema — o browser nunca vê tokens.
+ */
+export function forgotPasswordRequest(
+  email: string,
+  userAgent?: string | null,
+): Promise<{ message: string }> {
+  return backendFetch(endpoints.forgotPassword, {
+    method: "POST",
+    body: { email },
+    schema: messageResponseSchema,
+    userAgent,
+  });
+}
+
+/** POST /auth/reset-password — redefine a senha a partir do token de reset. */
+export function resetPasswordRequest(
+  token: string,
+  newPassword: string,
+  userAgent?: string | null,
+): Promise<{ message: string }> {
+  return backendFetch(endpoints.resetPassword, {
+    method: "POST",
+    body: { token, newPassword },
+    schema: messageResponseSchema,
     userAgent,
   });
 }
@@ -89,6 +153,19 @@ export function revokeSessionRequest(token: string, id: string): Promise<{ messa
     method: "DELETE",
     token,
     schema: messageResponseSchema,
+  });
+}
+
+/** POST /companies — cria uma empresa (o criador vira OWNER). */
+export function createCompanyRequest(
+  token: string,
+  body: CreateCompanyBody,
+): Promise<ApiCompany> {
+  return backendFetch(endpoints.companies, {
+    method: "POST",
+    token,
+    body,
+    schema: companySchema,
   });
 }
 

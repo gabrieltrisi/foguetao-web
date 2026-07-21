@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
+// Sprint MVP 1.1: abas de admin restritas ao que é funcional. Segurança,
+// API Keys, Integrações, Conexões e Marketplace (preview/mock) saem da
+// navegação — as rotas continuam existindo, apenas fora do MVP.
 const links: { href: string; label: string; permission?: string }[] = [
   { href: "/settings", label: "Geral" },
   { href: "/company", label: "Empresa", permission: PERMISSIONS.COMPANY_READ },
@@ -13,19 +16,6 @@ const links: { href: string; label: string; permission?: string }[] = [
   { href: "/roles", label: "Papéis", permission: PERMISSIONS.COMPANY_ROLES_READ },
   { href: "/permissions", label: "Permissões", permission: PERMISSIONS.COMPANY_ROLES_READ },
   { href: "/invitations", label: "Convites", permission: PERMISSIONS.COMPANY_MEMBERS_INVITE },
-  { href: "/security", label: "Segurança" },
-  { href: "/api-keys", label: "API Keys" },
-  {
-    href: "/integrations",
-    label: "Integrações",
-    permission: PERMISSIONS.INTEGRATIONS_CONNECTIONS_READ,
-  },
-  {
-    href: "/integrations/connections",
-    label: "Conexões",
-    permission: PERMISSIONS.INTEGRATIONS_CONNECTIONS_READ,
-  },
-  { href: "/marketplace", label: "Marketplace" },
 ];
 
 /** Um link cobre a rota atual (exato ou como prefixo de segmento). */
@@ -68,17 +58,14 @@ export function AdminNav() {
   );
 }
 
-const companyLinks = [
-  { href: "/company/general", label: "Geral" },
-  { href: "/company/branding", label: "Branding" },
-  { href: "/company/domains", label: "Domínios" },
-  { href: "/company/plans", label: "Plano" },
-  { href: "/company/billing", label: "Billing" },
-  { href: "/company/limits", label: "Limites" },
-];
+// Sprint MVP 1.1: apenas "Dados da empresa" é funcional; as demais abas
+// (branding, domínios, plano, billing, limites) são preview e saem do MVP.
+// Com um único item, a barra some (o cabeçalho "Empresa" já dá o contexto).
+const companyLinks = [{ href: "/company/general", label: "Geral" }];
 
 export function CompanyNav() {
   const pathname = usePathname();
+  if (companyLinks.length <= 1) return null;
   return (
     <nav aria-label="Empresa" className="no-scrollbar flex items-center gap-1 overflow-x-auto rounded-lg border border-line bg-surface p-1">
       {companyLinks.map((l) => {

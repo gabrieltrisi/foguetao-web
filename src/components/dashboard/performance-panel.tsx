@@ -70,17 +70,17 @@ export function PerformancePanel({
   return (
     <Card className="flex flex-col p-5">
       {header}
-      <dl className="mt-5 flex flex-col divide-y divide-line">
+      <div className="mt-5 flex flex-col divide-y divide-line">
         {kpis.map((kpi) => (
           <div
             key={kpi.id}
             className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
           >
             <div className="min-w-0">
-              <dt className="text-small text-ink-2">{kpi.label}</dt>
-              <dd className="mt-0.5 break-words font-display text-h3 font-bold text-ink">
+              <p className="text-small text-ink-2">{kpi.label}</p>
+              <p className="mt-0.5 break-words font-display text-h3 font-bold text-ink">
                 {kpi.value}
-              </dd>
+              </p>
             </div>
             {/* Só exibe tendência se o contrato fornecer — hoje, nunca. */}
             {kpi.delta !== undefined && kpi.trend ? (
@@ -88,7 +88,7 @@ export function PerformancePanel({
             ) : null}
           </div>
         ))}
-      </dl>
+      </div>
     </Card>
   );
 }

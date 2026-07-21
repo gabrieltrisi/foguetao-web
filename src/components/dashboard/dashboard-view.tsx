@@ -15,7 +15,6 @@ import { FunnelChart } from "@/components/dashboard/funnel-chart";
 import { PerformancePanel } from "@/components/dashboard/performance-panel";
 import { RecentActivities } from "@/components/dashboard/recent-activities";
 import { PendingTasks } from "@/components/dashboard/pending-tasks";
-import { RecentConversations } from "@/components/dashboard/recent-conversations";
 import { FadeIn, StaggerGroup, StaggerItem } from "@/components/ui/motion";
 import { useSession } from "@/providers/session-provider";
 import { useMetricsSummary } from "@/hooks/crm/use-metrics";
@@ -123,11 +122,10 @@ export function DashboardView() {
         <PerformancePanel filters={filters} period={period} />
       </FadeIn>
 
-      {/* Atividades + Tarefas (reais) + Conversas (mock isolado de Messaging) */}
-      <FadeIn className="grid grid-cols-1 gap-4 lg:grid-cols-3" delay={0.1}>
+      {/* Atividades + Tarefas (dados reais) */}
+      <FadeIn className="grid grid-cols-1 gap-4 lg:grid-cols-2" delay={0.1}>
         <RecentActivities />
         <PendingTasks />
-        <RecentConversations />
       </FadeIn>
     </div>
   );

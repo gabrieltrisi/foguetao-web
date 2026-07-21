@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function OnboardingPage() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Bem-vindo ao Foguetão 🚀" description="Vamos personalizar sua conta em 5 passos." />
+      <PageHeader title="Bem-vindo ao Foguetão 🚀" description="Crie sua empresa para ativar o seu centro de comando." />
       <OnboardingWizard />
     </div>
   );

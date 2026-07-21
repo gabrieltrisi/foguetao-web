@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { SquareKanban, UsersRound } from "lucide-react";
 import { SidebarSection } from "@/components/navigation/sidebar-section";
-import { navSections } from "@/config/nav";
+import { navSections, type NavSection } from "@/config/nav";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
@@ -9,7 +10,6 @@ vi.mock("next/navigation", () => ({
 
 const principal = navSections[0];
 const crm = navSections[1];
-const comunicacao = navSections.find((s) => s.title === "Comunicação")!;
 
 describe("SidebarSection", () => {
   it("renderiza o título do grupo e todos os itens com os hrefs corretos", () => {
@@ -28,9 +28,36 @@ describe("SidebarSection", () => {
   });
 
   it("desabilita itens marcados como indisponíveis e exibe badge 'Em breve'", () => {
-    render(<SidebarSection section={comunicacao} collapsed={false} />);
+    const section: NavSection = {
+      title: "Comunicação",
+      items: [
+        { label: "Grupos", href: "/groups", icon: UsersRound, badge: "Em breve", disabled: true },
+      ],
+    };
+    render(<SidebarSection section={section} collapsed={false} />);
     expect(screen.getByText("Em breve")).toBeInTheDocument();
     // Item desabilitado não deve ser um link navegável.
     expect(screen.queryByRole("link", { name: /Grupos/ })).not.toBeInTheDocument();
+  });
+
+  it("oculta itens marcados como hidden (Sprint MVP 1) e some com seções vazias", () => {
+    const section: NavSection = {
+      title: "Marketing",
+      items: [
+        { label: "Pipeline", href: "/pipeline", icon: SquareKanban },
+        { label: "Meta Ads", href: "/meta-ads", icon: SquareKanban, hidden: true },
+      ],
+    };
+    const { rerender } = render(<SidebarSection section={section} collapsed={false} />);
+    expect(screen.getByRole("link", { name: /Pipeline/ })).toBeInTheDocument();
+    expect(screen.queryByText("Meta Ads")).not.toBeInTheDocument();
+
+    // Seção só com itens ocultos não renderiza (nem o título).
+    const emptySection: NavSection = {
+      title: "Análise",
+      items: [{ label: "Relatórios", href: "/reports", icon: SquareKanban, hidden: true }],
+    };
+    rerender(<SidebarSection section={emptySection} collapsed={false} />);
+    expect(screen.queryByText("Análise")).not.toBeInTheDocument();
   });
 });

@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { route } from "@/lib/api/route-helpers";
 import { ApiError, ErrorCode } from "@/types/api/error";
-import { registerRequest, loginRequest, listCompaniesRequest } from "@/lib/auth/service";
-import { setSessionCookies, setActiveCompanyId } from "@/lib/auth/cookies";
+import { registerRequest } from "@/lib/auth/service";
 
 // Espelha a política de senha do backend para falhar cedo com mensagem clara.
 const bodySchema = z.object({
@@ -33,23 +32,13 @@ export function POST(request: Request): Promise<NextResponse> {
     const userAgent = request.headers.get("user-agent");
     const { name, email, password } = parsed.data;
 
-    // 1) Cria a conta (backend retorna 409 se o e-mail já existe).
-    await registerRequest({ name: name.trim(), email, password }, userAgent);
+    // Cria a conta. NÃO faz login: o backend envia um e-mail de confirmação e o
+    // acesso só é liberado após o usuário confirmar (fluxo em /verify-email).
+    const result = await registerRequest({ name: name.trim(), email, password }, userAgent);
 
-    // 2) Auto-login: já entra logado (define os cookies httpOnly da sessão).
-    const { accessToken, refreshToken, user } = await loginRequest(email, password, userAgent);
-    await setSessionCookies({ accessToken, refreshToken });
-
-    // 3) Empresa ativa inicial, se houver (conta nova ainda não tem — ok).
-    try {
-      const companies = await listCompaniesRequest(accessToken);
-      if (companies.length > 0) {
-        await setActiveCompanyId(companies[0].id);
-      }
-    } catch {
-      // Não bloqueia o cadastro se a listagem de empresas falhar.
-    }
-
-    return NextResponse.json({ user }, { status: 201 });
+    return NextResponse.json(
+      { pendingVerification: true, email, message: result.message },
+      { status: 201 },
+    );
   });
 }

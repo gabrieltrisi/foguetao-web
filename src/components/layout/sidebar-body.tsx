@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { HelpCircle, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -36,8 +34,6 @@ export function SidebarBody({
   /** Quando presente, exibe o controle de recolher/expandir (desktop). */
   onToggleCollapse?: () => void;
 }) {
-  const pathname = usePathname();
-  const helpActive = pathname === "/help";
   const { user } = useSession();
   const logout = useLogout();
   const displayName = user?.name ?? "…";
@@ -68,16 +64,6 @@ export function SidebarBody({
 
       {/* Rodapé */}
       <div className={cn("border-t border-line py-3", collapsed ? "px-2" : "px-3")}>
-        {/* Ajuda */}
-        <FooterLink
-          href="/help"
-          label="Ajuda"
-          icon={HelpCircle}
-          active={helpActive}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
-
         {/* Usuário */}
         <div
           className={cn(
@@ -145,39 +131,3 @@ export function SidebarBody({
   );
 }
 
-function FooterLink({
-  href,
-  label,
-  icon: Icon,
-  active,
-  collapsed,
-  onNavigate,
-}: {
-  href: string;
-  label: string;
-  icon: typeof HelpCircle;
-  active: boolean;
-  collapsed: boolean;
-  onNavigate?: () => void;
-}) {
-  const className = cn(
-    "flex h-10 items-center rounded-lg text-body2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-    collapsed ? "w-10 justify-center" : "w-full gap-3 px-3",
-    active ? "bg-brand-soft text-brand" : "text-ink-2 hover:bg-surface hover:text-ink",
-  );
-  const link = (
-    <Link href={href} onClick={onNavigate} className={className}>
-      <Icon className="size-[18px] shrink-0" aria-hidden />
-      {!collapsed ? <span>{label}</span> : null}
-    </Link>
-  );
-  if (collapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{link}</TooltipTrigger>
-        <TooltipContent side="right">{label}</TooltipContent>
-      </Tooltip>
-    );
-  }
-  return link;
-}

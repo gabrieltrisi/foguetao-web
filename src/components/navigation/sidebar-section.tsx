@@ -17,6 +17,11 @@ export function SidebarSection({
 }) {
   const pathname = usePathname();
 
+  // Sprint MVP 1: itens marcados como `hidden` saem da navegação (a rota
+  // continua existindo). Seções que ficam sem itens visíveis não são exibidas.
+  const items = section.items.filter((item) => !item.hidden);
+  if (items.length === 0) return null;
+
   return (
     <div className="flex flex-col gap-1">
       <p
@@ -28,7 +33,7 @@ export function SidebarSection({
         {section.title}
       </p>
       <ul className={cn("flex flex-col gap-1", collapsed && "items-center")}>
-        {section.items.map((item) => {
+        {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <li key={item.href} className={collapsed ? undefined : "w-full"}>

@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
-import { SiteFrame } from "@/components/site/site-frame";
-import { SiteNav } from "@/components/site/site-nav";
-import { HeroCommand } from "@/components/site/hero-command";
-import { SignalSection, ControlSection, ScaleSection } from "@/components/site/mission";
-import { InterfaceOrbit } from "@/components/site/interface-orbit";
-import { Pricing } from "@/components/site/pricing";
-import { Faq } from "@/components/site/faq";
-import { Launch } from "@/components/site/launch";
-import { SiteFooter } from "@/components/site/site-footer";
+import { LandingNav } from "@/components/site/landing/nav";
+import { LandingHero } from "@/components/site/landing/hero";
+import { LandingProblem } from "@/components/site/landing/problem";
+import { LandingPillars } from "@/components/site/landing/pillars";
+import { LandingShowcase } from "@/components/site/landing/showcase";
+import { LandingBenefits } from "@/components/site/landing/benefits";
+import { LandingFeatures } from "@/components/site/landing/features";
+import { LandingSecurity } from "@/components/site/landing/security";
+import { LandingComparison } from "@/components/site/landing/comparison";
+import { LandingFaq } from "@/components/site/landing/faq";
+import { LandingCta } from "@/components/site/landing/cta";
+import { LandingFooter } from "@/components/site/landing/footer";
 import { siteConfig } from "@/config/site";
 
-/** Telemetria/HUD. Escopada à landing pelo `.variable` no wrapper. */
+/** Fonte mono usada nos eyebrows/telemetria. Escopada à landing via `.variable`. */
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -19,36 +22,64 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const description =
+  "O CRM brasileiro que reúne contatos, pipeline, negócios, tarefas e campanhas em um só painel — com números em tempo real. Organize sua operação comercial e cresça com controle.";
+
 export const metadata: Metadata = {
-  title: "Foguetão — o centro de comando da sua operação",
-  description:
-    "O console onde leads viram missões, o pipeline vira trajetória e cada número responde em tempo real. CRM, WhatsApp e campanhas sob um só comando.",
+  title: "Foguetão — CRM para times comerciais que crescem",
+  description,
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Foguetão — centro de comando comercial",
-    description: "Leads no radar, vendas sob comando. O console da sua operação.",
-    siteName: siteConfig.name,
-    locale: siteConfig.locale,
     type: "website",
+    locale: siteConfig.locale,
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    title: "Foguetão — CRM para times comerciais que crescem",
+    description,
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Foguetão — CRM para times comerciais que crescem",
+    description,
+  },
+};
+
+/** Dados estruturados (Schema.org) — sem preço/avaliações inventados. */
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Foguetão",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: siteConfig.url,
+  description,
+  inLanguage: "pt-BR",
+  publisher: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
 };
 
 export default function LandingPage() {
   return (
-    <div className={jetbrainsMono.variable}>
-      <SiteFrame>
-        <SiteNav />
-        <main>
-          <HeroCommand />
-          <SignalSection />
-          <InterfaceOrbit />
-          <ControlSection />
-          <ScaleSection />
-          <Pricing />
-          <Faq />
-          <Launch />
-        </main>
-        <SiteFooter />
-      </SiteFrame>
+    <div
+      className={`${jetbrainsMono.variable} min-h-screen overflow-x-hidden bg-[#08080a] text-white antialiased`}
+    >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <LandingNav />
+      <main>
+        <LandingHero />
+        <LandingProblem />
+        <LandingPillars />
+        <LandingShowcase />
+        <LandingBenefits />
+        <LandingFeatures />
+        <LandingSecurity />
+        <LandingComparison />
+        <LandingFaq />
+        <LandingCta />
+      </main>
+      <LandingFooter />
     </div>
   );
 }

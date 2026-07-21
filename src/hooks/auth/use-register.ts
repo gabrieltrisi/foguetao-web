@@ -1,21 +1,22 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { clientFetch } from "@/lib/api/client";
-import { queryKeys } from "@/lib/query/keys";
-import type { ApiUser } from "@/types/api/auth";
+
+interface RegisterResult {
+  pendingVerification: boolean;
+  email: string;
+  message: string;
+}
 
 /**
- * Cadastro real: POST /api/auth/register. O BFF cria a conta e já faz o
- * auto-login (define os cookies httpOnly), então a sessão nasce autenticada.
+ * Cadastro real: POST /api/auth/register. O backend cria a conta e envia um
+ * e-mail de confirmação — NÃO há login aqui. O acesso é liberado após o
+ * usuário confirmar o e-mail (fluxo em /verify-email).
  */
 export function useRegister() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: { name: string; email: string; password: string }) =>
-      clientFetch<{ user: ApiUser }>("/api/auth/register", { method: "POST", body: input }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.session });
-    },
+      clientFetch<RegisterResult>("/api/auth/register", { method: "POST", body: input }),
   });
 }

@@ -35,7 +35,12 @@ export function UserMenu() {
           aria-label="Conta"
           className="rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
         >
-          <Avatar initials={initialsOf(name)} size="md" />
+          {/* Avatar decorativo: o nome acessível do botão vem do aria-label
+              ("Conta"); as iniciais ficam fora da árvore de acessibilidade para
+              não competir com o rótulo (WCAG 2.5.3). */}
+          <span aria-hidden>
+            <Avatar initials={initialsOf(name)} size="md" />
+          </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

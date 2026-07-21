@@ -1,7 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Rotas públicas (não exigem sessão). */
-const PUBLIC_PATHS = new Set<string>(["/", "/login", "/register"]);
+const PUBLIC_PATHS = new Set<string>([
+  "/",
+  "/login",
+  "/register",
+  "/verify-email",
+  "/forgot-password",
+  "/reset-password",
+]);
 
 /** Rotas de autenticação: já logado, não faz sentido revê-las. */
 const AUTH_PATHS = new Set<string>(["/login", "/register"]);
@@ -41,8 +48,10 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  // Protege tudo, exceto API (BFF), assets estáticos e arquivos de marca.
+  // Protege tudo, exceto API (BFF), assets estáticos, arquivos de marca e os
+  // metadados públicos de SEO (robots.txt / sitemap.xml) — que precisam ser
+  // acessíveis a crawlers sem sessão.
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|apple-icon|brand|.*\\.(?:png|jpg|jpeg|svg|ico|webmanifest)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|sitemap.xml|icon|apple-icon|brand|.*\\.(?:png|jpg|jpeg|svg|ico|webmanifest)$).*)",
   ],
 };

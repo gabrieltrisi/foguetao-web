@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Avatar } from "@/components/ui/avatar";
@@ -22,19 +21,7 @@ export function RecentActivities() {
   const { can } = useSession();
   const { data, isLoading, isError } = useAuditLog({ page: 1, limit: LIMIT, sortOrder: "desc" });
 
-  const header = (
-    <SectionHeader
-      title="Atividades recentes"
-      action={
-        <Link
-          href="/activity-log"
-          className="text-body2 font-medium text-brand hover:text-brand-dark"
-        >
-          Ver tudo
-        </Link>
-      }
-    />
-  );
+  const header = <SectionHeader title="Atividades recentes" />;
 
   if (!can("company.audit.read")) {
     return (

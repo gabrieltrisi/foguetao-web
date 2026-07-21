@@ -1,35 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Building2,
-  Palette,
-  Globe,
-  CreditCard,
-  Users,
-  ShieldCheck,
-  KeyRound,
-  Plug,
-  Store,
-  Gauge,
-  ArrowRight,
-  UserCog,
-} from "lucide-react";
+import { Building2, Users, ShieldCheck, ArrowRight, UserCog } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompany } from "@/hooks/company/use-company";
-import { companyPlanMeta, companyStatusMeta } from "@/lib/company/company";
+import { companyStatusMeta } from "@/lib/company/company";
 
+// Sprint MVP 1.1: o hub de Configurações exibe apenas áreas realmente
+// funcionais. Cards para recursos ainda sem backend (branding, domínios,
+// plano/billing, limites, segurança avançada, API keys, integrações,
+// marketplace) foram ocultados — as rotas seguem existindo, mas fora do MVP.
 const groups: { title: string; items: { href: string; label: string; description: string; icon: typeof Building2 }[] }[] = [
   {
     title: "Empresa",
     items: [
       { href: "/company/general", label: "Dados da empresa", description: "Nome, documento, contato e localização.", icon: Building2 },
-      { href: "/company/branding", label: "Branding", description: "White label, cores e logotipo.", icon: Palette },
-      { href: "/company/domains", label: "Domínios", description: "Domínios personalizados e SSL.", icon: Globe },
-      { href: "/company/plans", label: "Plano & Billing", description: "Assinatura, faturas e pagamento.", icon: CreditCard },
-      { href: "/company/limits", label: "Limites de uso", description: "Consumo do ciclo atual.", icon: Gauge },
     ],
   },
   {
@@ -38,15 +25,6 @@ const groups: { title: string; items: { href: string; label: string; description
       { href: "/team", label: "Equipe", description: "Usuários, cargos e status.", icon: Users },
       { href: "/roles", label: "Papéis", description: "Perfis de acesso da organização.", icon: UserCog },
       { href: "/permissions", label: "Permissões", description: "Matriz de permissões por módulo.", icon: ShieldCheck },
-      { href: "/security", label: "Segurança", description: "Sessões, 2FA e alertas.", icon: ShieldCheck },
-      { href: "/api-keys", label: "API Keys", description: "Chaves de integração.", icon: KeyRound },
-    ],
-  },
-  {
-    title: "Extensões",
-    items: [
-      { href: "/integrations", label: "Integrações", description: "Conecte ferramentas externas.", icon: Plug },
-      { href: "/marketplace", label: "Marketplace", description: "Templates e automações prontas.", icon: Store },
     ],
   },
 ];
@@ -80,12 +58,9 @@ export function SettingsView() {
           </div>
         </div>
         {company ? (
-          <div className="flex items-center gap-2">
-            <Badge tone={companyStatusMeta[company.status].tone}>
-              {companyStatusMeta[company.status].label}
-            </Badge>
-            <Badge tone="brand">Plano {companyPlanMeta[company.plan].label}</Badge>
-          </div>
+          <Badge tone={companyStatusMeta[company.status].tone}>
+            {companyStatusMeta[company.status].label}
+          </Badge>
         ) : null}
       </Card>
 

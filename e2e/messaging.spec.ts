@@ -331,19 +331,14 @@ test.describe("Telas em Preview (sem backend)", () => {
   });
 });
 
-test.describe("Dashboard — card Conversas recentes", () => {
-  test("consome a MESMA fonte do módulo de Conversas", async ({ page }) => {
-    // O card dispara a MESMA chamada do módulo (mesmo hook/contrato).
-    const [request] = await Promise.all([
-      page.waitForRequest((r) => r.url().includes("/api/messaging/conversations")),
-      page.goto("/dashboard"),
-    ]);
-    expect(request.url()).toContain("/api/messaging/conversations");
-    await expect(page.getByText("Conversas recentes")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Abrir inbox" })).toHaveAttribute(
-      "href",
-      "/conversations",
-    );
+test.describe("Dashboard — sem card de Conversas (MVP 1.1)", () => {
+  test("não expõe o módulo de Conversas no dashboard", async ({ page }) => {
+    // Sprint MVP 1.1: o card "Conversas recentes" foi removido do dashboard
+    // para não surgir um caminho a um módulo fora do MVP.
+    await page.goto("/dashboard");
+    await expect(page.getByRole("heading", { level: 1, name: "Visão geral" })).toBeVisible();
+    await expect(page.getByText("Conversas recentes")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Abrir inbox" })).toHaveCount(0);
   });
 });
 

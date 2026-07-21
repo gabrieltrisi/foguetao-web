@@ -24,7 +24,7 @@ test.describe("Papéis (owner)", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Papéis" })).toBeVisible();
 
     // aviso obrigatório
-    await expect(page.getByText(/papéis atuais são definidos pelo sistema/i)).toBeVisible();
+    await expect(page.getByText(/papéis são definidos pelo sistema/i)).toBeVisible();
 
     // os 9 papéis reais
     for (const name of [

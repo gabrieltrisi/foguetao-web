@@ -16,6 +16,10 @@ export function backendUrl(path: string): string {
 /** Endpoints do backend usados nesta sprint (auth + empresas). */
 export const endpoints = {
   register: "/auth/register",
+  verifyEmail: "/auth/verify-email",
+  resendVerification: "/auth/resend-verification",
+  forgotPassword: "/auth/forgot-password",
+  resetPassword: "/auth/reset-password",
   login: "/auth/login",
   refresh: "/auth/refresh",
   logout: "/auth/logout",

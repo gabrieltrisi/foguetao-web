@@ -100,12 +100,11 @@ test.describe("Dashboard comercial (owner)", () => {
     await expect(page.getByText("Tarefas pendentes")).toBeVisible();
     await expect(page.getByText("Atividades recentes")).toBeVisible();
 
-    // "Ver todas"/"Ver tudo" apontam para as telas reais
+    // "Ver todas" aponta para a tela real de Tarefas. (Sprint MVP 1.1: o link
+    // "Ver tudo" das Atividades — que ia para /activity-log, fora do MVP — foi
+    // removido; a tela de auditoria não faz parte da navegação do MVP.)
     await expect(page.getByRole("link", { name: "Ver todas" })).toHaveAttribute("href", "/tasks");
-    await expect(page.getByRole("link", { name: "Ver tudo" })).toHaveAttribute(
-      "href",
-      "/activity-log",
-    );
+    await expect(page.getByRole("link", { name: "Ver tudo" })).toHaveCount(0);
   });
 });
 

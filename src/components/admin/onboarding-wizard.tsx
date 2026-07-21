@@ -2,186 +2,188 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Rocket } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Building2, Rocket } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Stepper } from "@/components/ui/stepper";
-import { StatList } from "@/components/business/kpi-block";
-import { AdminIcon } from "@/components/admin/admin-icon";
-import { useToast } from "@/components/ui/toast";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  onboardingSteps,
-  onboardingSegments,
-  onboardingObjectives,
-  onboardingChannels,
-  onboardingTemplates,
-} from "@/mocks/admin/onboarding";
-import type { OnboardingOption } from "@/types/admin";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/components/ui/toast";
+import { useSession } from "@/providers/session-provider";
+import { useCreateCompany } from "@/hooks/company/use-company";
+import { isApiError } from "@/types/api/error";
+import {
+  createCompanySchema,
+  timezoneOptions,
+  DEFAULT_TIMEZONE,
+  type CreateCompanyFormValues,
+} from "@/lib/validations/company";
 
-function StepCard({
-  option,
-  selected,
-  onSelect,
-}: {
-  option: OnboardingOption;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={cn(
-        "flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-        selected ? "border-brand bg-brand-soft text-brand" : "border-line bg-white text-ink-2 hover:border-ink-3 hover:text-ink",
-      )}
-    >
-      <AdminIcon name={option.icon} className="size-6" />
-      <span className="text-body2 font-medium">{option.label}</span>
-    </button>
-  );
+function messageForError(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.isUnavailable) return "Servidor indisponível. Tente novamente em instantes.";
+    if (error.statusCode === 429)
+      return "Muitas empresas criadas em pouco tempo. Aguarde alguns minutos.";
+    if (error.statusCode === 400) return "Dados inválidos. Revise o nome da empresa.";
+  }
+  return "Não foi possível criar a empresa. Tente novamente.";
 }
 
-const labelOf = (opts: OnboardingOption[], v: string) => opts.find((o) => o.value === v)?.label ?? "—";
-
+/**
+ * Onboarding — criação da PRIMEIRA empresa do usuário. Enxuto e real: cria a
+ * empresa via `POST /api/companies` (o criador vira OWNER), define-a como ativa
+ * e leva ao dashboard. Sem passos cosméticos: coleta apenas o que o backend
+ * realmente persiste.
+ */
 export function OnboardingWizard() {
   const router = useRouter();
   const { toast } = useToast();
-  const [step, setStep] = React.useState(0);
-  const [segment, setSegment] = React.useState("");
-  const [objective, setObjective] = React.useState("");
-  const [channels, setChannels] = React.useState<string[]>([]);
-  const [template, setTemplate] = React.useState("");
+  const { user } = useSession();
+  const createCompany = useCreateCompany();
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
-  const toggleChannel = (v: string) =>
-    setChannels((c) => (c.includes(v) ? c.filter((x) => x !== v) : [...c, v]));
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateCompanyFormValues>({
+    resolver: zodResolver(createCompanySchema),
+    defaultValues: { name: "", phone: "", timezone: DEFAULT_TIMEZONE },
+  });
 
-  const canNext =
-    (step === 0 && !!segment) ||
-    (step === 1 && !!objective) ||
-    (step === 2 && channels.length > 0) ||
-    (step === 3 && !!template) ||
-    step === 4;
+  async function onSubmit(values: CreateCompanyFormValues) {
+    setSubmitError(null);
+    try {
+      await createCompany.mutateAsync({
+        name: values.name.trim(),
+        phone: values.phone?.trim() ? values.phone.trim() : undefined,
+        timezone: values.timezone,
+      });
+      toast({
+        title: "Empresa criada!",
+        description: "Tudo pronto — abrindo seu painel.",
+        variant: "success",
+      });
+      router.replace("/dashboard");
+    } catch (error) {
+      setSubmitError(messageForError(error));
+    }
+  }
 
-  const finish = () => {
-    toast({ title: "Configuração concluída (mock)", variant: "success" });
-    router.push("/dashboard");
-  };
+  const firstName = user?.name?.trim().split(/\s+/)[0];
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <Stepper steps={onboardingSteps} current={step} />
-
-      <Card className="flex min-h-[320px] flex-col gap-5 p-6">
-        {step === 0 && (
-          <>
-            <div>
-              <h2 className="font-display text-h3 font-semibold text-ink">Qual seu segmento?</h2>
-              <p className="text-body2 text-ink-2">Personalizamos o Foguetão para o seu tipo de negócio.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {onboardingSegments.map((o) => (
-                <StepCard key={o.value} option={o} selected={segment === o.value} onSelect={() => setSegment(o.value)} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {step === 1 && (
-          <>
-            <div>
-              <h2 className="font-display text-h3 font-semibold text-ink">Qual seu principal objetivo?</h2>
-              <p className="text-body2 text-ink-2">Assim priorizamos as ferramentas certas.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {onboardingObjectives.map((o) => (
-                <StepCard key={o.value} option={o} selected={objective === o.value} onSelect={() => setObjective(o.value)} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <div>
-              <h2 className="font-display text-h3 font-semibold text-ink">Principais canais</h2>
-              <p className="text-body2 text-ink-2">Selecione todos que você usa (múltipla escolha).</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {onboardingChannels.map((o) => (
-                <StepCard key={o.value} option={o} selected={channels.includes(o.value)} onSelect={() => toggleChannel(o.value)} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <div>
-              <h2 className="font-display text-h3 font-semibold text-ink">Escolha um template</h2>
-              <p className="text-body2 text-ink-2">Começamos com uma estrutura pronta que você pode ajustar depois.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {onboardingTemplates.map((t) => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setTemplate(t.value)}
-                  aria-pressed={template === t.value}
-                  className={cn(
-                    "flex flex-col gap-1 rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-                    template === t.value ? "border-brand bg-brand-soft" : "border-line bg-white hover:border-ink-3",
-                  )}
-                >
-                  <span className="flex items-center gap-2 font-medium text-ink">
-                    {template === t.value ? <Check className="size-4 text-brand" aria-hidden /> : <Rocket className="size-4 text-ink-3" aria-hidden />}
-                    {t.label}
-                  </span>
-                  <span className="text-caption text-ink-2">{t.description}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {step === 4 && (
-          <>
-            <div>
-              <h2 className="font-display text-h3 font-semibold text-ink">Tudo pronto! 🚀</h2>
-              <p className="text-body2 text-ink-2">Revise suas escolhas antes de concluir.</p>
-            </div>
-            <StatList
-              items={[
-                { label: "Segmento", value: labelOf(onboardingSegments, segment) },
-                { label: "Objetivo", value: labelOf(onboardingObjectives, objective) },
-                { label: "Canais", value: channels.length ? channels.map((c) => labelOf(onboardingChannels, c)).join(", ") : "—" },
-                { label: "Template", value: onboardingTemplates.find((t) => t.value === template)?.label ?? "—" },
-              ]}
-            />
-            <div className="flex flex-wrap gap-2">
-              {channels.map((c) => <Badge key={c} tone="brand">{labelOf(onboardingChannels, c)}</Badge>)}
-            </div>
-          </>
-        )}
-
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-5">
-          <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
-            <ArrowLeft className="size-4" aria-hidden /> Voltar
-          </Button>
-          {step < 4 ? (
-            <Button onClick={() => setStep((s) => Math.min(4, s + 1))} disabled={!canNext}>
-              Próximo <ArrowRight className="size-4" aria-hidden />
-            </Button>
-          ) : (
-            <Button onClick={finish}>
-              <Check className="size-4" aria-hidden /> Concluir
-            </Button>
-          )}
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+      <Card className="flex flex-col gap-6 p-6 sm:p-8">
+        <div className="flex items-start gap-4">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+            <Rocket className="size-6" aria-hidden />
+          </span>
+          <div>
+            <h2 className="font-display text-h3 font-semibold text-ink">
+              {firstName ? `Vamos lá, ${firstName}!` : "Vamos lá!"}
+            </h2>
+            <p className="text-body2 text-ink-2">
+              Crie sua empresa para começar a usar o Foguetão. Você poderá ajustar todos os
+              dados depois em Configurações.
+            </p>
+          </div>
         </div>
+
+        <AnimatePresence initial={false}>
+          {submitError ? (
+            <motion.div
+              role="alert"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-center gap-2 overflow-hidden rounded-lg border border-danger/30 bg-danger/5 px-4 py-3 text-body2 text-danger"
+            >
+              {submitError}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="company-name">Nome da empresa *</Label>
+            <Input
+              id="company-name"
+              placeholder="Ex.: Foguetão Marketing"
+              autoFocus
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? "company-name-error" : undefined}
+              disabled={isSubmitting}
+              {...register("name")}
+            />
+            {errors.name ? (
+              <p id="company-name-error" role="alert" className="text-caption text-danger">
+                {errors.name.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="company-phone">Telefone (opcional)</Label>
+            <Input
+              id="company-phone"
+              type="tel"
+              placeholder="+55 11 99999-0000"
+              aria-invalid={Boolean(errors.phone)}
+              aria-describedby={errors.phone ? "company-phone-error" : undefined}
+              disabled={isSubmitting}
+              {...register("phone")}
+            />
+            {errors.phone ? (
+              <p id="company-phone-error" role="alert" className="text-caption text-danger">
+                {errors.phone.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="company-timezone">Fuso horário</Label>
+            <Controller
+              name="timezone"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                  <SelectTrigger id="company-timezone">
+                    <SelectValue placeholder="Selecione o fuso" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timezoneOptions.map((tz) => (
+                      <SelectItem key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          <Button type="submit" className="mt-1 w-full" loading={isSubmitting}>
+            <Building2 className="size-4" aria-hidden />
+            Criar empresa e continuar
+            <ArrowRight className="size-4" aria-hidden />
+          </Button>
+        </form>
       </Card>
+
+      <p className="text-center text-caption text-ink-3">
+        Ao criar a empresa você se torna o administrador (OWNER) da conta.
+      </p>
     </div>
   );
 }

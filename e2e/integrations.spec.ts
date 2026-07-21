@@ -43,10 +43,10 @@ async function createMockConnection(page: Page, name: string, scenario?: string)
 }
 
 test.describe("Central de Integrações — catálogo (owner)", () => {
-  test("abre Configurações → Integrações e vê o catálogo real", async ({ page }) => {
-    await page.goto("/settings");
-    await page.getByRole("navigation", { name: "Administração" }).getByRole("link", { name: "Integrações" }).click();
-    await page.waitForURL("**/integrations");
+  test("acessa Integrações e vê o catálogo real", async ({ page }) => {
+    // Sprint MVP 1.1: a aba Integrações saiu da navegação (módulo fora do MVP),
+    // mas a rota continua existindo e funcional — acesso direto por URL.
+    await page.goto("/integrations");
 
     await expect(page.getByRole("heading", { level: 1, name: "Integrações" })).toBeVisible();
     await expect(catalog(page).getByText("Integração MOCK")).toBeVisible();

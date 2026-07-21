@@ -10,10 +10,20 @@ export const userSchema = z.object({
   email: z.string(),
   status: userStatusSchema,
   emailVerifiedAt: z.string().nullable(),
+  trialEndsAt: z.string().nullable().optional(),
+  paidUntil: z.string().nullable().optional(),
   lastLoginAt: z.string().nullable(),
   createdAt: z.string(),
 });
 export type ApiUser = z.infer<typeof userSchema>;
+
+/** Resposta do cadastro: conta criada, confirmação por e-mail pendente. */
+export const registerResponseSchema = z.object({
+  message: z.string(),
+  user: userSchema,
+  verifyToken: z.string().optional(),
+});
+export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 
 /** AuthTokensResponseDto: login. */
 export const authTokensSchema = z.object({

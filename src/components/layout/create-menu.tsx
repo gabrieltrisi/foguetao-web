@@ -1,6 +1,7 @@
 "use client";
 
-import { Megaphone, MessageCircle, Plus, Target, User, CheckSquare } from "lucide-react";
+import Link from "next/link";
+import { Megaphone, Plus, Target, User, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,11 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const createActions = [
-  { label: "Novo contato", icon: User },
-  { label: "Nova oportunidade", icon: Target },
-  { label: "Nova tarefa", icon: CheckSquare },
-  { label: "Nova mensagem", icon: MessageCircle },
-  { label: "Nova campanha", icon: Megaphone },
+  { label: "Novo contato", icon: User, href: "/contacts/new" },
+  { label: "Nova oportunidade", icon: Target, href: "/deals/new" },
+  { label: "Nova tarefa", icon: CheckSquare, href: "/tasks/new" },
+  { label: "Nova campanha", icon: Megaphone, href: "/campaigns/new" },
 ];
 
 export function CreateMenu({ compact = false }: { compact?: boolean }) {
@@ -41,9 +41,11 @@ export function CreateMenu({ compact = false }: { compact?: boolean }) {
         {createActions.map((action) => {
           const Icon = action.icon;
           return (
-            <DropdownMenuItem key={action.label}>
-              <Icon aria-hidden />
-              {action.label}
+            <DropdownMenuItem key={action.label} asChild>
+              <Link href={action.href}>
+                <Icon aria-hidden />
+                {action.label}
+              </Link>
             </DropdownMenuItem>
           );
         })}
