@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ function messageForError(error: unknown): string {
 const PASSWORD_HINT = "Mín. 10 caracteres · maiúscula · minúscula · número · símbolo";
 
 export function RegisterForm() {
+  const router = useRouter();
   const { toast } = useToast();
   const registerAccount = useRegister();
   const resend = useResendVerification();
@@ -55,17 +57,23 @@ export function RegisterForm() {
   async function onSubmit(values: RegisterFormValues) {
     setAuthError(null);
     try {
-      await registerAccount.mutateAsync({
+      const res = await registerAccount.mutateAsync({
         name: values.name.trim(),
         email: values.email.trim(),
         password: values.password,
       });
-      toast({
-        title: "Confirme seu e-mail",
-        description: "Enviamos um link de confirmação.",
-        variant: "success",
-      });
-      setSentTo(values.email.trim());
+      if (res.pendingVerification) {
+        toast({
+          title: "Confirme seu e-mail",
+          description: "Enviamos um link de confirmação.",
+          variant: "success",
+        });
+        setSentTo(values.email.trim());
+      } else {
+        // Confirmação desligada: já autenticado → segue pro app.
+        toast({ title: "Conta criada", description: "Abrindo seu painel…", variant: "success" });
+        router.replace("/dashboard");
+      }
     } catch (error) {
       setAuthError(messageForError(error));
     }

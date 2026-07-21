@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { route } from "@/lib/api/route-helpers";
 import { ApiError, ErrorCode } from "@/types/api/error";
-import { registerRequest } from "@/lib/auth/service";
+import { registerRequest, listCompaniesRequest } from "@/lib/auth/service";
+import { setSessionCookies, setActiveCompanyId } from "@/lib/auth/cookies";
 
 // Espelha a política de senha do backend para falhar cedo com mensagem clara.
 const bodySchema = z.object({
@@ -32,10 +33,25 @@ export function POST(request: Request): Promise<NextResponse> {
     const userAgent = request.headers.get("user-agent");
     const { name, email, password } = parsed.data;
 
-    // Cria a conta. NÃO faz login: o backend envia um e-mail de confirmação e o
-    // acesso só é liberado após o usuário confirmar (fluxo em /verify-email).
     const result = await registerRequest({ name: name.trim(), email, password }, userAgent);
 
+    // Confirmação de e-mail DESLIGADA no backend → já vem com tokens: define os
+    // cookies (auto-login) e sinaliza que não há pendência.
+    if (result.accessToken && result.refreshToken) {
+      await setSessionCookies({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      });
+      try {
+        const companies = await listCompaniesRequest(result.accessToken);
+        if (companies.length > 0) await setActiveCompanyId(companies[0].id);
+      } catch {
+        // conta nova ainda não tem empresa — ok
+      }
+      return NextResponse.json({ pendingVerification: false, user: result.user }, { status: 201 });
+    }
+
+    // Confirmação LIGADA: sem login; o acesso sai após confirmar (/verify-email).
     return NextResponse.json(
       { pendingVerification: true, email, message: result.message },
       { status: 201 },

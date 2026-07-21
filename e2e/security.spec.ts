@@ -23,6 +23,12 @@ async function createUser(request: APIRequestContext, label: string) {
     data: { name: `E2E ${label}`, email, password: PASS },
   });
   expect(res.status()).toBe(201);
+  // Confirmação de e-mail obrigatória: usa o verifyToken (exposto fora de
+  // produção) para confirmar pelo fluxo real, sem burlar a segurança.
+  const { verifyToken } = await res.json();
+  expect(verifyToken, "backend deve expor verifyToken fora de produção").toBeTruthy();
+  const confirm = await request.post(`${API}/auth/verify-email`, { data: { token: verifyToken } });
+  expect(confirm.status()).toBe(200);
   return { email };
 }
 

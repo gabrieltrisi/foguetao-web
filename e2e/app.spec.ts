@@ -106,7 +106,8 @@ test.describe("Público (sem sessão)", () => {
 
   test("landing exibe hero e CTA", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Escale sem limites/ })).toBeVisible();
+    // Landing Premium 3.0: headline de crescimento (substitui o hero antigo).
+    await expect(page.getByRole("heading", { name: /operação comercial/i })).toBeVisible();
     await expect(page.getByRole("link", { name: "Começar agora" }).first()).toBeVisible();
   });
 

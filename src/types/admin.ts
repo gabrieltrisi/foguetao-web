@@ -105,9 +105,3 @@ export interface MarketplaceItem {
   accent: string;
   installed?: boolean;
 }
-
-export interface OnboardingOption {
-  value: string;
-  label: string;
-  icon: string;
-}

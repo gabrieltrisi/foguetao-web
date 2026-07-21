@@ -45,15 +45,20 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
   const logout = useLogout();
 
   const onOnboarding = pathname === ONBOARDING_PATH || pathname.startsWith(`${ONBOARDING_PATH}/`);
+  // Aceitar um convite É a forma de um usuário novo (ainda sem empresa) ganhar
+  // acesso a uma empresa. Sem esta exceção, ele seria empurrado ao onboarding e
+  // ficaria preso, sem conseguir aceitar o convite.
+  const onInviteAccept = pathname.startsWith("/invitations/accept");
+  const allowsNoCompany = onOnboarding || onInviteAccept;
 
   // Redirecionamentos (fora da renderização).
   React.useEffect(() => {
-    if (status === "no-companies" && !onOnboarding) {
+    if (status === "no-companies" && !allowsNoCompany) {
       router.replace(ONBOARDING_PATH);
     } else if (status === "ready" && onOnboarding) {
       router.replace("/dashboard");
     }
-  }, [status, onOnboarding, router]);
+  }, [status, allowsNoCompany, onOnboarding, router]);
 
   if (status === "loading") return <FullPageLoader />;
 
@@ -125,9 +130,9 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // no-companies: só renderiza o onboarding; fora dele, aguarda o redirect.
+  // no-companies: renderiza onboarding e aceite de convite; fora deles, aguarda o redirect.
   if (status === "no-companies") {
-    return onOnboarding ? <>{children}</> : <FullPageLoader />;
+    return allowsNoCompany ? <>{children}</> : <FullPageLoader />;
   }
 
   // ready: no onboarding, aguarda redirect ao dashboard; senão, app normal.

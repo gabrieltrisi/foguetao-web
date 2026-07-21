@@ -22,6 +22,9 @@ export const registerResponseSchema = z.object({
   message: z.string(),
   user: userSchema,
   verifyToken: z.string().optional(),
+  // Presentes quando a confirmação de e-mail está desligada (auto-login).
+  accessToken: z.string().optional(),
+  refreshToken: z.string().optional(),
 });
 export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 
