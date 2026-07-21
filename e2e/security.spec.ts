@@ -29,6 +29,26 @@ async function createUser(request: APIRequestContext, label: string) {
   expect(verifyToken, "backend deve expor verifyToken fora de produção").toBeTruthy();
   const confirm = await request.post(`${API}/auth/verify-email`, { data: { token: verifyToken } });
   expect(confirm.status()).toBe(200);
+
+  // As telas de Sessões/Segurança ficam sob (app), que exige empresa ativa (o
+  // SessionGate manda quem não tem empresa ao onboarding). Um usuário real de
+  // verdade tem empresa — provisionamos uma pelo fluxo real (login + criar
+  // empresa) para que o descartável chegue a /sessions e /security.
+  const login = await request.post(`${API}/auth/login`, { data: { email, password: PASS } });
+  expect(login.status()).toBe(200);
+  const { accessToken } = await login.json();
+  const company = await request.post(`${API}/companies`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    data: { name: `E2E Sec ${label} ${Date.now()}` },
+  });
+  expect(company.status(), "criar empresa do usuário de segurança").toBe(201);
+  // O provisionamento acima deixou sessões (o login para criar a empresa). As
+  // suítes de sessão contam sessões EXATAS, então zeramos aqui: os logins da UI
+  // feitos pelo próprio teste passam a ser as únicas sessões ativas.
+  const revoke = await request.post(`${API}/auth/logout-all`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(revoke.status()).toBe(200);
   return { email };
 }
 

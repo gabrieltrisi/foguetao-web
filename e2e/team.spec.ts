@@ -63,11 +63,25 @@ async function loginAs(page: Page, email: string, password = PASS) {
   await page.waitForURL("**/dashboard");
 }
 
+/**
+ * Login de um convidado recém-criado: ele ainda NÃO tem empresa, então o login
+ * o leva ao onboarding (não ao dashboard). A página de aceite de convite é
+ * acessível sem empresa (o SessionGate a libera) — é justamente por ela que o
+ * convidado ganha acesso a uma empresa. Basta a sessão existir.
+ */
+async function loginNoCompany(page: Page, email: string, password = PASS) {
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByLabel("Senha", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
+}
+
 /** Registra + convida + aceita: devolve um membro descartável já ativo. */
 async function addMember(page: Page, memberPage: Page, role: string, label: string) {
   const user = await createUser(page.request, label);
   const token = await invite(page, user.email, role);
-  await loginAs(memberPage, user.email);
+  await loginNoCompany(memberPage, user.email);
   await memberPage.goto(`/invitations/accept/${token}`);
   await memberPage.getByRole("button", { name: "Aceitar convite" }).click();
   await expect(memberPage.getByRole("heading", { name: "Convite aceito" })).toBeVisible();
@@ -245,7 +259,7 @@ test.describe("Aceitar convite", () => {
 
     const context = await browser.newContext({ storageState: EMPTY_STATE });
     const memberPage = await context.newPage();
-    await loginAs(memberPage, user.email);
+    await loginNoCompany(memberPage, user.email);
     await memberPage.goto(`/invitations/accept/${token}`);
     await memberPage.getByRole("button", { name: "Aceitar convite" }).click();
     await expect(memberPage.getByText(/foi revogado/i)).toBeVisible();
@@ -260,7 +274,7 @@ test.describe("Aceitar convite", () => {
 
     const context = await browser.newContext({ storageState: EMPTY_STATE });
     const memberPage = await context.newPage();
-    await loginAs(memberPage, outro.email);
+    await loginNoCompany(memberPage, outro.email);
     await memberPage.goto(`/invitations/accept/${token}`);
     await memberPage.getByRole("button", { name: "Aceitar convite" }).click();
     await expect(memberPage.getByText(/pertence a outro e-mail/i)).toBeVisible();
