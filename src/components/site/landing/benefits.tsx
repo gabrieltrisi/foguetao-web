@@ -1,17 +1,20 @@
 import { TrendingUp, BellRing, Users2, BarChart3, Layers3, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Section, SectionHeader } from "./section";
 import { Reveal } from "./reveal";
+import type { BenefitIconKey, BenefitItem } from "@/config/landing/segments";
 
-const BENEFITS = [
-  { icon: TrendingUp, title: "Previsibilidade de receita", body: "Saiba o que vai fechar antes do fim do mês — o funil mostra onde está cada real." },
-  { icon: BellRing, title: "Follow-up que não escapa", body: "Cada tarefa e cada lembrete no lugar certo. Nenhuma oportunidade esquecida." },
-  { icon: Users2, title: "Time na mesma página", body: "Todos veem o mesmo pipeline e os mesmos números. Fim das versões paralelas." },
-  { icon: BarChart3, title: "Decisão por dado", body: "Métricas ao vivo em vez de planilha de ontem. Ajuste a rota na hora certa." },
-  { icon: Layers3, title: "Menos ferramentas", body: "Uma plataforma no lugar de cinco abas abertas. Tudo conversa entre si." },
-  { icon: Zap, title: "Velocidade no dia a dia", body: "Menos tempo organizando, mais tempo vendendo. A rotina fica leve." },
-];
+/** Mapa chave→ícone: os dados de segmento carregam só a string (sem React). */
+const BENEFIT_ICONS: Record<BenefitIconKey, LucideIcon> = {
+  trendingUp: TrendingUp,
+  bell: BellRing,
+  users: Users2,
+  chart: BarChart3,
+  layers: Layers3,
+  zap: Zap,
+};
 
-export function LandingBenefits() {
+export function LandingBenefits({ benefits }: { benefits: BenefitItem[] }) {
   return (
     <Section id="beneficios">
       <SectionHeader
@@ -20,8 +23,8 @@ export function LandingBenefits() {
         subtitle="Não é sobre mais uma ferramenta. É sobre operar com clareza e vender com consistência."
       />
       <div className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-        {BENEFITS.map((b, i) => {
-          const Icon = b.icon;
+        {benefits.map((b, i) => {
+          const Icon = BENEFIT_ICONS[b.icon];
           return (
             <Reveal key={b.title} delay={(i % 3) * 0.06}>
               <div>

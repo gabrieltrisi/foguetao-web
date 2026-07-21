@@ -3,7 +3,7 @@ import { LandingLogo } from "./brand-logo";
 import { LandingButton } from "./button";
 
 /** Navbar minimalista da landing — logo, âncoras e acesso. Sem HUD/telemetria. */
-export function LandingNav() {
+export function LandingNav({ registerHref = "/register" }: { registerHref?: string }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-[#08080a]/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between px-6 sm:px-8">
@@ -35,7 +35,7 @@ export function LandingNav() {
           >
             Entrar
           </Link>
-          <LandingButton href="/register">Começar agora</LandingButton>
+          <LandingButton href={registerHref}>Começar agora</LandingButton>
         </div>
       </div>
     </header>

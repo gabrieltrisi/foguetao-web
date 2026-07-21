@@ -1,12 +1,19 @@
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "./reveal";
 import { LandingButton } from "./button";
+import type { FinalCtaContent } from "@/config/landing/segments";
 
 /**
  * CTA final — impacto, pouco texto. Fundo preparado para o vídeo do foguete
  * (mesmo slot `[data-hero-media]` do hero); hoje, gradientes estáticos.
  */
-export function LandingCta() {
+export function LandingCta({
+  content,
+  registerHref,
+}: {
+  content: FinalCtaContent;
+  registerHref: string;
+}) {
   return (
     <section className="relative overflow-hidden">
       <div aria-hidden data-hero-media className="pointer-events-none absolute inset-0">
@@ -17,19 +24,19 @@ export function LandingCta() {
       <div className="relative z-10 mx-auto max-w-[900px] px-6 py-32 text-center sm:py-44">
         <Reveal>
           <h2 className="font-display text-[clamp(2.6rem,6.5vw,5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-white">
-            Pronto para <span className="text-brand">decolar</span>?
+            {content.titleLead} <span className="text-brand">{content.titleHighlight}</span>
+            {content.titleTail}
           </h2>
         </Reveal>
         <Reveal delay={0.08}>
           <p className="mx-auto mt-6 max-w-xl text-[16px] leading-relaxed text-white/60 sm:text-[17px]">
-            Crie sua conta em minutos e veja sua operação comercial ganhar altitude — com
-            organização, clareza e controle desde o primeiro dia.
+            {content.subtitle}
           </p>
         </Reveal>
         <Reveal delay={0.15}>
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <LandingButton href="/register" size="lg">
-              Começar agora <ArrowRight className="size-4" aria-hidden />
+            <LandingButton href={registerHref} size="lg">
+              {content.primaryCta} <ArrowRight className="size-4" aria-hidden />
             </LandingButton>
             <LandingButton href="/login" variant="ghost" size="lg">
               Já tenho conta

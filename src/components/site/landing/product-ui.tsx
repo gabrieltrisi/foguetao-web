@@ -14,12 +14,20 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type {
+  CrmBoardColumn,
+  CrmContact,
+  CrmDashboard,
+  CrmDeal,
+  CrmTask,
+  Tone,
+} from "@/config/landing/segments";
 
 /* -------------------------------------------------------------------------- */
 /*  Composições fiéis do produto (tema claro real do CRM) para a landing.      */
 /*  Reproduzem 1:1 a linguagem visual do app — Card branco, borda `line`,      */
 /*  valores em Sora, badges por tom, vermelho da marca — sem importar          */
-/*  componentes com hooks/dados. Renderizam claros sobre o fundo escuro.       */
+/*  componentes com hooks/dados. Os DADOS chegam por props (por segmento).     */
 /* -------------------------------------------------------------------------- */
 
 const initials = (name: string) =>
@@ -44,8 +52,8 @@ function AvatarDot({ name, className }: { name: string; className?: string }) {
   );
 }
 
-function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "brand" | "success" | "warning" }) {
-  const tones = {
+function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?: Tone }) {
+  const tones: Record<Tone, string> = {
     neutral: "bg-[#e6e6e8]/70 text-[#66666d]",
     brand: "bg-[#fdecec] text-[#8a0509]",
     success: "bg-[#16a34a]/10 text-[#16a34a]",
@@ -156,7 +164,7 @@ function MetricCard({ label, value, delta }: { label: string; value: string; del
 
 /* ------------------------------- Telas ----------------------------------- */
 
-export function ProductDashboard({ className }: { className?: string }) {
+export function ProductDashboard({ data, className }: { data: CrmDashboard; className?: string }) {
   return (
     <AppFrame active="Visão geral" title="Visão geral" className={className}>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -170,16 +178,11 @@ export function ProductDashboard({ className }: { className?: string }) {
         <div className="rounded-lg border border-[#e6e6e8] bg-[#ffffff] p-4 lg:col-span-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#66666d]">Funil de vendas</p>
           <div className="mt-3 flex flex-col gap-2">
-            {[
-              { label: "Novos leads", value: 100, count: "312" },
-              { label: "Em contato", value: 72, count: "224" },
-              { label: "Proposta enviada", value: 45, count: "141" },
-              { label: "Fechamento", value: 28, count: "88" },
-            ].map((s) => (
+            {data.funnel.map((s) => (
               <div key={s.label} className="flex items-center gap-3">
                 <span className="w-28 shrink-0 text-[11.5px] text-[#66666d]">{s.label}</span>
                 <span className="h-6 flex-1 overflow-hidden rounded bg-[#f7f7f8]">
-                  <span className="flex h-full items-center rounded bg-gradient-to-r from-brand to-brand-dark px-2 text-[10px] font-semibold text-white" style={{ width: `${s.value}%` }}>
+                  <span className="flex h-full items-center rounded bg-gradient-to-r from-brand to-brand-dark px-2 text-[10px] font-semibold text-white" style={{ width: `${s.pct}%` }}>
                     {s.count}
                   </span>
                 </span>
@@ -190,7 +193,7 @@ export function ProductDashboard({ className }: { className?: string }) {
         <div className="rounded-lg border border-[#e6e6e8] bg-[#ffffff] p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#66666d]">Tarefas de hoje</p>
           <ul className="mt-3 flex flex-col gap-2.5">
-            {["Ligar para Studio Vitta", "Enviar proposta — Alpha", "Follow-up Rede Norte"].map((t, i) => (
+            {data.tasks.map((t, i) => (
               <li key={t} className="flex items-center gap-2.5 text-[12px]">
                 <span className={cn("flex size-4 items-center justify-center rounded border", i === 0 ? "border-brand bg-brand text-white" : "border-[#d4d4d8]")}>
                   {i === 0 ? <Check className="size-3" aria-hidden /> : null}
@@ -205,31 +208,18 @@ export function ProductDashboard({ className }: { className?: string }) {
   );
 }
 
-const DEALS = {
-  Lead: [
-    { name: "Studio Vitta", value: "R$ 12.400" },
-    { name: "Café Aurora", value: "R$ 6.900" },
-  ],
-  "Em contato": [
-    { name: "Rede Norte", value: "R$ 38.000" },
-    { name: "Alpha Log", value: "R$ 21.500" },
-  ],
-  Proposta: [{ name: "Grupo Meridian", value: "R$ 74.000" }],
-  Fechamento: [{ name: "Oficina Praia", value: "R$ 29.800" }],
-};
-
-export function ProductPipeline({ className }: { className?: string }) {
+export function ProductPipeline({ board, className }: { board: CrmBoardColumn[]; className?: string }) {
   return (
     <AppFrame active="Pipeline" title="Pipeline" className={className}>
       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        {Object.entries(DEALS).map(([stage, items]) => (
-          <div key={stage} className="rounded-lg bg-[#f7f7f8] p-2">
+        {board.map((col) => (
+          <div key={col.stage} className="rounded-lg bg-[#f7f7f8] p-2">
             <div className="flex items-center justify-between px-1 pb-2">
-              <span className="text-[11px] font-semibold text-[#66666d]">{stage}</span>
-              <span className="text-[10px] text-[#929298]">{items.length}</span>
+              <span className="text-[11px] font-semibold text-[#66666d]">{col.stage}</span>
+              <span className="text-[10px] text-[#929298]">{col.deals.length}</span>
             </div>
             <div className="flex flex-col gap-2">
-              {items.map((d) => (
+              {col.deals.map((d) => (
                 <div key={d.name} className="rounded-md border border-[#e6e6e8] bg-[#ffffff] p-2.5">
                   <p className="text-[12px] font-semibold">{d.name}</p>
                   <p className="mt-1 font-display text-[13px] font-bold text-brand">{d.value}</p>
@@ -247,37 +237,35 @@ export function ProductPipeline({ className }: { className?: string }) {
   );
 }
 
-export function ProductContact({ className }: { className?: string }) {
+export function ProductContact({ contact, className }: { contact: CrmContact; className?: string }) {
   return (
     <AppFrame active="Contatos" title="Contato" className={className}>
       <div className="flex items-start gap-3">
-        <AvatarDot name="Marina Alves" className="size-12 text-sm" />
+        <AvatarDot name={contact.name} className="size-12 text-sm" />
         <div className="min-w-0 flex-1">
-          <p className="font-display text-base font-bold">Marina Alves</p>
-          <p className="text-[12.5px] text-[#66666d]">Diretora comercial · Studio Vitta</p>
+          <p className="font-display text-base font-bold">{contact.name}</p>
+          <p className="text-[12.5px] text-[#66666d]">{contact.role}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            <Tag tone="brand">Cliente</Tag>
-            <Tag tone="success">Ativo</Tag>
-            <Tag>Sudeste</Tag>
+            {contact.tags.map((tag) => (
+              <Tag key={tag.label} tone={tag.tone}>
+                {tag.label}
+              </Tag>
+            ))}
           </div>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2.5">
         <div className="flex items-center gap-2 rounded-lg border border-[#e6e6e8] bg-[#ffffff] px-3 py-2.5 text-[12px]">
-          <Phone className="size-3.5 text-[#929298]" aria-hidden /> (11) 99999-0000
+          <Phone className="size-3.5 text-[#929298]" aria-hidden /> {contact.phone}
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-[#e6e6e8] bg-[#ffffff] px-3 py-2.5 text-[12px]">
-          <Mail className="size-3.5 text-[#929298]" aria-hidden /> marina@studiovitta.com
+        <div className="flex items-center gap-2 truncate rounded-lg border border-[#e6e6e8] bg-[#ffffff] px-3 py-2.5 text-[12px]">
+          <Mail className="size-3.5 shrink-0 text-[#929298]" aria-hidden /> <span className="truncate">{contact.email}</span>
         </div>
       </div>
       <div className="mt-3 rounded-lg border border-[#e6e6e8] bg-[#ffffff] p-3.5">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-[#66666d]">Atividades recentes</p>
         <ul className="mt-2.5 flex flex-col gap-2.5">
-          {[
-            { t: "Proposta enviada — R$ 12.400", d: "há 2 h" },
-            { t: "Ligação registrada · 6 min", d: "ontem" },
-            { t: "Movido para “Em contato”", d: "há 3 dias" },
-          ].map((a) => (
+          {contact.activities.map((a) => (
             <li key={a.t} className="flex items-center gap-2.5 text-[12px]">
               <span className="size-1.5 rounded-full bg-brand" aria-hidden />
               <span className="flex-1">{a.t}</span>
@@ -290,47 +278,41 @@ export function ProductContact({ className }: { className?: string }) {
   );
 }
 
-export function ProductDeal({ className }: { className?: string }) {
+export function ProductDeal({ deal, className }: { deal: CrmDeal; className?: string }) {
   return (
     <AppFrame active="Negócios" title="Negócio" className={className}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-display text-base font-bold">Studio Vitta — Plano anual</p>
-          <p className="text-[12.5px] text-[#66666d]">Marina Alves · fecha em 12 dias</p>
+          <p className="font-display text-base font-bold">{deal.title}</p>
+          <p className="text-[12.5px] text-[#66666d]">{deal.person}</p>
         </div>
-        <Tag tone="warning">Em negociação</Tag>
+        <Tag tone={deal.status.tone}>{deal.status.label}</Tag>
       </div>
       <div className="mt-4 flex items-end gap-6">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wide text-[#66666d]">Valor</p>
-          <p className="font-display text-2xl font-bold text-brand">R$ 42.000</p>
+          <p className="font-display text-2xl font-bold text-brand">{deal.value}</p>
         </div>
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wide text-[#66666d]">Probabilidade</p>
-          <p className="font-display text-2xl font-bold">85%</p>
+          <p className="font-display text-2xl font-bold">{deal.probability}</p>
         </div>
       </div>
       <div className="mt-4">
         <div className="flex items-center justify-between text-[11px] text-[#66666d]">
-          {["Lead", "Contato", "Proposta", "Fechamento"].map((s, i) => (
+          {deal.stages.map((s, i) => (
             <span key={s} className={cn(i <= 2 && "font-semibold text-brand")}>{s}</span>
           ))}
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#f7f7f8]">
-          <span className="block h-full rounded-full bg-gradient-to-r from-brand to-brand-dark" style={{ width: "75%" }} />
+          <span className="block h-full rounded-full bg-gradient-to-r from-brand to-brand-dark" style={{ width: `${deal.progressPct}%` }} />
         </div>
       </div>
     </AppFrame>
   );
 }
 
-export function ProductTask({ className }: { className?: string }) {
-  const tasks = [
-    { t: "Enviar proposta — Studio Vitta", tag: "Hoje", tone: "brand" as const, done: false },
-    { t: "Follow-up com Rede Norte", tag: "Hoje", tone: "brand" as const, done: false },
-    { t: "Preparar reunião — Grupo Meridian", tag: "Amanhã", tone: "neutral" as const, done: false },
-    { t: "Atualizar cadastro Alpha Log", tag: "Concluída", tone: "success" as const, done: true },
-  ];
+export function ProductTask({ tasks, className }: { tasks: CrmTask[]; className?: string }) {
   return (
     <AppFrame active="Tarefas" title="Tarefas" className={className}>
       <ul className="flex flex-col gap-2">

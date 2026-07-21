@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { LandingNav } from "@/components/site/landing/nav";
 import { LandingHero } from "@/components/site/landing/hero";
 import { LandingProblem } from "@/components/site/landing/problem";
@@ -12,6 +13,15 @@ import { LandingComparison } from "@/components/site/landing/comparison";
 import { LandingFaq } from "@/components/site/landing/faq";
 import { LandingCta } from "@/components/site/landing/cta";
 import { LandingFooter } from "@/components/site/landing/footer";
+import { SegmentReconciler } from "@/components/site/landing/segment-reconciler";
+import {
+  SEGMENTS,
+  getLandingContent,
+  hasUrlSegment,
+  isSegmentId,
+  resolveSegmentId,
+} from "@/config/landing/segments";
+import { SEGMENT_COOKIE, SEGMENT_PARAM, withSegment } from "@/lib/landing/segment";
 import { siteConfig } from "@/config/site";
 
 /** Fonte mono usada nos eyebrows/telemetria. Escopada à landing via `.variable`. */
@@ -25,6 +35,11 @@ const jetbrainsMono = JetBrains_Mono({
 const description =
   "O CRM brasileiro que reúne contatos, pipeline, negócios, tarefas e campanhas em um só painel — com números em tempo real. Organize sua operação comercial e cresça com controle.";
 
+/**
+ * Metadata SEMPRE geral, com canonical fixo em "/". A personalização por
+ * `?segment=` é uma camada de UX — não gera páginas/SEO distintos nem conteúdo
+ * duplicado. A Landing geral continua sendo a página canônica.
+ */
 export const metadata: Metadata = {
   title: "Foguetão — CRM para times comerciais que crescem",
   description,
@@ -57,7 +72,25 @@ const jsonLd = {
   publisher: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
 };
 
-export default function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // Prioridade URL > Cookie (localStorage é reconciliado no cliente). O SSR só
+  // depende de URL+cookie → determinístico, sem hydration mismatch.
+  const params = await searchParams;
+  const raw = params[SEGMENT_PARAM];
+  const urlSegment = Array.isArray(raw) ? raw[0] : raw;
+  const cookieSegment = (await cookies()).get(SEGMENT_COOKIE)?.value;
+
+  const active = resolveSegmentId({ url: urlSegment, cookie: cookieSegment });
+  const fromUrl = isSegmentId(urlSegment);
+  const urlPresent = hasUrlSegment(urlSegment);
+  const content = getLandingContent(active);
+  const registerHref = withSegment("/register", active);
+  const activeLabel = SEGMENTS[active].label;
+
   return (
     <div
       className={`${jetbrainsMono.variable} min-h-screen overflow-x-hidden bg-[#08080a] text-white antialiased`}
@@ -66,18 +99,25 @@ export default function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LandingNav />
+      <SegmentReconciler active={active} fromUrl={fromUrl} urlPresent={urlPresent} />
+      <LandingNav registerHref={registerHref} />
       <main>
-        <LandingHero />
+        <LandingHero
+          content={content.hero}
+          registerHref={registerHref}
+          active={active}
+          activeLabel={activeLabel}
+          dashboard={content.crm.dashboard}
+        />
         <LandingProblem />
         <LandingPillars />
-        <LandingShowcase />
-        <LandingBenefits />
+        <LandingShowcase crm={content.crm} />
+        <LandingBenefits benefits={content.benefits} />
         <LandingFeatures />
         <LandingSecurity />
         <LandingComparison />
-        <LandingFaq />
-        <LandingCta />
+        <LandingFaq faq={content.faq} />
+        <LandingCta content={content.finalCta} registerHref={registerHref} />
       </main>
       <LandingFooter />
     </div>
