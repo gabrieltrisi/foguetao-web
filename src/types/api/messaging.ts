@@ -70,6 +70,31 @@ export function cursorResult<T extends z.ZodTypeAny>(item: T) {
   });
 }
 
+/* ---------- Sendability (Fase 6.1/6.2) ---------- */
+
+/** Vocabulário público estável de status (Fase 6.1). Nunca o enum interno. */
+export const publicMessageStatusSchema = z.enum([
+  "QUEUED",
+  "SENDING",
+  "SENT",
+  "DELIVERED",
+  "READ",
+  "FAILED",
+]);
+export type PublicMessageStatus = z.infer<typeof publicMessageStatusSchema>;
+
+/**
+ * Motivo de a conversa não poder enviar. `code` é estável/provider-agnóstico
+ * (CONNECTION_*); `connectionStatus` é o status persistido da conexão. NUNCA
+ * expõe connectionId/provider. Fonte da verdade da UI: `canSend` + este objeto.
+ */
+export const sendabilityReasonSchema = z.object({
+  code: z.string(),
+  retryable: z.boolean(),
+  connectionStatus: z.string(),
+});
+export type ApiSendabilityReason = z.infer<typeof sendabilityReasonSchema>;
+
 /* ---------- Conversas ---------- */
 
 export const conversationSummarySchema = z.object({
@@ -87,6 +112,9 @@ export const conversationSummarySchema = z.object({
   lastOutboundAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  // Fase 6.1: a conversa pode enviar? (derivado da conexão no backend).
+  canSend: z.boolean(),
+  sendabilityReason: sendabilityReasonSchema.nullable(),
 });
 export type ApiConversation = z.infer<typeof conversationSummarySchema>;
 export const conversationListSchema = cursorResult(conversationSummarySchema);
@@ -113,8 +141,8 @@ export const messageSummarySchema = z.object({
   preview: z.string().nullable(),
   hasMedia: z.boolean(),
   mediaId: z.string().nullable(),
-  externalMessageId: z.string().nullable(),
-  clientMessageId: z.string(),
+  // Fase 6.1: `externalMessageId` (providerMessageId) e `clientMessageId`
+  // REMOVIDOS do contrato público — nunca expor identificadores de provider.
   replyToMessageId: z.string().nullable(),
   errorCode: z.string().nullable(),
   sentAt: z.string().nullable(),
@@ -128,6 +156,37 @@ export const messageSummarySchema = z.object({
 export type ApiMessage = z.infer<typeof messageSummarySchema>;
 export const messageListSchema = cursorResult(messageSummarySchema);
 export type ApiMessageList = z.infer<typeof messageListSchema>;
+
+/* ---------- Mensagem PÚBLICA (histórico + resposta de envio, Fase 6.1) ---------- */
+
+export const publicFailureSchema = z.object({
+  code: z.string(),
+  retryable: z.boolean(),
+  message: z.string().nullable(),
+});
+
+/**
+ * Shape sanitizado devolvido por `GET /conversations/:id/messages` e pela
+ * resposta do envio conversation-scoped: `text` já decifrado (ou placeholder de
+ * mídia/erro), `status` público e `failure` seguro. SEM externalMessageId,
+ * clientMessageId, remoteJid, ciphertext ou dados de provider.
+ */
+export const publicMessageSchema = z.object({
+  id: z.string(),
+  direction: z.string(),
+  type: z.string(),
+  text: z.string().nullable(),
+  status: publicMessageStatusSchema,
+  createdAt: z.string(),
+  sentAt: z.string().nullable(),
+  deliveredAt: z.string().nullable(),
+  readAt: z.string().nullable(),
+  failedAt: z.string().nullable(),
+  failure: publicFailureSchema.nullable(),
+});
+export type ApiPublicMessage = z.infer<typeof publicMessageSchema>;
+export const publicMessageListSchema = cursorResult(publicMessageSchema);
+export type ApiPublicMessageList = z.infer<typeof publicMessageListSchema>;
 
 export const conversationDetailSchema = conversationSummarySchema.extend({
   participants: z.array(participantSchema),
@@ -190,7 +249,7 @@ export interface MessageFilters {
   after?: string;
 }
 
-/** Corpo real de POST /messaging/messages. */
+/** Corpo real de POST /messaging/messages (endpoint account-scoped legado). */
 export interface SendMessageInput {
   messagingAccountId: string;
   to: string;
@@ -200,4 +259,14 @@ export interface SendMessageInput {
   replyToMessageId?: string;
   contactId?: string;
   metadata?: Record<string, unknown>;
+}
+
+/**
+ * Corpo do envio CONVERSATION-SCOPED da Inbox (Fase 6.1/6.2):
+ * `POST /messaging/conversations/:id/messages`. Só texto; `clientMessageId` é a
+ * chave de idempotência e existe SOMENTE no request (nunca na resposta pública).
+ */
+export interface SendConversationMessageInput {
+  text: string;
+  clientMessageId: string;
 }

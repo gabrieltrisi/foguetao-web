@@ -1,6 +1,12 @@
 import type { BadgeProps } from "@/components/ui/badge";
 import { isApiError } from "@/types/api/error";
-import type { ApiConversation, ApiMessage, ApiParticipant } from "@/types/api/messaging";
+import type {
+  ApiConversation,
+  ApiMessage,
+  ApiParticipant,
+  ApiSendabilityReason,
+  PublicMessageStatus,
+} from "@/types/api/messaging";
 
 type Tone = NonNullable<BadgeProps["tone"]>;
 
@@ -51,6 +57,92 @@ export function isPendingSend(status: string): boolean {
 
 export function isFailed(status: string): boolean {
   return status === "FAILED";
+}
+
+/* ---------- Status PÚBLICO (Fase 6.1) ---------- */
+
+/**
+ * Único ponto de apresentação do status público (QUEUED/SENDING/SENT/DELIVERED/
+ * READ/FAILED). Nenhum componente conhece o enum interno. `tone` alimenta badges/
+ * cores; a UI decide o ícone da biblioteca instalada (lucide) a partir de `icon`.
+ */
+export type PublicStatusIcon = "clock" | "loader" | "check" | "check-check" | "eye" | "alert";
+
+export const publicStatusMeta: Record<
+  PublicMessageStatus,
+  { label: string; tone: Tone; icon: PublicStatusIcon }
+> = {
+  QUEUED: { label: "Na fila", tone: "neutral", icon: "clock" },
+  SENDING: { label: "Enviando", tone: "info", icon: "loader" },
+  SENT: { label: "Enviada", tone: "info", icon: "check" },
+  DELIVERED: { label: "Entregue", tone: "success", icon: "check-check" },
+  READ: { label: "Lida", tone: "success", icon: "eye" },
+  FAILED: { label: "Falhou", tone: "danger", icon: "alert" },
+};
+
+export function publicStatus(status: string): {
+  label: string;
+  tone: Tone;
+  icon: PublicStatusIcon;
+} {
+  return publicStatusMeta[status as PublicMessageStatus] ?? publicStatusMeta.QUEUED;
+}
+
+/* ---------- Sendability (Fase 6.1/6.2) ---------- */
+
+/** Frase humana por code de sendability. Componentes NUNCA veem CONNECTION_*. */
+const SENDABILITY_MESSAGE: Record<string, string> = {
+  CONNECTION_CONNECTING: "Conexão em andamento. Aguarde alguns instantes.",
+  CONNECTION_AWAITING_QR: "A conta precisa ser conectada antes de enviar mensagens.",
+  CONNECTION_NOT_READY: "A conta precisa ser conectada antes de enviar mensagens.",
+  CONNECTION_DISCONNECTED: "A conta está desconectada no momento.",
+  CONNECTION_DEGRADED: "A conexão está instável. Tente novamente mais tarde.",
+  CONNECTION_FAILED: "Não foi possível utilizar esta conexão.",
+  CONNECTION_REVOKED: "A sessão foi revogada e precisa ser configurada novamente.",
+  CONNECTION_DISABLED: "Esta conexão está desativada.",
+  CONNECTION_NOT_SENDABLE: "Esta conexão não permite envio no momento.",
+};
+
+/** Rótulo curto por code (cabeçalho/lista). */
+const SENDABILITY_LABEL: Record<string, string> = {
+  CONNECTION_CONNECTING: "Conectando",
+  CONNECTION_AWAITING_QR: "Aguardando conexão",
+  CONNECTION_NOT_READY: "Aguardando conexão",
+  CONNECTION_DISCONNECTED: "Desconectado",
+  CONNECTION_DEGRADED: "Conexão instável",
+  CONNECTION_FAILED: "Falha de conexão",
+  CONNECTION_REVOKED: "Sessão revogada",
+  CONNECTION_DISABLED: "Conexão desativada",
+  CONNECTION_NOT_SENDABLE: "Indisponível",
+};
+
+export interface SendabilityView {
+  canSend: boolean;
+  /** Rótulo curto para header/lista. */
+  label: string;
+  /** Frase humana (sem código técnico). */
+  message: string;
+  tone: Tone;
+}
+
+/**
+ * Traduz `canSend` + `sendabilityReason` para a UI. Fonte da verdade é o backend
+ * (nunca inferir por provider). `retryable` NÃO é exposto como palavra técnica.
+ */
+export function sendability(
+  canSend: boolean,
+  reason: ApiSendabilityReason | null,
+): SendabilityView {
+  if (canSend || !reason) {
+    return { canSend: true, label: "Disponível para envio", message: "", tone: "success" };
+  }
+  const code = reason.code;
+  return {
+    canSend: false,
+    label: SENDABILITY_LABEL[code] ?? "Indisponível",
+    message: SENDABILITY_MESSAGE[code] ?? "Esta conexão não permite envio no momento.",
+    tone: reason.retryable ? "warning" : "danger",
+  };
 }
 
 /* ---------- Identidade da conversa ---------- */
@@ -247,4 +339,49 @@ export function messageForMessagingError(error: unknown): string {
     }
   }
   return "Não foi possível concluir a ação.";
+}
+
+/* ---------- Erros de ENVIO conversation-scoped (Fase 6.2) ---------- */
+
+/** Mensagem humana por status HTTP do envio (400/404/409/422/429/5xx). */
+export function messageForSendError(error: unknown): string {
+  if (isApiError(error)) {
+    switch (error.statusCode) {
+      case 400:
+        return "Revise o conteúdo da mensagem.";
+      case 404:
+        return "Esta conversa não está mais disponível.";
+      case 409:
+        return "A conexão está temporariamente indisponível. Tente novamente em instantes.";
+      case 422:
+        return "Esta conexão precisa ser configurada antes de enviar novas mensagens.";
+      case 429:
+        return "Muitas tentativas. Aguarde um momento.";
+      default:
+        if (error.statusCode >= 500 || error.statusCode === 0) {
+          return "Não foi possível enviar a mensagem agora.";
+        }
+        return messageForMessagingError(error);
+    }
+  }
+  return "Não foi possível enviar a mensagem agora.";
+}
+
+/**
+ * Extrai `{ retryable, connectionStatus }` do `details` de um 409/422
+ * (CONNECTION_NOT_SENDABLE) para atualizar a sendability local — sem expor
+ * detalhe técnico ao usuário.
+ */
+export function sendabilityFromError(
+  error: unknown,
+): { retryable: boolean; connectionStatus: string } | null {
+  if (isApiError(error) && (error.statusCode === 409 || error.statusCode === 422)) {
+    const d = error.details?.[0] as
+      | { retryable?: unknown; connectionStatus?: unknown }
+      | undefined;
+    if (d && typeof d.retryable === "boolean" && typeof d.connectionStatus === "string") {
+      return { retryable: d.retryable, connectionStatus: d.connectionStatus };
+    }
+  }
+  return null;
 }

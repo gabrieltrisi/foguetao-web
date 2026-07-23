@@ -51,6 +51,32 @@ export function parseAssignBody(body: unknown): { assignedToUserId: string } {
   return parsed.data;
 }
 
+const CLIENT_MESSAGE_ID_PATTERN = /^[a-zA-Z0-9._:-]+$/;
+
+/**
+ * Corpo de POST /messaging/conversations/:id/messages (Inbox, Fase 6.2). Espelha
+ * o backend: só `text` (1..8192) + `clientMessageId` opcional (idempotência).
+ * NÃO aceita messagingAccountId/provider/connectionId.
+ */
+export function parseSendConversationMessageBody(body: unknown): {
+  text: string;
+  clientMessageId?: string;
+} {
+  const parsed = z
+    .object({
+      text: z.string().min(1, "Texto obrigatório").max(8192, "Texto excede o limite"),
+      clientMessageId: z.string().regex(CLIENT_MESSAGE_ID_PATTERN).max(120).optional(),
+    })
+    .safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Conteúdo inválido",
+      parsed.error.issues.map((i) => i.message),
+    );
+  }
+  return parsed.data;
+}
+
 const CRM_MAX_LIMIT = 100;
 
 /**

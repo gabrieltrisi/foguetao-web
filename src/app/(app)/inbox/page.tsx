@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/ui/page-header";
 import { CommunicationNav } from "@/components/messaging/communication-nav";
-import { InboxView } from "@/components/messaging/inbox-view";
+import { Inbox } from "@/components/messaging/inbox/inbox";
 
 export const metadata: Metadata = {
   title: "Inbox",
-  description: "Visão operacional dos atendimentos.",
+  description: "Atenda as conversas de mensageria em tempo real.",
   robots: { index: false, follow: false },
 };
 
 export default function Page() {
   return (
-    <div className="flex flex-col gap-5">
-      <PageHeader title="Inbox" description="Visão operacional dos atendimentos." />
+    <div className="flex flex-col gap-4">
       <CommunicationNav />
-      <InboxView />
+      <Inbox />
     </div>
   );
 }

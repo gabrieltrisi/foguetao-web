@@ -45,6 +45,8 @@ const conv = {
   lastOutboundAt: null,
   createdAt: "2026-07-16T10:00:00.000Z",
   updatedAt: "2026-07-16T12:00:00.000Z",
+  canSend: true,
+  sendabilityReason: null,
 };
 
 const msg = {
@@ -57,8 +59,6 @@ const msg = {
   preview: "Olá",
   hasMedia: false,
   mediaId: null,
-  externalMessageId: null,
-  clientMessageId: "cli-1",
   replyToMessageId: null,
   errorCode: null,
   sentAt: "2026-07-16T12:00:00.000Z",

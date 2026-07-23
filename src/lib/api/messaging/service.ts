@@ -5,10 +5,11 @@ import {
   conversationListSchema,
   conversationDetailSchema,
   conversationSummarySchema,
-  messageListSchema,
   messageDetailSchema,
   messagingAccountSchema,
   messagingAccountListSchema,
+  publicMessageListSchema,
+  publicMessageSchema,
 } from "@/types/api/messaging";
 
 interface Ctx {
@@ -72,15 +73,16 @@ export const messagingService = {
     }),
 
   /* Mensagens */
+  /** Histórico da conversa (Fase 6.1: DTO público sanitizado, com `text`). */
   listMessages: ({ token, companyId }: Ctx, conversationId: string, params?: QueryParams) =>
     backendFetch(`/messaging/conversations/${conversationId}/messages${buildQuery(params)}`, {
       token,
       companyId,
-      schema: messageListSchema,
+      schema: publicMessageListSchema,
     }),
   getMessage: ({ token, companyId }: Ctx, id: string) =>
     backendFetch(`/messaging/messages/${id}`, { token, companyId, schema: messageDetailSchema }),
-  /** 202 ACCEPTED — envio é assíncrono. */
+  /** 202 ACCEPTED — envio account-scoped LEGADO (não usado pela nova Inbox). */
   sendMessage: ({ token, companyId }: Ctx, body: unknown) =>
     backendFetch(`/messaging/messages`, {
       method: "POST",
@@ -88,6 +90,23 @@ export const messagingService = {
       companyId,
       body,
       schema: messageSummaryOrDetail,
+    }),
+  /**
+   * Envio CONVERSATION-SCOPED da Inbox (Fase 6.1/6.2): 202/QUEUED, idempotente
+   * por `clientMessageId`. Body: { text, clientMessageId }. Nunca envia
+   * messagingAccountId/provider. Resposta: DTO público sanitizado.
+   */
+  sendConversationMessage: (
+    { token, companyId }: Ctx,
+    conversationId: string,
+    body: { text: string; clientMessageId: string },
+  ) =>
+    backendFetch(`/messaging/conversations/${conversationId}/messages`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+      schema: publicMessageSchema,
     }),
   cancelMessage: ({ token, companyId }: Ctx, id: string) =>
     backendFetch(`/messaging/messages/${id}/cancel`, {

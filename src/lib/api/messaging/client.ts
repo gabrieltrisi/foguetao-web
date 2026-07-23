@@ -9,8 +9,11 @@ import type {
   ApiMessageDetail,
   ApiMessageList,
   ApiMessagingAccount,
+  ApiPublicMessage,
+  ApiPublicMessageList,
   ConversationFilters,
   MessageFilters,
+  SendConversationMessageInput,
   SendMessageInput,
 } from "@/types/api/messaging";
 
@@ -39,9 +42,25 @@ export const messagingApi = {
     clientFetch<ApiMessageList>(
       `${B}/conversations/${conversationId}/messages${buildQuery(filters as QueryParams)}`,
     ),
+  /**
+   * Histórico PÚBLICO da Inbox (Fase 6.1). Mesmo endpoint do `listMessages`, mas
+   * tipado no contrato sanitizado (`ApiPublicMessage`: text/status/failure, sem
+   * provider). `listMessages` (contrato antigo) segue existindo para a UI legada
+   * de /conversations — não removê-lo aqui.
+   */
+  listPublicMessages: (conversationId: string, filters?: MessageFilters) =>
+    clientFetch<ApiPublicMessageList>(
+      `${B}/conversations/${conversationId}/messages${buildQuery(filters as QueryParams)}`,
+    ),
   getMessage: (id: string) => clientFetch<ApiMessageDetail>(`${B}/messages/${id}`),
   sendMessage: (body: SendMessageInput) =>
     clientFetch<ApiMessageDetail>(`${B}/messages`, { method: "POST", body }),
+  /** Envio CONVERSATION-SCOPED da Inbox (Fase 6.1/6.2): 202, resposta pública. */
+  sendConversationMessage: (conversationId: string, body: SendConversationMessageInput) =>
+    clientFetch<ApiPublicMessage>(`${B}/conversations/${conversationId}/messages`, {
+      method: "POST",
+      body,
+    }),
   cancelMessage: (id: string) =>
     clientFetch<ApiMessageDetail>(`${B}/messages/${id}/cancel`, { method: "POST" }),
 
