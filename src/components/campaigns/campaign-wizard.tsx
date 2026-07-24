@@ -96,15 +96,12 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
   }, [existing.data]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const accountOptions = (accounts.data?.items ?? accounts.data ?? []) as Array<{
+  const accountOptions = (accounts.data?.items ?? []) as Array<{
     id: string;
     displayName?: string | null;
     status: string;
   }>;
-  const tagOptions = ((tags.data ?? []) as Array<{ id: string; name: string }>).map((t) => ({
-    value: t.id,
-    label: t.name,
-  }));
+  const tagOptions = (tags.data?.items ?? []).map((t) => ({ value: t.id, label: t.name }));
   const contactOptions = (contacts.data?.items ?? []).map((c) => ({
     value: c.id,
     label: `${c.fullName ?? c.firstName ?? "Contato"}${c.phone ? ` · ${c.phone}` : ""}`,
