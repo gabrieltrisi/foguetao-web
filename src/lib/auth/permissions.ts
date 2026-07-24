@@ -41,6 +41,15 @@ export const PERMISSIONS = {
   CAMPAIGNS_DELETE: "campaigns.delete",
   CAMPAIGNS_PUBLISH: "campaigns.publish",
 
+  // Campanhas de WhatsApp (Sprint C1) — módulo próprio, separado de marketing.
+  MESSAGING_CAMPAIGNS_READ: "messaging.campaigns.read",
+  MESSAGING_CAMPAIGNS_CREATE: "messaging.campaigns.create",
+  MESSAGING_CAMPAIGNS_UPDATE: "messaging.campaigns.update",
+  MESSAGING_CAMPAIGNS_DELETE: "messaging.campaigns.delete",
+  MESSAGING_CAMPAIGNS_SEND: "messaging.campaigns.send",
+  MESSAGING_CAMPAIGNS_CANCEL: "messaging.campaigns.cancel",
+  MESSAGING_SUPPRESSION_MANAGE: "messaging.suppression.manage",
+
   // Origens de lead e atribuição — nomes REAIS do backend (Sprint 1.5A-2).
   MARKETING_LEAD_SOURCES_READ: "marketing.lead_sources.read",
   MARKETING_LEAD_SOURCES_MANAGE: "marketing.lead_sources.manage",

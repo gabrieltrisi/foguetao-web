@@ -77,9 +77,11 @@ export const navSections: NavSection[] = [
   {
     title: "Comunicação",
     items: [
+      { label: "Inbox", href: "/inbox", icon: MessagesSquare },
+      { label: "Campanhas", href: "/whatsapp/campaigns", icon: Megaphone },
       { label: "Conversas", href: "/conversations", icon: MessagesSquare, hidden: true },
       { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle, hidden: true },
-      { label: "Campanhas", href: "/campaigns", icon: Megaphone },
+      { label: "Campanhas (Marketing)", href: "/campaigns", icon: Megaphone, hidden: true },
       { label: "Grupos", href: "/groups", icon: UsersRound, badge: "Em breve", disabled: true, hidden: true },
     ],
   },
@@ -97,6 +99,7 @@ export const navSections: NavSection[] = [
     items: [
       { label: "Automações", href: "/automations", icon: Workflow, hidden: true },
       { label: "Integrações", href: "/integrations", icon: Plug, hidden: true },
+      { label: "WhatsApp (Evolution)", href: "/integrations/evolution", icon: MessageCircle },
     ],
   },
   {
