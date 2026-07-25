@@ -212,6 +212,29 @@ export function parseCreateConnectionBody(body: unknown): Record<string, unknown
   return parsed.data;
 }
 
+/**
+ * Corpo de criação da conexão Evolution (Sprint 7.1C). `apiKey` é segredo
+ * write-only: validado aqui, NUNCA logado nem devolvido. `baseUrl` precisa ser
+ * URL — a defesa anti-SSRF/allowlist real fica no backend, isto é só formato.
+ */
+const createEvolutionConnectionSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  baseUrl: z.string().trim().url().max(500),
+  apiKey: z.string().min(1).max(500),
+  environment: z.enum(["SANDBOX", "PRODUCTION"]).optional(),
+});
+
+export function parseCreateEvolutionConnectionBody(body: unknown): Record<string, unknown> {
+  const parsed = createEvolutionConnectionSchema.safeParse(body);
+  if (!parsed.success) {
+    fail(
+      "Dados da conexão Evolution inválidos",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
+  }
+  return parsed.data;
+}
+
 /** PATCH: provider e category são imutáveis no backend e nem são aceitos aqui. */
 const updateConnectionSchema = z
   .object({

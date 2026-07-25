@@ -90,6 +90,13 @@ export const queryKeys = {
     connection: (id: string) => ["integrations", "connection", id] as const,
     logs: (id: string, filters?: unknown) =>
       ["integrations", "connection", id, "logs", filters ?? {}] as const,
+    /** Onboarding Evolution (Sprint 7.1C). QR nunca é persistido no cache além do polling. */
+    evolution: {
+      capabilities: () => ["integrations", "evolution", "capabilities"] as const,
+      connection: (id: string) => ["integrations", "evolution", "connection", id] as const,
+      qr: (id: string) => ["integrations", "evolution", "connection", id, "qr"] as const,
+      webhook: (id: string) => ["integrations", "evolution", "connection", id, "webhook"] as const,
+    },
   },
 } as const;
 

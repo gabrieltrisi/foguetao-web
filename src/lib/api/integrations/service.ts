@@ -10,6 +10,12 @@ import {
   integrationConnectionListSchema,
   integrationLogListSchema,
 } from "@/types/api/integrations";
+import {
+  evolutionCapabilitiesSchema,
+  evolutionConnectionSchema,
+  evolutionQrSchema,
+  evolutionWebhookStateSchema,
+} from "@/types/api/evolution";
 
 interface Ctx {
   token: string;
@@ -94,5 +100,68 @@ export const integrationsService = {
       token,
       companyId,
       schema: integrationLogListSchema,
+    }),
+
+  /* ---------- Evolution onboarding (Sprint 7.1A/B/C) ---------- */
+
+  evolutionCapabilities: ({ token, companyId }: Ctx) =>
+    backendFetch(`/integrations/evolution/capabilities`, {
+      token,
+      companyId,
+      schema: evolutionCapabilitiesSchema,
+    }),
+  /** Provisiona conexão Evolution. Corpo carrega segredo (apiKey) — write-only. */
+  evolutionCreate: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/integrations/evolution/connections`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+      schema: evolutionConnectionSchema,
+    }),
+  evolutionGet: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/integrations/evolution/connections/${id}`, {
+      token,
+      companyId,
+      schema: evolutionConnectionSchema,
+    }),
+  evolutionConnect: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/integrations/evolution/connections/${id}/connect`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: evolutionConnectionSchema,
+    }),
+  evolutionQr: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/integrations/evolution/connections/${id}/qr`, {
+      token,
+      companyId,
+      schema: evolutionQrSchema,
+    }),
+  evolutionState: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/integrations/evolution/connections/${id}/state`, {
+      token,
+      companyId,
+      schema: evolutionConnectionSchema,
+    }),
+  evolutionConfigureWebhook: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/integrations/evolution/connections/${id}/webhook/configure`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: evolutionWebhookStateSchema,
+    }),
+  evolutionWebhookState: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/integrations/evolution/connections/${id}/webhook`, {
+      token,
+      companyId,
+      schema: evolutionWebhookStateSchema,
+    }),
+  evolutionDisconnect: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/integrations/evolution/connections/${id}/disconnect`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: evolutionConnectionSchema,
     }),
 };
