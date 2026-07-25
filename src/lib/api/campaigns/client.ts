@@ -6,9 +6,13 @@ import type {
   ApiAudiencePreview,
   ApiCampaign,
   ApiCampaignList,
+  ApiCampaignMetrics,
+  ApiCampaignRecipientList,
+  ApiCampaignTimelineEvent,
   AudienceSpec,
   CampaignFilters,
   CreateCampaignInput,
+  RecipientFilters,
   UpdateCampaignInput,
 } from "@/types/api/campaigns";
 
@@ -35,4 +39,14 @@ export const campaignsApi = {
       method: "POST",
       body: sendAt ? { sendAt } : {},
     }),
+
+  /* ---------- Execução (Sprint C2B) ---------- */
+  sendNow: (id: string) => clientFetch<ApiCampaign>(`${C}/${id}/send-now`, { method: "POST" }),
+  pause: (id: string) => clientFetch<ApiCampaign>(`${C}/${id}/pause`, { method: "POST" }),
+  resume: (id: string) => clientFetch<ApiCampaign>(`${C}/${id}/resume`, { method: "POST" }),
+  cancel: (id: string) => clientFetch<ApiCampaign>(`${C}/${id}/cancel`, { method: "POST" }),
+  metrics: (id: string) => clientFetch<ApiCampaignMetrics>(`${C}/${id}/metrics`),
+  timeline: (id: string) => clientFetch<ApiCampaignTimelineEvent[]>(`${C}/${id}/timeline`),
+  recipients: (id: string, filters?: RecipientFilters) =>
+    clientFetch<ApiCampaignRecipientList>(`${C}/${id}/recipients${buildQuery(filters as QueryParams)}`),
 };

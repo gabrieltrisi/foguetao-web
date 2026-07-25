@@ -3,37 +3,78 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { campaignsApi } from "@/lib/api/campaigns/client";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { campaignKeys, invalidateCampaign } from "@/lib/campaigns/query-keys";
 import { useSession } from "@/providers/session-provider";
 import type {
   ApiCampaign,
+  CampaignStatus,
   AudienceSpec,
   CampaignFilters,
   CreateCampaignInput,
+  RecipientFilters,
   UpdateCampaignInput,
 } from "@/types/api/campaigns";
-
-const KEY = "messaging-campaigns";
-const listKey = (filters?: CampaignFilters) => [KEY, "list", filters ?? {}] as const;
-const oneKey = (id: string) => [KEY, "one", id] as const;
 
 /* ---------- Queries ---------- */
 
 export function useCampaigns(filters?: CampaignFilters) {
   const { activeCompanyId, can } = useSession();
   return useQuery({
-    queryKey: [...listKey(filters), activeCompanyId],
+    queryKey: [...campaignKeys.list(filters), activeCompanyId],
     queryFn: () => campaignsApi.list(filters),
     enabled: Boolean(activeCompanyId) && can(PERMISSIONS.MESSAGING_CAMPAIGNS_READ),
+    placeholderData: (prev) => prev,
   });
 }
 
 export function useCampaign(id: string | null) {
   const { activeCompanyId, can } = useSession();
   return useQuery({
-    queryKey: [...oneKey(id ?? "none"), activeCompanyId],
+    queryKey: [...campaignKeys.detail(id ?? "none"), activeCompanyId],
     queryFn: () => campaignsApi.get(id as string),
+    enabled: Boolean(id) && Boolean(activeCompanyId) && can(PERMISSIONS.MESSAGING_CAMPAIGNS_READ),
+  });
+}
+
+/** Estados em que faz sentido acompanhar métricas ao vivo (polling de segurança). */
+const LIVE_STATUSES: CampaignStatus[] = ["SCHEDULED", "PREPARING", "SENDING", "PAUSED"];
+const METRICS_POLL_MS = 6_000;
+
+/**
+ * Métricas reais da campanha. Realtime é o caminho principal; este polling é o
+ * FALLBACK durante a execução (para/reduz ao concluir). `live` liga o polling.
+ */
+export function useCampaignMetrics(id: string | null, status?: CampaignStatus) {
+  const { activeCompanyId, can } = useSession();
+  const live = status ? LIVE_STATUSES.includes(status) : false;
+  return useQuery({
+    queryKey: [...campaignKeys.metrics(id ?? "none"), activeCompanyId],
+    queryFn: () => campaignsApi.metrics(id as string),
     enabled:
-      Boolean(id) && Boolean(activeCompanyId) && can(PERMISSIONS.MESSAGING_CAMPAIGNS_READ),
+      Boolean(id) &&
+      Boolean(activeCompanyId) &&
+      can(PERMISSIONS.MESSAGING_CAMPAIGNS_METRICS_READ),
+    refetchInterval: live ? METRICS_POLL_MS : false,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useCampaignTimeline(id: string | null) {
+  const { activeCompanyId, can } = useSession();
+  return useQuery({
+    queryKey: [...campaignKeys.timeline(id ?? "none"), activeCompanyId],
+    queryFn: () => campaignsApi.timeline(id as string),
+    enabled: Boolean(id) && Boolean(activeCompanyId) && can(PERMISSIONS.MESSAGING_CAMPAIGNS_READ),
+  });
+}
+
+export function useCampaignRecipients(id: string | null, filters?: RecipientFilters) {
+  const { activeCompanyId, can } = useSession();
+  return useQuery({
+    queryKey: [...campaignKeys.recipients(id ?? "none", filters), activeCompanyId],
+    queryFn: () => campaignsApi.recipients(id as string, filters),
+    enabled: Boolean(id) && Boolean(activeCompanyId) && can(PERMISSIONS.MESSAGING_CAMPAIGNS_READ),
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -41,9 +82,10 @@ export function useCampaign(id: string | null) {
 
 function useInvalidate() {
   const qc = useQueryClient();
-  return (id?: string) => {
-    qc.invalidateQueries({ queryKey: [KEY, "list"] });
-    if (id) qc.invalidateQueries({ queryKey: [KEY, "one", id] });
+  const inv = (key: readonly unknown[]) => qc.invalidateQueries({ queryKey: key });
+  return (id?: string, opts?: { recipients?: boolean }) => {
+    inv(campaignKeys.lists());
+    if (id) invalidateCampaign(inv, id, opts);
   };
 }
 
@@ -91,5 +133,39 @@ export function useScheduleCampaign(id: string) {
   return useMutation({
     mutationFn: (sendAt?: string) => campaignsApi.schedule(id, sendAt),
     onSuccess: (c: ApiCampaign) => invalidate(c.id),
+  });
+}
+
+/* ---------- Execução (Sprint C2B) — atualizam após a resposta do backend ------ */
+
+export function useSendNowCampaign(id: string) {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: () => campaignsApi.sendNow(id),
+    onSuccess: (c: ApiCampaign) => invalidate(c.id),
+  });
+}
+
+export function usePauseCampaign(id: string) {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: () => campaignsApi.pause(id),
+    onSuccess: (c: ApiCampaign) => invalidate(c.id),
+  });
+}
+
+export function useResumeCampaign(id: string) {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: () => campaignsApi.resume(id),
+    onSuccess: (c: ApiCampaign) => invalidate(c.id),
+  });
+}
+
+export function useCancelCampaign(id: string) {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: () => campaignsApi.cancel(id),
+    onSuccess: (c: ApiCampaign) => invalidate(c.id, { recipients: true }),
   });
 }

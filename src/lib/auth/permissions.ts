@@ -48,6 +48,7 @@ export const PERMISSIONS = {
   MESSAGING_CAMPAIGNS_DELETE: "messaging.campaigns.delete",
   MESSAGING_CAMPAIGNS_SEND: "messaging.campaigns.send",
   MESSAGING_CAMPAIGNS_CANCEL: "messaging.campaigns.cancel",
+  MESSAGING_CAMPAIGNS_METRICS_READ: "messaging.campaigns.metrics.read",
   MESSAGING_SUPPRESSION_MANAGE: "messaging.suppression.manage",
 
   // Origens de lead e atribuição — nomes REAIS do backend (Sprint 1.5A-2).

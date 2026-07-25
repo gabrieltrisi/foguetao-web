@@ -72,7 +72,7 @@ export const campaignListSchema = z.object({
 });
 export type ApiCampaignList = z.infer<typeof campaignListSchema>;
 
-const exclusionReasonSchema = z.enum([
+export const exclusionReasonSchema = z.enum([
   "NO_PHONE",
   "INVALID_PHONE",
   "OPT_OUT",
@@ -81,6 +81,8 @@ const exclusionReasonSchema = z.enum([
   "SELF",
   "NOT_IN_ALLOWLIST",
 ]);
+export type ExclusionReason = z.infer<typeof exclusionReasonSchema>;
+
 export const audiencePreviewSchema = z.object({
   total: z.number(),
   eligible: z.number(),
@@ -88,6 +90,81 @@ export const audiencePreviewSchema = z.object({
   byReason: z.record(exclusionReasonSchema, z.number()),
 });
 export type ApiAudiencePreview = z.infer<typeof audiencePreviewSchema>;
+
+/* ---------- Execução (Sprint C2B) — espelham os DTOs reais do backend ---------- */
+
+/** Status de destinatário (enum real CampaignRecipientStatus). */
+export const recipientStatusSchema = z.enum([
+  "PENDING",
+  "EXCLUDED",
+  "QUEUED",
+  "SENDING",
+  "SENT",
+  "DELIVERED",
+  "READ",
+  "FAILED",
+  "CANCELED",
+]);
+export type RecipientStatus = z.infer<typeof recipientStatusSchema>;
+
+/** GET /messaging/campaigns/:id/metrics — CampaignMetricsDto. */
+export const campaignMetricsSchema = z.object({
+  totalSnapshot: z.number(),
+  eligible: z.number(),
+  excluded: z.number(),
+  pending: z.number(),
+  queued: z.number(),
+  sent: z.number(),
+  delivered: z.number(),
+  read: z.number(),
+  failed: z.number(),
+  canceled: z.number(),
+  processed: z.number(),
+  progressPercentage: z.number(),
+  deliveryRate: z.number(),
+  readRate: z.number(),
+  startedAt: z.string().nullable(),
+  completedAt: z.string().nullable(),
+  estimatedCompletionAt: z.string().nullable(),
+  remainingSeconds: z.number().nullable(),
+});
+export type ApiCampaignMetrics = z.infer<typeof campaignMetricsSchema>;
+
+/** GET /messaging/campaigns/:id/recipients — linha (sem conteúdo cifrado). */
+export const campaignRecipientSchema = z.object({
+  id: z.string(),
+  contactId: z.string().nullable(),
+  name: z.string().nullable(),
+  phone: z.string(),
+  status: recipientStatusSchema,
+  exclusionReason: exclusionReasonSchema.nullable(),
+  sentAt: z.string().nullable(),
+  deliveredAt: z.string().nullable(),
+  readAt: z.string().nullable(),
+  failedAt: z.string().nullable(),
+  attempts: z.number(),
+  errorCode: z.string().nullable(),
+});
+export type ApiCampaignRecipient = z.infer<typeof campaignRecipientSchema>;
+
+export const campaignRecipientListSchema = z.object({
+  items: z.array(campaignRecipientSchema),
+  page: z.number(),
+  limit: z.number(),
+  total: z.number(),
+  totalPages: z.number(),
+});
+export type ApiCampaignRecipientList = z.infer<typeof campaignRecipientListSchema>;
+
+/** GET /messaging/campaigns/:id/timeline — evento de lifecycle (via AuditLog). */
+export const campaignTimelineEventSchema = z.object({
+  event: z.string(),
+  timestamp: z.string(),
+  actorUserId: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+});
+export type ApiCampaignTimelineEvent = z.infer<typeof campaignTimelineEventSchema>;
+export const campaignTimelineSchema = z.array(campaignTimelineEventSchema);
 
 /* ---------- inputs ---------- */
 
@@ -110,5 +187,15 @@ export interface CampaignFilters {
   createdByUserId?: string;
   search?: string;
   sortBy?: "scheduledAt" | "updatedAt" | "createdAt" | "name";
+  sortDir?: "asc" | "desc";
+}
+
+export interface RecipientFilters {
+  page?: number;
+  limit?: number;
+  status?: RecipientStatus;
+  exclusionReason?: ExclusionReason;
+  search?: string;
+  sortBy?: "createdAt" | "status" | "sentAt" | "deliveredAt";
   sortDir?: "asc" | "desc";
 }

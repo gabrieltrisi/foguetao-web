@@ -4,7 +4,10 @@ import { buildQuery, type QueryParams } from "@/lib/api/query-string";
 import {
   audiencePreviewSchema,
   campaignListSchema,
+  campaignMetricsSchema,
+  campaignRecipientListSchema,
   campaignSchema,
+  campaignTimelineSchema,
 } from "@/types/api/campaigns";
 
 interface Ctx {
@@ -38,4 +41,24 @@ export const campaignsService = {
     }),
   schedule: ({ token, companyId }: Ctx, id: string, body: unknown) =>
     backendFetch(`${BASE}/${id}/schedule`, { method: "POST", token, companyId, body, schema: campaignSchema }),
+
+  /* ---------- Execução (Sprint C2B) ---------- */
+  sendNow: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`${BASE}/${id}/send-now`, { method: "POST", token, companyId, schema: campaignSchema }),
+  pause: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`${BASE}/${id}/pause`, { method: "POST", token, companyId, schema: campaignSchema }),
+  resume: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`${BASE}/${id}/resume`, { method: "POST", token, companyId, schema: campaignSchema }),
+  cancel: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`${BASE}/${id}/cancel`, { method: "POST", token, companyId, schema: campaignSchema }),
+  metrics: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`${BASE}/${id}/metrics`, { token, companyId, schema: campaignMetricsSchema }),
+  timeline: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`${BASE}/${id}/timeline`, { token, companyId, schema: campaignTimelineSchema }),
+  recipients: ({ token, companyId }: Ctx, id: string, params?: QueryParams) =>
+    backendFetch(`${BASE}/${id}/recipients${buildQuery(params)}`, {
+      token,
+      companyId,
+      schema: campaignRecipientListSchema,
+    }),
 };
