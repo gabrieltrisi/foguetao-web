@@ -78,6 +78,7 @@ export const publicStatusMeta: Record<
   DELIVERED: { label: "Entregue", tone: "success", icon: "check-check" },
   READ: { label: "Lida", tone: "success", icon: "eye" },
   FAILED: { label: "Falhou", tone: "danger", icon: "alert" },
+  CANCELED: { label: "Cancelada", tone: "neutral", icon: "alert" },
 };
 
 export function publicStatus(status: string): {
@@ -148,16 +149,36 @@ export function sendability(
 /* ---------- Identidade da conversa ---------- */
 
 /**
- * Nome exibido. O summary NÃO traz nome de contato nem telefone — só `title` e
- * `contactId`. Resolvemos o contato quando o nome é conhecido; senão usamos o
- * título; senão um rótulo honesto por tipo.
+ * Formata um telefone normalizado (só dígitos, com DDI) para exibição completa.
+ * BR celular (55 + DDD + 9 dígitos) → "+55 71 98123-0869"; fixo (55 + DDD + 8) →
+ * "+55 71 3216-5498". Qualquer outro formato: "+<dígitos>" sem inventar grupos.
+ */
+export function formatPhone(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const d = raw.replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("55") && (d.length === 13 || d.length === 12)) {
+    const ddd = d.slice(2, 4);
+    const rest = d.slice(4);
+    const mid = rest.length === 9 ? rest.slice(0, 5) : rest.slice(0, 4);
+    const end = rest.length === 9 ? rest.slice(5) : rest.slice(4);
+    return `+55 ${ddd} ${mid}-${end}`;
+  }
+  return `+${d}`;
+}
+
+/**
+ * Nome exibido. O summary traz `title`, `contactId` e `normalizedPhone`.
+ * Resolvemos o contato quando o nome é conhecido; senão o título; senão o
+ * telefone completo do interlocutor; senão um rótulo honesto por tipo.
  */
 export function conversationName(
-  c: Pick<ApiConversation, "title" | "contactId" | "type">,
+  c: Pick<ApiConversation, "title" | "contactId" | "type" | "normalizedPhone">,
   contactName?: string | null,
 ): string {
   if (contactName) return contactName;
   if (c.title) return c.title;
+  if (c.normalizedPhone) return formatPhone(c.normalizedPhone);
   if (c.type === "GROUP") return "Grupo sem título";
   if (c.type === "BROADCAST") return "Transmissão";
   return "Conversa sem título";
@@ -174,7 +195,7 @@ export function participantName(p: ApiParticipant): string {
  * nunca ganha de um nome real.
  */
 export function chatTitle(
-  c: Pick<ApiConversation, "title" | "contactId" | "type">,
+  c: Pick<ApiConversation, "title" | "contactId" | "type" | "normalizedPhone">,
   counterpart?: ApiParticipant,
 ): string {
   if (counterpart?.displayName) return counterpart.displayName;

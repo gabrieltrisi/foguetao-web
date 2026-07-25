@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   accountMeta,
   conversationName,
+  formatPhone,
   conversationTime,
   dayLabel,
   groupByDay,
@@ -154,10 +155,24 @@ describe("identidade da conversa", () => {
     expect(conversationName({ ...conv, title: "Suporte" }, null)).toBe("Suporte");
   });
 
-  it("sem contato e sem título, rotula por tipo — não inventa nome", () => {
+  it("sem contato e sem título, cai para o telefone completo do interlocutor", () => {
+    expect(conversationName({ ...conv, normalizedPhone: "5571981230869" }, null)).toBe(
+      "+55 71 98123-0869",
+    );
+  });
+
+  it("sem contato, sem título e sem telefone, rotula por tipo — não inventa nome", () => {
     expect(conversationName({ ...conv, type: "GROUP" }, null)).toBe("Grupo sem título");
     expect(conversationName({ ...conv, type: "BROADCAST" }, null)).toBe("Transmissão");
     expect(conversationName(conv, null)).toBe("Conversa sem título");
+  });
+
+  it("formatPhone: BR celular, fixo e desconhecido", () => {
+    expect(formatPhone("5571981230869")).toBe("+55 71 98123-0869");
+    expect(formatPhone("557132165498")).toBe("+55 71 3216-5498");
+    expect(formatPhone("+55 (71) 98123-0869")).toBe("+55 71 98123-0869");
+    expect(formatPhone("12025550187")).toBe("+12025550187");
+    expect(formatPhone(null)).toBe("");
   });
 
   it("participante usa displayName ou o telefone já mascarado", () => {

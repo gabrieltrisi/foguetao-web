@@ -75,6 +75,7 @@ export function cursorResult<T extends z.ZodTypeAny>(item: T) {
 /** Vocabulário público estável de status (Fase 6.1). Nunca o enum interno. */
 export const publicMessageStatusSchema = z.enum([
   "QUEUED",
+  "CANCELED",
   "SENDING",
   "SENT",
   "DELIVERED",
@@ -104,6 +105,8 @@ export const conversationSummarySchema = z.object({
   type: z.string(),
   status: z.string(),
   title: z.string().nullable(),
+  // Telefone do interlocutor (número completo) — fallback de exibição na lista.
+  normalizedPhone: z.string().nullable().optional(),
   assignedToUserId: z.string().nullable(),
   contactId: z.string().nullable(),
   unreadCount: z.number(),
@@ -178,6 +181,8 @@ export const publicMessageSchema = z.object({
   text: z.string().nullable(),
   status: publicMessageStatusSchema,
   createdAt: z.string(),
+  /** Instante UTC de despacho agendado (OUTBOUND). null = envio imediato. */
+  scheduledAt: z.string().nullable(),
   sentAt: z.string().nullable(),
   deliveredAt: z.string().nullable(),
   readAt: z.string().nullable(),
@@ -269,4 +274,6 @@ export interface SendMessageInput {
 export interface SendConversationMessageInput {
   text: string;
   clientMessageId: string;
+  /** Agendar: instante ISO-8601 com offset/Z. Ausente = envio imediato (Sprint 7.2). */
+  sendAt?: string;
 }
