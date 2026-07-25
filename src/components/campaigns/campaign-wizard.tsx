@@ -317,7 +317,9 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
                   <p className="text-caption text-ink-3">Fuso: {TZ}</p>
                 </>
               ) : (
-                <p className="text-body2 text-ink-2">A execução real ocorrerá na Sprint C2.</p>
+                <p className="text-body2 text-ink-2">
+                  O envio começa imediatamente após a confirmação.
+                </p>
               )}
             </>
           ) : null}
@@ -412,7 +414,7 @@ function ExecutiveSummary({
       ))}
       {preview && preview.excluded > 0 ? <ExclusionBreakdown preview={preview} /> : null}
       <p className="mt-1 rounded-lg bg-warning/10 p-2 text-caption text-warning">
-        Envio conservador para proteger o número. A execução real ocorre na Sprint C2.
+        Envio conservador para proteger o número, respeitando o limite da conta.
       </p>
     </div>
   );
