@@ -20,6 +20,15 @@ export const REALTIME_EVENT_TYPES = {
   MESSAGE_STATUS_CHANGED: "message.statusChanged",
   CONVERSATION_UPDATED: "conversation.updated",
   CONVERSATION_READ: "conversation.read",
+  // Campanhas (Sprint C2B) — operacionais, sem PII (só id + contadores).
+  CAMPAIGN_STARTED: "campaign.started",
+  CAMPAIGN_PROGRESS: "campaign.progress",
+  CAMPAIGN_PAUSED: "campaign.paused",
+  CAMPAIGN_RESUMED: "campaign.resumed",
+  CAMPAIGN_COMPLETED: "campaign.completed",
+  CAMPAIGN_CANCELED: "campaign.canceled",
+  CAMPAIGN_FAILED: "campaign.failed",
+  CAMPAIGN_METRICS_UPDATED: "campaign.metrics.updated",
 } as const;
 export type RealtimeEventType = (typeof REALTIME_EVENT_TYPES)[keyof typeof REALTIME_EVENT_TYPES];
 
@@ -68,11 +77,41 @@ const conversationReadSchema = z.object({
   }),
 });
 
+/* ---------- Campanhas (Sprint C2B) ---------- */
+
+const campaignLifecycleData = z.object({
+  campaignId: z.string(),
+  status: z.string(),
+  at: z.string(),
+});
+const campaignMetricsData = z.object({
+  campaignId: z.string(),
+  eligible: z.number(),
+  processed: z.number(),
+  progressPercentage: z.number(),
+  sent: z.number(),
+  delivered: z.number(),
+  read: z.number(),
+  failed: z.number(),
+});
+const campaignLifecycleSchema = <T extends string>(type: T) =>
+  z.object({ ...base, type: z.literal(type), data: campaignLifecycleData });
+const campaignMetricsSchema = <T extends string>(type: T) =>
+  z.object({ ...base, type: z.literal(type), data: campaignMetricsData });
+
 export const realtimeEnvelopeSchema = z.discriminatedUnion("type", [
   messageCreatedSchema,
   messageStatusChangedSchema,
   conversationUpdatedSchema,
   conversationReadSchema,
+  campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_STARTED),
+  campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_PAUSED),
+  campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_RESUMED),
+  campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_COMPLETED),
+  campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_CANCELED),
+  campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_FAILED),
+  campaignMetricsSchema(REALTIME_EVENT_TYPES.CAMPAIGN_PROGRESS),
+  campaignMetricsSchema(REALTIME_EVENT_TYPES.CAMPAIGN_METRICS_UPDATED),
 ]);
 
 export type RealtimeEvent = z.infer<typeof realtimeEnvelopeSchema>;

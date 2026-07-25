@@ -1,5 +1,6 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 import { messagingInvalidation } from "@/lib/query/keys";
+import { campaignKeys } from "@/lib/campaigns/query-keys";
 import { upsertNewestMessage } from "@/hooks/messaging/use-inbox";
 import { shouldApplyStatus, type RealtimeEvent } from "./realtime-events";
 import type {
@@ -57,6 +58,29 @@ export function applyRealtimeEvent(
       zeroUnreadInLists(qc, event.data.conversationId);
       invalidate(messagingInvalidation.conversation(event.data.conversationId));
       invalidate(messagingInvalidation.allConversations);
+      break;
+    }
+
+    // Campanhas (Sprint C2B): sem PII no payload — invalida as queries (a API é a
+    // fonte da verdade). Progresso/métricas só tocam métricas+listas (mais quente);
+    // eventos de ciclo de vida também tocam detalhe+timeline.
+    case "campaign.progress":
+    case "campaign.metrics.updated": {
+      invalidate(campaignKeys.metrics(event.data.campaignId));
+      invalidate(campaignKeys.lists());
+      break;
+    }
+    case "campaign.started":
+    case "campaign.paused":
+    case "campaign.resumed":
+    case "campaign.completed":
+    case "campaign.canceled":
+    case "campaign.failed": {
+      const { campaignId } = event.data;
+      invalidate(campaignKeys.detail(campaignId));
+      invalidate(campaignKeys.metrics(campaignId));
+      invalidate(campaignKeys.timeline(campaignId));
+      invalidate(campaignKeys.lists());
       break;
     }
   }
