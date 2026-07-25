@@ -11,6 +11,7 @@ function message(over: Partial<ApiPublicMessage> = {}): ApiPublicMessage {
     text: "Olá",
     status: "QUEUED",
     createdAt: "2026-07-16T12:00:00.000Z",
+    scheduledAt: null,
     sentAt: null,
     deliveredAt: null,
     readAt: null,

@@ -1,10 +1,33 @@
 "use client";
 
-import { AlertCircle, Check, CheckCheck, Clock, Eye, FileText, ImageIcon, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  Ban,
+  CalendarClock,
+  Check,
+  CheckCheck,
+  Clock,
+  Eye,
+  FileText,
+  ImageIcon,
+  Loader2,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { messageTime, publicStatus, type PublicStatusIcon } from "@/lib/messaging/display";
 import type { ApiPublicMessage } from "@/types/api/messaging";
+
+/** Formata o instante agendado no fuso local (dd/mm às hh:mm). */
+function formatScheduled(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
 
 /**
  * Balão de mensagem da Inbox (Fase 6.2). Consome APENAS o DTO público
@@ -30,7 +53,15 @@ const MEDIA_FALLBACK: Record<string, string> = {
   VIDEO: "Vídeo",
 };
 
-export function InboxMessage({ message: m }: { message: ApiPublicMessage }) {
+export function InboxMessage({
+  message: m,
+  onCancel,
+  canceling,
+}: {
+  message: ApiPublicMessage;
+  onCancel?: (id: string) => void;
+  canceling?: boolean;
+}) {
   if (m.direction === "SYSTEM") {
     return (
       <div className="my-2 flex justify-center">
@@ -43,6 +74,10 @@ export function InboxMessage({ message: m }: { message: ApiPublicMessage }) {
 
   const isOut = m.direction === "OUTBOUND";
   const failed = m.status === "FAILED";
+  const canceled = m.status === "CANCELED";
+  // Agendada = ainda na fila (QUEUED) com horário definido. Ao despachar, o status
+  // sai de QUEUED (SENDING/SENT/FAILED) e o badge some — sem checar o relógio aqui.
+  const scheduled = m.status === "QUEUED" && m.scheduledAt !== null;
   const isMedia = m.type !== "TEXT" && m.type !== "SYSTEM";
   const mediaLabel = m.text ?? MEDIA_FALLBACK[m.type] ?? "Anexo";
 
@@ -64,6 +99,44 @@ export function InboxMessage({ message: m }: { message: ApiPublicMessage }) {
         {failed ? (
           <p className={cn("mt-1 text-caption", isOut ? "text-white/90" : "text-danger")} role="alert">
             {m.failure?.message ?? "Não foi possível enviar esta mensagem."}
+          </p>
+        ) : null}
+
+        {scheduled ? (
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 text-caption",
+                isOut ? "text-white/90" : "text-ink-2",
+              )}
+            >
+              <CalendarClock className="size-3.5" aria-hidden />
+              Agendada • {formatScheduled(m.scheduledAt as string)}
+            </span>
+            {onCancel ? (
+              <button
+                type="button"
+                disabled={canceling}
+                onClick={() => onCancel(m.id)}
+                className={cn(
+                  "text-caption font-medium underline underline-offset-2 disabled:opacity-50",
+                  isOut ? "text-white/90 hover:text-white" : "text-danger hover:opacity-80",
+                )}
+              >
+                Cancelar
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {canceled ? (
+          <p
+            className={cn(
+              "mt-1 inline-flex items-center gap-1 text-caption",
+              isOut ? "text-white/80" : "text-ink-3",
+            )}
+          >
+            <Ban className="size-3.5" aria-hidden /> Cancelada
           </p>
         ) : null}
 

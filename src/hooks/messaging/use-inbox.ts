@@ -79,3 +79,20 @@ export function useSendInboxMessage(conversationId: string) {
     },
   });
 }
+
+/**
+ * Cancela uma mensagem agendada (PENDING/QUEUED) antes do despacho (Sprint 7.2).
+ * Reusa o cancelamento genérico existente. O realtime também empurra a transição
+ * para CANCELED; a invalidação garante consistência mesmo sem SSE.
+ */
+export function useCancelInboxMessage(conversationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (messageId: string) => messagingApi.cancelMessage(messageId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: messagingInvalidation.messages(conversationId) });
+      qc.invalidateQueries({ queryKey: messagingInvalidation.conversation(conversationId) });
+      qc.invalidateQueries({ queryKey: messagingInvalidation.allConversations });
+    },
+  });
+}

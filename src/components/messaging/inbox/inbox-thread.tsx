@@ -13,7 +13,11 @@ import {
   useConversation,
   useMarkConversationRead,
 } from "@/hooks/messaging/use-conversations";
-import { useInboxMessages, useSendInboxMessage } from "@/hooks/messaging/use-inbox";
+import {
+  useCancelInboxMessage,
+  useInboxMessages,
+  useSendInboxMessage,
+} from "@/hooks/messaging/use-inbox";
 import {
   chatTitle,
   groupByDay,
@@ -50,6 +54,7 @@ export function InboxThread({
   const detail = useConversation(conversationId);
   const markRead = useMarkConversationRead(conversationId);
   const send = useSendInboxMessage(conversationId);
+  const cancel = useCancelInboxMessage(conversationId);
 
   const canReadMessages = can("messaging.messages.read");
   const canUpdate = can("messaging.conversations.update");
@@ -61,15 +66,33 @@ export function InboxThread({
    * texto; em sucesso o composer limpa sozinho.
    */
   const handleSend = React.useCallback(
-    async (text: string) => {
+    async (text: string, sendAt?: string) => {
       try {
-        await send.mutateAsync({ text, clientMessageId: crypto.randomUUID() });
+        await send.mutateAsync({ text, clientMessageId: crypto.randomUUID(), sendAt });
       } catch (error) {
         toast({ title: messageForSendError(error), variant: "error" });
         throw error;
       }
     },
     [send, toast],
+  );
+
+  /** Cancela uma mensagem agendada antes do despacho (Sprint 7.2). */
+  const handleCancel = React.useCallback(
+    (messageId: string) => {
+      cancel.mutate(messageId, {
+        onSuccess: () => toast({ title: "Agendamento cancelado", variant: "success" }),
+        onError: (error) =>
+          toast({
+            title:
+              isApiError(error) && error.statusCode === 409
+                ? "Não foi possível cancelar: a mensagem já saiu."
+                : messageForSendError(error),
+            variant: "error",
+          }),
+      });
+    },
+    [cancel, toast],
   );
 
   // 404 → some da lista: limpar a seleção inválida (uma vez).
@@ -132,6 +155,8 @@ export function InboxThread({
       <ThreadHistory
         conversationId={conversationId}
         canRead={canReadMessages}
+        onCancel={canSendPerm ? handleCancel : undefined}
+        canceling={cancel.isPending}
         onFirstView={() => {
           if (conversation.unreadCount > 0 && canUpdate) markRead.mutate();
         }}
@@ -157,10 +182,14 @@ function ThreadHistory({
   conversationId,
   canRead,
   onFirstView,
+  onCancel,
+  canceling,
 }: {
   conversationId: string;
   canRead: boolean;
   onFirstView: () => void;
+  onCancel?: (messageId: string) => void;
+  canceling?: boolean;
 }) {
   const messages = useInboxMessages(conversationId, { limit: PAGE });
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -249,7 +278,7 @@ function ThreadHistory({
                 </span>
               </div>
               {group.items.map((m) => (
-                <InboxMessage key={m.id} message={m} />
+                <InboxMessage key={m.id} message={m} onCancel={onCancel} canceling={canceling} />
               ))}
             </div>
           ))}

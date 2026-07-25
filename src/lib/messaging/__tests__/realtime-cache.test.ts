@@ -27,6 +27,7 @@ function msg(over: Partial<ApiPublicMessage> = {}): ApiPublicMessage {
     text: "oi",
     status: "SENT",
     createdAt: "2026-07-22T00:00:00.000Z",
+    scheduledAt: null,
     sentAt: "2026-07-22T00:00:00.000Z",
     deliveredAt: null,
     readAt: null,

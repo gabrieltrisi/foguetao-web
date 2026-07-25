@@ -14,7 +14,7 @@ describe("InboxComposer (Bloco 3 — envio)", () => {
     render(<InboxComposer canSend onSend={onSend} />);
     const textarea = typeInto("Olá mundo");
     fireEvent.keyDown(textarea, { key: "Enter" });
-    expect(onSend).toHaveBeenCalledWith("Olá mundo");
+    expect(onSend).toHaveBeenCalledWith("Olá mundo", undefined); // imediato = sem sendAt
     await waitFor(() => expect(textarea.value).toBe(""));
   });
 
@@ -59,5 +59,37 @@ describe("InboxComposer (Bloco 3 — envio)", () => {
     render(<InboxComposer canSend />);
     expect(screen.getByLabelText("Mensagem")).toBeDisabled();
     expect(screen.getByLabelText("Enviar")).toBeDisabled();
+  });
+
+  /* ---------- Sprint 7.2: agendamento ---------- */
+
+  it("agendar: abre o seletor, mostra o fuso e envia com sendAt ISO absoluto", async () => {
+    const onSend = vi.fn().mockResolvedValue({});
+    render(<InboxComposer canSend onSend={onSend} />);
+    typeInto("mensagem futura");
+
+    fireEvent.click(screen.getByLabelText("Agendar mensagem"));
+    expect(screen.getByText(/Fuso:/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Data e hora do envio"), {
+      target: { value: "2099-01-01T15:30" },
+    });
+    expect(screen.getByText(/Esta mensagem será enviada em/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Agendar" }));
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
+    const [text, sendAt] = onSend.mock.calls[0];
+    expect(text).toBe("mensagem futura");
+    expect(typeof sendAt).toBe("string");
+    expect(new Date(sendAt as string).getUTCFullYear()).toBe(2099);
+  });
+
+  it("agendar com data vazia mantém 'Agendar' desabilitado (não envia)", () => {
+    const onSend = vi.fn().mockResolvedValue({});
+    render(<InboxComposer canSend onSend={onSend} />);
+    typeInto("x");
+    fireEvent.click(screen.getByLabelText("Agendar mensagem"));
+    expect(screen.getByRole("button", { name: "Agendar" })).toBeDisabled();
+    expect(onSend).not.toHaveBeenCalled();
   });
 });

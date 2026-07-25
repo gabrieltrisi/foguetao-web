@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { InboxMessage } from "@/components/messaging/inbox/inbox-message";
 import type { ApiPublicMessage } from "@/types/api/messaging";
 
@@ -11,6 +12,7 @@ function msg(over: Partial<ApiPublicMessage> = {}): ApiPublicMessage {
     text: "Olá",
     status: "SENT",
     createdAt: "2026-07-16T12:00:00.000Z",
+    scheduledAt: null,
     sentAt: "2026-07-16T12:00:00.000Z",
     deliveredAt: null,
     readAt: null,
@@ -89,6 +91,35 @@ describe("InboxMessage (Bloco 2)", () => {
     const { container } = render(<InboxMessage message={msg({ direction: "SYSTEM", text: "Conversa iniciada" })} />);
     expect(screen.getByText("Conversa iniciada")).toBeInTheDocument();
     expect(container.querySelector(".justify-center")).toBeInTheDocument();
+  });
+
+  it("mensagem agendada (QUEUED + scheduledAt) mostra badge 'Agendada' e botão Cancelar", async () => {
+    const onCancel = vi.fn();
+    render(
+      <InboxMessage
+        message={msg({ id: "sched", status: "QUEUED", scheduledAt: "2099-01-01T15:30:00.000Z", sentAt: null })}
+        onCancel={onCancel}
+      />,
+    );
+    expect(screen.getByText(/Agendada/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Cancelar/i }));
+    expect(onCancel).toHaveBeenCalledWith("sched");
+  });
+
+  it("sem onCancel (sem permissão) não mostra o botão Cancelar na agendada", () => {
+    render(
+      <InboxMessage
+        message={msg({ status: "QUEUED", scheduledAt: "2099-01-01T15:30:00.000Z", sentAt: null })}
+      />,
+    );
+    expect(screen.getByText(/Agendada/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Cancelar/i })).not.toBeInTheDocument();
+  });
+
+  it("mensagem CANCELED mostra 'Cancelada' e não mostra badge de agendamento", () => {
+    render(<InboxMessage message={msg({ status: "CANCELED", scheduledAt: "2099-01-01T15:30:00.000Z" })} />);
+    expect(screen.getByText("Cancelada")).toBeInTheDocument();
+    expect(screen.queryByText(/Agendada/)).not.toBeInTheDocument();
   });
 
   it("ignora qualquer campo de provider anexado (sanitização)", () => {
