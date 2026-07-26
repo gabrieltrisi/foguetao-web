@@ -54,9 +54,41 @@ export function applyRealtimeEvent(
     }
 
     case "conversation.read": {
-      // unreadCount → 0 imediato nas listas + invalidação (reconcilia filtro unreadOnly).
-      zeroUnreadInLists(qc, event.data.conversationId);
+      // Legado global (`unreadCount:0`) → zera imediato nas listas (snappy). Para a
+      // leitura POR USUÁRIO (userId), a invalidação reconcilia `unreadForUser` via
+      // refetch (a API é a fonte da verdade de quem leu). Sempre invalida.
+      if (event.data.unreadCount === 0) zeroUnreadInLists(qc, event.data.conversationId);
       invalidate(messagingInvalidation.conversation(event.data.conversationId));
+      invalidate(messagingInvalidation.allConversations);
+      break;
+    }
+
+    // Inbox operacional (C3.1B/C/D): payloads id-only → invalidação reconcilia
+    // (assignedTo/owner/status/labels/version) via refetch. Nunca faz patch cego de
+    // dados sensíveis; a API HTTP é a fonte da verdade.
+    case "conversation.assigned":
+    case "conversation.unassigned":
+    case "conversation.ownerChanged":
+    case "conversation.labeled":
+    case "conversation.closed":
+    case "conversation.reopened": {
+      invalidate(messagingInvalidation.conversation(event.data.conversationId));
+      invalidate(messagingInvalidation.allConversations);
+      break;
+    }
+
+    case "draft.saved":
+    case "draft.deleted": {
+      // Rascunho é POR USUÁRIO e cifrado — nunca chega conteúdo no evento. Invalida
+      // a query do rascunho da conversa; a reconciliação de versão/conflito de abas
+      // é responsabilidade do hook de rascunho (refetch autorizado).
+      invalidate(messagingInvalidation.draft(event.data.conversationId));
+      break;
+    }
+
+    case "account.updated": {
+      // Status de conexão mudou → sendability das conversas pode ter mudado.
+      invalidate(messagingInvalidation.allAccounts);
       invalidate(messagingInvalidation.allConversations);
       break;
     }

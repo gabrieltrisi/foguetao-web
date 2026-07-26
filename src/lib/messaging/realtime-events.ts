@@ -20,6 +20,16 @@ export const REALTIME_EVENT_TYPES = {
   MESSAGE_STATUS_CHANGED: "message.statusChanged",
   CONVERSATION_UPDATED: "conversation.updated",
   CONVERSATION_READ: "conversation.read",
+  // Inbox operacional (C3.1B/C/D) — eventos dedicados, união aditiva. SEM PII/conteúdo.
+  CONVERSATION_ASSIGNED: "conversation.assigned",
+  CONVERSATION_UNASSIGNED: "conversation.unassigned",
+  CONVERSATION_OWNER_CHANGED: "conversation.ownerChanged",
+  CONVERSATION_LABELED: "conversation.labeled",
+  CONVERSATION_CLOSED: "conversation.closed",
+  CONVERSATION_REOPENED: "conversation.reopened",
+  DRAFT_SAVED: "draft.saved",
+  DRAFT_DELETED: "draft.deleted",
+  ACCOUNT_UPDATED: "account.updated",
   // Campanhas (Sprint C2B) — operacionais, sem PII (só id + contadores).
   CAMPAIGN_STARTED: "campaign.started",
   CAMPAIGN_PROGRESS: "campaign.progress",
@@ -70,11 +80,62 @@ const conversationUpdatedSchema = z.object({
 const conversationReadSchema = z.object({
   ...base,
   type: z.literal(REALTIME_EVENT_TYPES.CONVERSATION_READ),
+  // C3.1B: coexistem o legado global (`unreadCount:0`) e a leitura POR USUÁRIO
+  // (`userId` + `lastReadMessageId`). Todos opcionais → aceita ambas as formas.
   data: z.object({
     conversationId: z.string(),
-    unreadCount: z.literal(0),
+    unreadCount: z.literal(0).optional(),
+    userId: z.string().optional(),
+    lastReadMessageId: z.string().nullable().optional(),
     updatedAt: z.string(),
   }),
+});
+
+/* ---------- Inbox operacional (C3.1B/C/D) ---------- */
+
+const conversationAssignedSchema = z.object({
+  ...base,
+  type: z.literal(REALTIME_EVENT_TYPES.CONVERSATION_ASSIGNED),
+  data: z.object({ conversationId: z.string(), assignedToUserId: z.string().nullable() }),
+});
+
+const conversationUnassignedSchema = z.object({
+  ...base,
+  type: z.literal(REALTIME_EVENT_TYPES.CONVERSATION_UNASSIGNED),
+  data: z.object({ conversationId: z.string() }),
+});
+
+const conversationOwnerChangedSchema = z.object({
+  ...base,
+  type: z.literal(REALTIME_EVENT_TYPES.CONVERSATION_OWNER_CHANGED),
+  data: z.object({ conversationId: z.string(), ownerId: z.string().nullable() }),
+});
+
+const conversationLabeledSchema = z.object({
+  ...base,
+  type: z.literal(REALTIME_EVENT_TYPES.CONVERSATION_LABELED),
+  data: z.object({ conversationId: z.string(), labelId: z.string(), added: z.boolean() }),
+});
+
+const conversationLifecycleSchema = <T extends string>(type: T) =>
+  z.object({ ...base, type: z.literal(type), data: z.object({ conversationId: z.string(), at: z.string() }) });
+
+const draftSavedSchema = z.object({
+  ...base,
+  type: z.literal(REALTIME_EVENT_TYPES.DRAFT_SAVED),
+  data: z.object({ conversationId: z.string(), userId: z.string(), updatedAt: z.string() }),
+});
+
+const draftDeletedSchema = z.object({
+  ...base,
+  type: z.literal(REALTIME_EVENT_TYPES.DRAFT_DELETED),
+  data: z.object({ conversationId: z.string(), userId: z.string() }),
+});
+
+const accountUpdatedSchema = z.object({
+  ...base,
+  type: z.literal(REALTIME_EVENT_TYPES.ACCOUNT_UPDATED),
+  data: z.object({ accountId: z.string(), status: z.string(), at: z.string() }),
 });
 
 /* ---------- Campanhas (Sprint C2B) ---------- */
@@ -104,6 +165,15 @@ export const realtimeEnvelopeSchema = z.discriminatedUnion("type", [
   messageStatusChangedSchema,
   conversationUpdatedSchema,
   conversationReadSchema,
+  conversationAssignedSchema,
+  conversationUnassignedSchema,
+  conversationOwnerChangedSchema,
+  conversationLabeledSchema,
+  conversationLifecycleSchema(REALTIME_EVENT_TYPES.CONVERSATION_CLOSED),
+  conversationLifecycleSchema(REALTIME_EVENT_TYPES.CONVERSATION_REOPENED),
+  draftSavedSchema,
+  draftDeletedSchema,
+  accountUpdatedSchema,
   campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_STARTED),
   campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_PAUSED),
   campaignLifecycleSchema(REALTIME_EVENT_TYPES.CAMPAIGN_RESUMED),

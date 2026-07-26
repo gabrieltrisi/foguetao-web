@@ -79,6 +79,9 @@ export const queryKeys = {
     messages: (conversationId: string, filters?: unknown) =>
       ["messaging", "conversation", conversationId, "messages", filters ?? {}] as const,
     message: (id: string) => ["messaging", "message", id] as const,
+    /** Rascunho do usuário atual em UMA conversa (C3.1D). */
+    draft: (conversationId: string) =>
+      ["messaging", "conversation", conversationId, "draft"] as const,
     accounts: () => ["messaging", "accounts"] as const,
   },
 
@@ -162,6 +165,9 @@ export const messagingInvalidation = {
   /** Prefixo das mensagens de UMA conversa (qualquer filtro). */
   messages: (conversationId: string) =>
     ["messaging", "conversation", conversationId, "messages"] as const,
+  /** Rascunho do usuário atual em UMA conversa (C3.1D). */
+  draft: (conversationId: string) =>
+    ["messaging", "conversation", conversationId, "draft"] as const,
   allAccounts: ["messaging", "accounts"] as const,
 };
 
