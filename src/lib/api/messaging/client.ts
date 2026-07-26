@@ -6,6 +6,8 @@ import type {
   ApiConversation,
   ApiConversationDetail,
   ApiConversationList,
+  ApiDraft,
+  ApiLabel,
   ApiMessageDetail,
   ApiMessageList,
   ApiMessagingAccount,
@@ -16,6 +18,14 @@ import type {
   SendConversationMessageInput,
   SendMessageInput,
 } from "@/types/api/messaging";
+
+/** Body do autosave de rascunho. */
+export interface PutDraftInput {
+  text?: string;
+  attachmentRefs?: string[];
+  replyToMessageId?: string;
+  expectedVersion?: number;
+}
 
 const B = "/api/messaging";
 
@@ -63,6 +73,31 @@ export const messagingApi = {
     }),
   cancelMessage: (id: string) =>
     clientFetch<ApiMessageDetail>(`${B}/messages/${id}/cancel`, { method: "POST" }),
+
+  /* Inbox operacional (C3.1B/C/D) */
+  changeOwner: (id: string, ownerId: string | null, expectedVersion?: number) =>
+    clientFetch<ApiConversation>(`${B}/conversations/${id}/owner`, {
+      method: "POST",
+      body: { ownerId, expectedVersion },
+    }),
+  close: (id: string) =>
+    clientFetch<ApiConversation>(`${B}/conversations/${id}/close`, { method: "POST" }),
+  createInternalNote: (id: string, text: string) =>
+    clientFetch(`${B}/conversations/${id}/internal-notes`, { method: "POST", body: { text } }),
+
+  getDraft: (id: string) => clientFetch<ApiDraft | null>(`${B}/conversations/${id}/draft`),
+  putDraft: (id: string, body: PutDraftInput) =>
+    clientFetch<ApiDraft>(`${B}/conversations/${id}/draft`, { method: "PUT", body }),
+  deleteDraft: (id: string) =>
+    clientFetch<void>(`${B}/conversations/${id}/draft`, { method: "DELETE" }),
+
+  listLabels: () => clientFetch<ApiLabel[]>(`${B}/labels`),
+  createLabel: (body: { name: string; color: string }) =>
+    clientFetch<ApiLabel>(`${B}/labels`, { method: "POST", body }),
+  addConversationLabel: (id: string, labelId: string) =>
+    clientFetch(`${B}/conversations/${id}/labels`, { method: "POST", body: { labelId } }),
+  removeConversationLabel: (id: string, labelId: string) =>
+    clientFetch(`${B}/conversations/${id}/labels/${labelId}`, { method: "DELETE" }),
 
   listAccounts: () => clientFetch<{ items: ApiMessagingAccount[] }>(`${B}/accounts`),
   connectAccount: (id: string) =>

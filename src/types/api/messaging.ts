@@ -306,6 +306,16 @@ export const labelSchema = z.object({
 export type ApiLabel = z.infer<typeof labelSchema>;
 export const labelListSchema = z.array(labelSchema);
 
+/** Resultado da marcação de leitura POR USUÁRIO (C3.1B) — o /read não retorna mais a conversa. */
+export const readResultSchema = z.object({
+  conversationId: z.string(),
+  userId: z.string(),
+  lastReadMessageId: z.string().nullable(),
+  lastReadAt: z.string(),
+  unreadForUser: z.number(),
+});
+export type ApiReadResult = z.infer<typeof readResultSchema>;
+
 export const conversationDetailSchema = conversationSummarySchema.extend({
   participants: z.array(participantSchema),
   lastMessage: messageSummarySchema.nullable(),

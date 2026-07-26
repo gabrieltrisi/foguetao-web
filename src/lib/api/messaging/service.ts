@@ -10,6 +10,10 @@ import {
   messagingAccountListSchema,
   publicMessageListSchema,
   publicMessageSchema,
+  draftSchema,
+  labelSchema,
+  labelListSchema,
+  readResultSchema,
 } from "@/types/api/messaging";
 
 interface Ctx {
@@ -64,12 +68,74 @@ export const messagingService = {
       companyId,
       schema: conversationSummarySchema,
     }),
-  markConversationRead: ({ token, companyId }: Ctx, id: string) =>
+  markConversationRead: ({ token, companyId }: Ctx, id: string, body?: unknown) =>
     backendFetch(`/messaging/conversations/${id}/read`, {
       method: "POST",
       token,
       companyId,
+      body: body ?? {},
+      schema: readResultSchema,
+    }),
+  /* Inbox operacional (C3.1B/C) — owner/close + notas + rascunhos + etiquetas. */
+  changeOwner: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/messaging/conversations/${id}/owner`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
       schema: conversationSummarySchema,
+    }),
+  closeConversation: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}/close`, {
+      method: "POST",
+      token,
+      companyId,
+      schema: conversationSummarySchema,
+    }),
+  createInternalNote: ({ token, companyId }: Ctx, id: string, body: { text: string }) =>
+    backendFetch(`/messaging/conversations/${id}/internal-notes`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+      schema: messageSummaryOrDetail,
+    }),
+
+  /* Rascunhos (por usuário, cifrados no backend) */
+  getDraft: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}/draft`, {
+      token,
+      companyId,
+      schema: draftSchema.nullable().catch(null),
+    }),
+  putDraft: ({ token, companyId }: Ctx, id: string, body: unknown) =>
+    backendFetch(`/messaging/conversations/${id}/draft`, {
+      method: "PUT",
+      token,
+      companyId,
+      body,
+      schema: draftSchema,
+    }),
+  deleteDraft: ({ token, companyId }: Ctx, id: string) =>
+    backendFetch(`/messaging/conversations/${id}/draft`, { method: "DELETE", token, companyId }),
+
+  /* Etiquetas */
+  listLabels: ({ token, companyId }: Ctx) =>
+    backendFetch(`/messaging/labels`, { token, companyId, schema: labelListSchema }),
+  createLabel: ({ token, companyId }: Ctx, body: unknown) =>
+    backendFetch(`/messaging/labels`, { method: "POST", token, companyId, body, schema: labelSchema }),
+  addConversationLabel: ({ token, companyId }: Ctx, id: string, body: { labelId: string }) =>
+    backendFetch(`/messaging/conversations/${id}/labels`, {
+      method: "POST",
+      token,
+      companyId,
+      body,
+    }),
+  removeConversationLabel: ({ token, companyId }: Ctx, id: string, labelId: string) =>
+    backendFetch(`/messaging/conversations/${id}/labels/${labelId}`, {
+      method: "DELETE",
+      token,
+      companyId,
     }),
 
   /* Mensagens */
