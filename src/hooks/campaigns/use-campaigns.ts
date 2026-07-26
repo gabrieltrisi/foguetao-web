@@ -136,13 +136,15 @@ export function useScheduleCampaign(id: string) {
   });
 }
 
-/* ---------- Execução (Sprint C2B) — atualizam após a resposta do backend ------ */
+/* ---------- Execução (Sprint C2B) — atualizam após a resposta do backend ------
+ * Invalidam em onSETTLED (sucesso E erro): num 409 (estado mudou sob o usuário)
+ * o refetch já traz o status real, sincronizando a UI sem falha silenciosa. */
 
 export function useSendNowCampaign(id: string) {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: () => campaignsApi.sendNow(id),
-    onSuccess: (c: ApiCampaign) => invalidate(c.id),
+    onSettled: () => invalidate(id),
   });
 }
 
@@ -150,7 +152,7 @@ export function usePauseCampaign(id: string) {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: () => campaignsApi.pause(id),
-    onSuccess: (c: ApiCampaign) => invalidate(c.id),
+    onSettled: () => invalidate(id),
   });
 }
 
@@ -158,7 +160,7 @@ export function useResumeCampaign(id: string) {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: () => campaignsApi.resume(id),
-    onSuccess: (c: ApiCampaign) => invalidate(c.id),
+    onSettled: () => invalidate(id),
   });
 }
 
@@ -166,6 +168,6 @@ export function useCancelCampaign(id: string) {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: () => campaignsApi.cancel(id),
-    onSuccess: (c: ApiCampaign) => invalidate(c.id, { recipients: true }),
+    onSettled: () => invalidate(id, { recipients: true }),
   });
 }

@@ -58,8 +58,8 @@ export function CampaignExecutionActions({
 
   if (!showSend && !showPause && !showResume && !showCancel) return null;
 
-  const onErr = (err: unknown) =>
-    toast({ title: messageForCampaignError(err), variant: "error" });
+  const errToast = (action: Parameters<typeof messageForCampaignError>[1]) => (err: unknown) =>
+    toast({ title: messageForCampaignError(err, action), variant: "error" });
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -82,7 +82,7 @@ export function CampaignExecutionActions({
           onConfirm={() =>
             pause.mutate(undefined, {
               onSuccess: () => toast({ title: "Campanha pausada", variant: "success" }),
-              onError: onErr,
+              onError: errToast("pause"),
             })
           }
         />
@@ -101,7 +101,7 @@ export function CampaignExecutionActions({
           onConfirm={() =>
             resume.mutate(undefined, {
               onSuccess: () => toast({ title: "Campanha retomada", variant: "success" }),
-              onError: onErr,
+              onError: errToast("resume"),
             })
           }
         />
@@ -124,16 +124,27 @@ export function CampaignExecutionActions({
         <AlertDialogContent>
           <AlertDialogTitle>Enviar campanha agora?</AlertDialogTitle>
           <AlertDialogDescription>
-            Você está prestes a iniciar o envio para{" "}
-            <strong>{campaign.counters.eligible}</strong> destinatário(s) elegíveis. O processamento
-            começa imediatamente e respeita o limite configurado da conta.
+            {campaign.counters.eligible > 0 ? (
+              <>
+                Você está prestes a iniciar o envio para{" "}
+                <strong>{campaign.counters.eligible}</strong> destinatário(s) elegíveis. O
+                processamento começa imediatamente e respeita o limite configurado da conta.
+              </>
+            ) : (
+              <>
+                O público será congelado e os destinatários elegíveis calculados ao confirmar. O
+                processamento começa imediatamente e respeita o limite configurado da conta.
+              </>
+            )}
           </AlertDialogDescription>
-          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-small">
-            <dt className="text-ink-3">Elegíveis</dt>
-            <dd className="text-ink">{campaign.counters.eligible}</dd>
-            <dt className="text-ink-3">Excluídos</dt>
-            <dd className="text-ink">{campaign.counters.excluded}</dd>
-          </dl>
+          {campaign.counters.eligible > 0 ? (
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-small">
+              <dt className="text-ink-3">Elegíveis</dt>
+              <dd className="text-ink">{campaign.counters.eligible}</dd>
+              <dt className="text-ink-3">Excluídos</dt>
+              <dd className="text-ink">{campaign.counters.excluded}</dd>
+            </dl>
+          ) : null}
           <div className="mt-6 flex justify-end gap-2">
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
@@ -141,11 +152,12 @@ export function CampaignExecutionActions({
               onClick={() =>
                 sendNow.mutate(undefined, {
                   onSuccess: () => toast({ title: "Envio iniciado", variant: "success" }),
-                  onError: onErr,
+                  onError: errToast("sendNow"),
+                  onSettled: () => setSendOpen(false),
                 })
               }
             >
-              Enviar agora
+              Confirmar e enviar
             </AlertDialogAction>
           </div>
         </AlertDialogContent>
@@ -172,7 +184,8 @@ export function CampaignExecutionActions({
               onClick={() =>
                 cancel.mutate(undefined, {
                   onSuccess: () => toast({ title: "Campanha cancelada", variant: "success" }),
-                  onError: onErr,
+                  onError: errToast("cancel"),
+                  onSettled: () => setCancelOpen(false),
                 })
               }
             >
