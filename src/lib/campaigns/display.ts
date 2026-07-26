@@ -48,6 +48,18 @@ export function formatDateTime(iso: string | null, timeZone?: string): string {
   }).format(d);
 }
 
+/**
+ * Rótulo AMIGÁVEL de uma conta de WhatsApp — nunca o UUID interno. Preferência:
+ * displayName → name → "Conta de WhatsApp", com o número quando houver.
+ */
+export function accountLabel(
+  a?: { name?: string | null; displayName?: string | null; phoneNumber?: string | null } | null,
+): string {
+  if (!a) return "—";
+  const name = a.displayName || a.name || "Conta de WhatsApp";
+  return a.phoneNumber ? `${name} · ${a.phoneNumber}` : name;
+}
+
 /* ---------- Destinatários (Sprint C2B) ---------- */
 
 /** Ponto único de apresentação do status do destinatário. */

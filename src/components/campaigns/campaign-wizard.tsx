@@ -21,8 +21,12 @@ import {
   useScheduleCampaign,
   useUpdateCampaign,
 } from "@/hooks/campaigns/use-campaigns";
-import { EXCLUSION_LABELS, formatDateTime } from "@/lib/campaigns/display";
+import { accountLabel, EXCLUSION_LABELS, formatDateTime } from "@/lib/campaigns/display";
+import { messageForCampaignError } from "@/lib/campaigns/errors";
 import type { ApiAudiencePreview, AudienceKind, AudienceSpec } from "@/types/api/campaigns";
+import type { ApiMessagingAccount } from "@/types/api/messaging";
+
+type WizardErrors = Partial<Record<"name" | "account" | "audience" | "message" | "schedule", string>>;
 
 const STEPS = [
   { label: "Informações" },
@@ -73,6 +77,24 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
   const [scheduleValue, setScheduleValue] = React.useState("");
   const [previewData, setPreviewData] = React.useState<ApiAudiencePreview | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [errors, setErrors] = React.useState<WizardErrors>({});
+
+  // P5: qualquer mudança de audiência INVALIDA a estimativa (nunca mostra elegíveis antigos).
+  const setKindFresh = (v: AudienceKind) => {
+    setKind(v);
+    setPreviewData(null);
+    setErrors((p) => ({ ...p, audience: undefined }));
+  };
+  const setTagsFresh = (v: string[]) => {
+    setTagIds(v);
+    setPreviewData(null);
+    setErrors((p) => ({ ...p, audience: undefined }));
+  };
+  const setContactsFresh = (v: string[]) => {
+    setContactIds(v);
+    setPreviewData(null);
+    setErrors((p) => ({ ...p, audience: undefined }));
+  };
 
   // Prefill em modo edição.
   const loaded = React.useRef(false);
@@ -96,11 +118,40 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
   }, [existing.data]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const accountOptions = (accounts.data?.items ?? []) as Array<{
-    id: string;
-    displayName?: string | null;
-    status: string;
-  }>;
+  const accountOptions = (accounts.data?.items ?? []) as ApiMessagingAccount[];
+
+  /** Valida o passo atual; devolve o id do 1º campo inválido (para focar) ou null. */
+  function validateStep(s: number): { errors: WizardErrors; firstInvalid: string | null } {
+    const e: WizardErrors = {};
+    if (s === 0) {
+      if (!name.trim()) e.name = "Informe o nome da campanha.";
+      if (!accountId) e.account = "Selecione uma conta de WhatsApp conectada.";
+    }
+    if (s === 1) {
+      if (kind === "TAGS" && tagIds.length === 0) e.audience = "Selecione ao menos uma tag.";
+      if (kind === "CONTACTS" && contactIds.length === 0)
+        e.audience = "Selecione ao menos um contato.";
+    }
+    if (s === 2) {
+      if (!message.trim()) e.message = "Escreva a mensagem da campanha.";
+      else if (message.length > TEXT_LIMIT) e.message = "A mensagem excede o limite.";
+    }
+    if (s === 3 && sendMode === "schedule") {
+      if (!scheduleValue) e.schedule = "Escolha a data e hora do agendamento.";
+      else if (new Date(scheduleValue).getTime() <= Date.now())
+        e.schedule = "A data precisa ser no futuro.";
+    }
+    const order = ["name", "account", "audience", "message", "schedule"] as const;
+    const firstInvalid = order.find((k) => e[k]) ?? null;
+    const fieldId: Record<string, string> = {
+      name: "c-name",
+      account: "c-acc",
+      audience: "c-audience",
+      message: "c-message",
+      schedule: "c-schedule",
+    };
+    return { errors: e, firstInvalid: firstInvalid ? fieldId[firstInvalid] : null };
+  }
   const tagOptions = (tags.data?.items ?? []).map((t) => ({ value: t.id, label: t.name }));
   const contactOptions = (contacts.data?.items ?? []).map((c) => ({
     value: c.id,
@@ -149,22 +200,21 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
   }
 
   async function next() {
+    // P3: validação inline — destaca campo, mostra mensagem, foca o 1º erro, bloqueia avanço.
+    const { errors: e, firstInvalid } = validateStep(step);
+    setErrors(e);
+    if (firstInvalid) {
+      document.getElementById(firstInvalid)?.focus();
+      return;
+    }
     setBusy(true);
     try {
-      if (step === 0) {
-        if (!name.trim() || !accountId) {
-          toast({ title: "Informe nome e conta", variant: "error" });
-          return;
-        }
-        await ensureDraft();
-      } else {
-        await ensureDraft();
-      }
+      await ensureDraft();
       const nextStep = step + 1;
       if (nextStep === 1 || nextStep === 4) await runPreview();
       setStep(nextStep);
-    } catch {
-      toast({ title: "Não foi possível salvar o rascunho", variant: "error" });
+    } catch (err) {
+      toast({ title: messageForCampaignError(err), variant: "error" });
     } finally {
       setBusy(false);
     }
@@ -172,6 +222,12 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
 
   async function confirm() {
     if (!draftId) return;
+    const { errors: e, firstInvalid } = validateStep(3);
+    if (firstInvalid) {
+      setErrors(e);
+      setStep(3);
+      return;
+    }
     setBusy(true);
     try {
       const sendAt =
@@ -179,10 +235,16 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
           ? new Date(scheduleValue).toISOString()
           : undefined;
       const c = await schedule.mutateAsync(sendAt);
-      toast({ title: "Campanha agendada", variant: "success" });
+      toast({
+        title: sendMode === "now" ? "Envio iniciado" : "Campanha agendada",
+        variant: "success",
+      });
       router.push(`/whatsapp/campaigns/${c.id}`);
-    } catch {
-      toast({ title: "Não foi possível agendar", variant: "error" });
+    } catch (err) {
+      toast({
+        title: messageForCampaignError(err, sendMode === "now" ? "sendNow" : "schedule"),
+        variant: "error",
+      });
     } finally {
       setBusy(false);
     }
@@ -202,9 +264,18 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
         <CardContent className="flex flex-col gap-4">
           {step === 0 ? (
             <>
-              <FormField id="c-name" label="Nome da campanha" required>
+              <FormField id="c-name" label="Nome da campanha" required error={errors.name}>
                 {(p) => (
-                  <Input {...p} value={name} maxLength={160} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Dia dos Pais" />
+                  <Input
+                    {...p}
+                    value={name}
+                    maxLength={160}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setErrors((prev) => ({ ...prev, name: undefined }));
+                    }}
+                    placeholder="Ex.: Dia dos Pais"
+                  />
                 )}
               </FormField>
               <FormField id="c-desc" label="Descrição (opcional)">
@@ -212,18 +283,22 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
                   <Input {...p} value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} />
                 )}
               </FormField>
-              <FormField id="c-acc" label="Conta de WhatsApp" required>
+              <FormField id="c-acc" label="Conta de WhatsApp" required error={errors.account}>
                 {(p) => (
                   <select
                     {...p}
                     value={accountId}
-                    onChange={(e) => setAccountId(e.target.value)}
-                    className="h-10 rounded-lg border border-line bg-white px-3 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    onChange={(e) => {
+                      setAccountId(e.target.value);
+                      setErrors((prev) => ({ ...prev, account: undefined }));
+                    }}
+                    className="h-10 rounded-lg border border-line bg-white px-3 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand aria-[invalid=true]:border-danger"
                   >
                     <option value="">Selecione…</option>
                     {accountOptions.map((a) => (
                       <option key={a.id} value={a.id} disabled={a.status !== "CONNECTED"}>
-                        {a.displayName || a.id.slice(0, 8)} {a.status !== "CONNECTED" ? "(desconectada)" : ""}
+                        {accountLabel(a)}
+                        {a.status !== "CONNECTED" ? " (desconectada)" : ""}
                       </option>
                     ))}
                   </select>
@@ -234,19 +309,26 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
 
           {step === 1 ? (
             <>
-              <RadioGroup value={kind} onValueChange={(v) => setKind(v as AudienceKind)} className="flex gap-4">
-                {(["ALL", "TAGS", "CONTACTS"] as const).map((k) => (
-                  <label key={k} className="flex items-center gap-2 text-body">
-                    <RadioGroupItem value={k} /> {k === "ALL" ? "Todos" : k === "TAGS" ? "Por tags" : "Contatos"}
-                  </label>
-                ))}
-              </RadioGroup>
-              {kind === "TAGS" ? (
-                <MultiSelect options={tagOptions} value={tagIds} onValueChange={setTagIds} placeholder="Selecione tags…" />
-              ) : null}
-              {kind === "CONTACTS" ? (
-                <MultiSelect options={contactOptions} value={contactIds} onValueChange={setContactIds} placeholder="Selecione contatos…" />
-              ) : null}
+              <div id="c-audience" tabIndex={-1} className="flex flex-col gap-4 outline-none">
+                <RadioGroup value={kind} onValueChange={(v) => setKindFresh(v as AudienceKind)} className="flex gap-4">
+                  {(["ALL", "TAGS", "CONTACTS"] as const).map((k) => (
+                    <label key={k} className="flex items-center gap-2 text-body">
+                      <RadioGroupItem value={k} /> {k === "ALL" ? "Todos" : k === "TAGS" ? "Por tags" : "Contatos"}
+                    </label>
+                  ))}
+                </RadioGroup>
+                {kind === "TAGS" ? (
+                  <MultiSelect options={tagOptions} value={tagIds} onValueChange={setTagsFresh} placeholder="Selecione tags…" />
+                ) : null}
+                {kind === "CONTACTS" ? (
+                  <MultiSelect options={contactOptions} value={contactIds} onValueChange={setContactsFresh} placeholder="Selecione contatos…" />
+                ) : null}
+                {errors.audience ? (
+                  <p role="alert" className="text-small text-danger">
+                    {errors.audience}
+                  </p>
+                ) : null}
+              </div>
               <div className="flex items-center justify-between rounded-lg border border-line bg-surface/40 p-3">
                 <div className="text-body2">
                   {previewData ? (
@@ -280,12 +362,23 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
                 </Button>
               </div>
               <Textarea
+                id="c-message"
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                aria-invalid={errors.message ? true : undefined}
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                  setErrors((prev) => ({ ...prev, message: undefined }));
+                }}
                 rows={5}
                 maxLength={TEXT_LIMIT + 200}
                 placeholder="Olá {{primeiro_nome}}, ..."
+                className="aria-[invalid=true]:border-danger"
               />
+              {errors.message ? (
+                <p role="alert" className="text-small text-danger">
+                  {errors.message}
+                </p>
+              ) : null}
               <p className={overLimit ? "text-right text-caption text-danger" : "text-right text-caption text-ink-3"}>
                 {message.length}/{TEXT_LIMIT}
               </p>
@@ -309,11 +402,21 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
               {sendMode === "schedule" ? (
                 <>
                   <input
+                    id="c-schedule"
                     type="datetime-local"
                     value={scheduleValue}
-                    onChange={(e) => setScheduleValue(e.target.value)}
-                    className="w-full rounded-lg border border-line bg-white px-3 py-2 text-body2 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/15"
+                    aria-invalid={errors.schedule ? true : undefined}
+                    onChange={(e) => {
+                      setScheduleValue(e.target.value);
+                      setErrors((prev) => ({ ...prev, schedule: undefined }));
+                    }}
+                    className="w-full rounded-lg border border-line bg-white px-3 py-2 text-body2 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/15 aria-[invalid=true]:border-danger"
                   />
+                  {errors.schedule ? (
+                    <p role="alert" className="text-small text-danger">
+                      {errors.schedule}
+                    </p>
+                  ) : null}
                   <p className="text-caption text-ink-3">Fuso: {TZ}</p>
                 </>
               ) : (
@@ -327,7 +430,7 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
           {step === 4 ? (
             <ExecutiveSummary
               name={name}
-              account={accountOptions.find((a) => a.id === accountId)?.displayName ?? accountId}
+              account={accountLabel(accountOptions.find((a) => a.id === accountId))}
               message={message}
               sendMode={sendMode}
               scheduleValue={scheduleValue}
@@ -348,7 +451,7 @@ export function CampaignWizard({ campaignId }: { campaignId?: string }) {
           </Button>
         ) : (
           <Button loading={busy} onClick={confirm} disabled={!scheduleValid || !previewData?.eligible}>
-            Confirmar e agendar
+            {sendMode === "now" ? "Confirmar e enviar" : "Confirmar agendamento"}
           </Button>
         )}
       </div>
