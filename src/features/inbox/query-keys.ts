@@ -24,6 +24,8 @@ export const inboxKeys = {
     [ROOT, "conversation", id, "messages", filters ?? {}] as const,
   /** Rascunho do usuário atual em UMA conversa. */
   draft: (id: string) => [ROOT, "conversation", id, "draft"] as const,
+  /** Metadados de UMA mídia. */
+  media: (mediaId: string) => [ROOT, "media", mediaId] as const,
   /** Taxonomia de etiquetas da empresa. */
   labels: () => [ROOT, "labels"] as const,
   /** Contas de messaging (canais). */

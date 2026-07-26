@@ -306,6 +306,23 @@ export const labelSchema = z.object({
 export type ApiLabel = z.infer<typeof labelSchema>;
 export const labelListSchema = z.array(labelSchema);
 
+/**
+ * Metadados de mídia (C3.1 — storage MOCK). O backend NÃO expõe URL/bytes de
+ * download nesta fase: só metadados (mime/tamanho/nome/status). A reprodução real
+ * (imagem/vídeo/áudio) depende de download assinado do storage real (pendência).
+ */
+export const mediaResponseSchema = z.object({
+  id: z.string(),
+  storageProvider: z.string(),
+  mimeType: z.string(),
+  sizeBytes: z.number(),
+  originalFilename: z.string().nullable(),
+  status: z.string(),
+  checksum: z.string(),
+  createdAt: z.string(),
+});
+export type ApiMedia = z.infer<typeof mediaResponseSchema>;
+
 /** Resultado da marcação de leitura POR USUÁRIO (C3.1B) — o /read não retorna mais a conversa. */
 export const readResultSchema = z.object({
   conversationId: z.string(),

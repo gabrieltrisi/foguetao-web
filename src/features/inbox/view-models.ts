@@ -76,12 +76,15 @@ export interface TimelineMessageVM {
   id: string;
   kind: TimelineMessageKind;
   direction: string;
+  /** Tipo funcional (TEXT/IMAGE/VIDEO/AUDIO/DOCUMENT/…) — decide a renderização. */
+  type: string;
   text: string | null;
   status: string;
   createdAt: string;
   replyToMessageId: string | null;
   senderUserId: string | null;
   hasMedia: boolean;
+  mediaId: string | null;
   failure: ApiPublicMessageListItem["failure"];
   /** Falha terminal → oferecer retry. */
   isFailed: boolean;
@@ -101,12 +104,14 @@ export function toTimelineMessage(m: ApiPublicMessageListItem): TimelineMessageV
     id: m.id,
     kind: messageKind(m),
     direction: m.direction,
+    type: m.type,
     text: m.text,
     status: m.status,
     createdAt: m.createdAt,
     replyToMessageId: m.replyToMessageId ?? null,
     senderUserId: m.senderUserId ?? null,
     hasMedia: m.hasMedia ?? false,
+    mediaId: m.mediaId ?? null,
     failure: m.failure,
     isFailed: m.status === "FAILED",
   };

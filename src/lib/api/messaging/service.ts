@@ -14,6 +14,7 @@ import {
   labelSchema,
   labelListSchema,
   readResultSchema,
+  mediaResponseSchema,
 } from "@/types/api/messaging";
 
 interface Ctx {
@@ -205,4 +206,8 @@ export const messagingService = {
     }),
   testAccount: ({ token, companyId }: Ctx, id: string) =>
     backendFetch(`/messaging/accounts/${id}/test`, { method: "POST", token, companyId }),
+
+  /* Mídia — SOMENTE metadados (storage MOCK; sem URL de download nesta fase). */
+  getMedia: ({ token, companyId }: Ctx, mediaId: string) =>
+    backendFetch(`/messaging/media/${mediaId}`, { token, companyId, schema: mediaResponseSchema }),
 };

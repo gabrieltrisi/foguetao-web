@@ -10,6 +10,7 @@ import type {
   ApiLabel,
   ApiMessageDetail,
   ApiMessageList,
+  ApiMedia,
   ApiMessagingAccount,
   ApiPublicMessage,
   ApiPublicMessageList,
@@ -119,4 +120,5 @@ export const messagingApi = {
   disconnectAccount: (id: string) =>
     clientFetch<ApiMessagingAccount>(`${B}/accounts/${id}/disconnect`, { method: "POST" }),
   testAccount: (id: string) => clientFetch(`${B}/accounts/${id}/test`, { method: "POST" }),
+  getMedia: (mediaId: string) => clientFetch<ApiMedia>(`${B}/media/${mediaId}`),
 };
