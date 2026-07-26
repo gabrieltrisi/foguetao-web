@@ -1,5 +1,7 @@
+import * as React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApiError } from "@/types/api/error";
 import type { ApiPublicMessageListItem } from "@/types/api/messaging";
 import { ConversationTimeline } from "@/features/inbox/components/timeline/conversation-timeline";
@@ -8,6 +10,10 @@ const hook = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
 vi.mock("@/features/inbox/hooks/use-conversation-messages", () => ({
   useConversationMessages: () => hook.value,
 }));
+vi.mock("@/providers/session-provider", () => ({
+  useSession: () => ({ user: { id: "u1" }, activeCompanyId: "co1", can: () => true }),
+}));
+vi.mock("@/components/ui/toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
 
 function m(over: Partial<ApiPublicMessageListItem>): ApiPublicMessageListItem {
   return {
@@ -21,7 +27,12 @@ const base = {
   hasNextPage: false, isFetchingNextPage: false, fetchNextPage: vi.fn(), refetch: vi.fn(),
   isError: false, error: null,
 };
-const render$ = () => render(<ConversationTimeline conversationId="c1" unreadForUser={0} />);
+function Wrap({ children }: { children: React.ReactNode }) {
+  const [c] = React.useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
+  return <QueryClientProvider client={c}>{children}</QueryClientProvider>;
+}
+const render$ = () =>
+  render(<ConversationTimeline conversationId="c1" unreadForUser={0} />, { wrapper: Wrap });
 
 describe("ConversationTimeline (F2A)", () => {
   it("loading → skeleton", () => {
@@ -79,7 +90,7 @@ describe("ConversationTimeline (F2A)", () => {
       ...base, isLoading: false,
       data: { pages: [{ items: [m({ id: "a", direction: "INBOUND" })], nextCursor: null, hasMore: false }] },
     };
-    render(<ConversationTimeline conversationId="c1" unreadForUser={1} />);
+    render(<ConversationTimeline conversationId="c1" unreadForUser={1} />, { wrapper: Wrap });
     expect(screen.getByText("Não lidas")).toBeInTheDocument();
   });
 });
