@@ -1,6 +1,6 @@
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { applyRealtimeEvent } from "@/lib/messaging/realtime-cache";
 import { useMessagingRealtime } from "@/hooks/messaging/use-messaging-realtime";
@@ -197,5 +197,49 @@ describe("useMessagingRealtime — reconnect/onopen", () => {
     unmount();
     vi.advanceTimersByTime(60000);
     expect(FakeEventSource.created).toHaveLength(1); // nenhuma reconexão após unmount
+  });
+});
+
+describe("useMessagingRealtime — estado, dedup e offline (C3.1D)", () => {
+  it("expõe estado: connecting → connected → reconnecting", () => {
+    const { result } = render();
+    expect(result.current.status).toBe("connecting");
+    act(() => last().open());
+    expect(result.current.status).toBe("connected");
+    expect(result.current.pollingActive).toBe(false);
+    act(() => last().error());
+    expect(result.current.status).toBe("reconnecting");
+    expect(result.current.pollingActive).toBe(true);
+    expect(result.current.reconnectAttempts).toBe(1);
+  });
+
+  it("deduplica por eventId (at-least-once) — mesmo id aplica uma vez", () => {
+    render();
+    const src = last();
+    src.emit("conversation.updated", validEvent({ id: "dup" }));
+    src.emit("conversation.updated", validEvent({ id: "dup" }));
+    expect(applyRealtimeEvent).toHaveBeenCalledTimes(1);
+    // id diferente volta a aplicar
+    src.emit("conversation.updated", validEvent({ id: "outro" }));
+    expect(applyRealtimeEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it("offline: fecha o stream e vai para status offline; online religa", () => {
+    const onLine = vi.spyOn(navigator, "onLine", "get");
+    onLine.mockReturnValue(true);
+    const { result } = render();
+    const first = last();
+    act(() => {
+      onLine.mockReturnValue(false);
+      window.dispatchEvent(new Event("offline"));
+    });
+    expect(first.closed).toBe(true);
+    expect(result.current.status).toBe("offline");
+    act(() => {
+      onLine.mockReturnValue(true);
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(FakeEventSource.created.length).toBeGreaterThan(1); // reabriu
+    onLine.mockRestore();
   });
 });
