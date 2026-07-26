@@ -112,6 +112,7 @@ export function InboxThread({
       <ConversationTimeline
         conversationId={conversationId}
         unreadForUser={conversation.unreadForUser}
+        counterpartName={name}
       />
 
       <InboxComposer

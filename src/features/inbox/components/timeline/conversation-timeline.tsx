@@ -3,18 +3,20 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { toUserErrorMessage } from "@/lib/api/user-error-message";
+import { useSession } from "@/providers/session-provider";
 import { useConversationMessages } from "@/features/inbox/hooks/use-conversation-messages";
 import { useTimelineScroll } from "@/features/inbox/hooks/use-timeline-scroll";
 import { buildTimeline, findFirstUnreadId, flattenTimelinePages } from "@/features/inbox/timeline";
+import type { TimelineMessageVM } from "@/features/inbox/view-models";
 import {
   DaySeparator,
   NewMessagesIndicator,
   TimelineEmpty,
   TimelineError,
-  TimelineMessageRow,
   TimelineSkeleton,
   UnreadSeparator,
 } from "./timeline-parts";
+import { MessageRow } from "./message/message-row";
 
 const PAGE = 30;
 const UNREAD_ANCHOR_ID = "timeline-unread-anchor";
@@ -28,12 +30,25 @@ const UNREAD_ANCHOR_ID = "timeline-unread-anchor";
 export function ConversationTimeline({
   conversationId,
   unreadForUser,
+  counterpartName = "Contato",
 }: {
   conversationId: string;
   unreadForUser?: number | null;
+  counterpartName?: string;
 }) {
+  const { user } = useSession();
   const q = useConversationMessages(conversationId, { limit: PAGE });
   const now = React.useMemo(() => new Date(), []);
+
+  const senderName = React.useCallback(
+    (m: TimelineMessageVM) =>
+      m.direction === "OUTBOUND"
+        ? m.senderUserId && m.senderUserId === user?.id
+          ? "Você"
+          : "Atendente"
+        : counterpartName,
+    [user?.id, counterpartName],
+  );
 
   const ordered = React.useMemo(() => flattenTimelinePages(q.data?.pages), [q.data?.pages]);
   const topItemId = ordered[0]?.id;
@@ -137,7 +152,7 @@ export function ConversationTimeline({
           </div>
         ) : null}
 
-        <div className="pb-3">
+        <div className="pb-3" role="list">
           {items.map((it) =>
             it.kind === "day" ? (
               <DaySeparator key={it.id} label={it.label} />
@@ -146,7 +161,7 @@ export function ConversationTimeline({
                 <UnreadSeparator />
               </div>
             ) : (
-              <TimelineMessageRow key={it.id} message={it.message} group={it.group} />
+              <MessageRow key={it.id} message={it.message} group={it.group} senderName={senderName(it.message)} />
             ),
           )}
         </div>
