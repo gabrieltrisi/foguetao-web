@@ -6,6 +6,10 @@
 export * from "./query-keys";
 export * from "./view-models";
 export * from "./constants";
+export * from "./url-state";
+export * from "./format";
+export { useInboxUrlState } from "./hooks/use-inbox-url-state";
+export { InboxShell } from "./components/shell/inbox-shell";
 export { useConversationDraft, type DraftSaveState } from "./hooks/use-conversation-draft";
 export {
   useInboxLabels,

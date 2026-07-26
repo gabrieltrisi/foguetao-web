@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CommunicationNav } from "@/components/messaging/communication-nav";
-import { Inbox } from "@/components/messaging/inbox/inbox";
+import { InboxShell } from "@/features/inbox/components/shell/inbox-shell";
 
 export const metadata: Metadata = {
   title: "Inbox",
@@ -12,7 +13,10 @@ export default function Page() {
   return (
     <div className="flex flex-col gap-4">
       <CommunicationNav />
-      <Inbox />
+      {/* useSearchParams (seleção/filtros por URL) exige limite de Suspense. */}
+      <Suspense fallback={<div className="h-[calc(100dvh-11rem)] rounded-xl border border-line bg-white" />}>
+        <InboxShell />
+      </Suspense>
     </div>
   );
 }
