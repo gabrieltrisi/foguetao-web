@@ -380,6 +380,14 @@ export interface ConversationFilters {
   search?: string;
   updatedFrom?: string;
   updatedTo?: string;
+  // C3.1C (aditivos) — filtros avançados da Inbox.
+  ownerId?: string;
+  labelId?: string;
+  channel?: string;
+  organizationId?: string;
+  archived?: boolean;
+  blocked?: boolean;
+  sort?: "lastMessageAt" | "updatedAt" | "createdAt";
 }
 
 export interface MessageFilters {
