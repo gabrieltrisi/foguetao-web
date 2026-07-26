@@ -98,6 +98,47 @@ export type ApiSendabilityReason = z.infer<typeof sendabilityReasonSchema>;
 
 /* ---------- Conversas ---------- */
 
+/** Referência leve de etiqueta na projeção de conversa (C3.1B). */
+export const labelRefSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.string(),
+});
+export type ApiLabelRef = z.infer<typeof labelRefSchema>;
+
+/** Conta/canal resumidos da conversa (C3.1C). Nunca UUID de conexão. */
+export const conversationAccountSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  channel: z.string(),
+  phoneNumber: z.string().nullable(),
+});
+export type ApiConversationAccount = z.infer<typeof conversationAccountSchema>;
+
+/** Capacidades EFETIVAS do canal (C3.1A/C). Campos usados pela UI (composer/sendability). */
+export const channelCapabilitiesSchema = z
+  .object({
+    supportsText: z.boolean(),
+    supportsMedia: z.boolean(),
+    supportsTemplates: z.boolean(),
+    hasReplyWindow: z.boolean(),
+    replyWindowSeconds: z.number().nullable(),
+    maxTextLength: z.number().nullable(),
+    supportedMimeTypes: z.array(z.string()),
+  })
+  .partial()
+  .passthrough();
+export type ApiChannelCapabilities = z.infer<typeof channelCapabilitiesSchema>;
+
+/** Prévia da última mensagem PÚBLICA (C3.1C). `preview` já sanitizado. */
+export const lastMessagePreviewSchema = z.object({
+  preview: z.string().nullable(),
+  direction: z.string(),
+  type: z.string(),
+  at: z.string(),
+});
+export type ApiLastMessagePreview = z.infer<typeof lastMessagePreviewSchema>;
+
 export const conversationSummarySchema = z.object({
   id: z.string(),
   companyId: z.string(),
@@ -108,8 +149,21 @@ export const conversationSummarySchema = z.object({
   // Telefone do interlocutor (número completo) — fallback de exibição na lista.
   normalizedPhone: z.string().nullable().optional(),
   assignedToUserId: z.string().nullable(),
+  // C3.1B/C (aditivos): owner comercial, canal/conta/capacidades, prévia, unread por
+  // usuário, etiquetas, lock otimista e SLA. Opcionais/tolerantes para compat.
+  ownerId: z.string().nullable().optional(),
   contactId: z.string().nullable(),
+  channel: z.string().optional(),
+  account: conversationAccountSchema.nullable().optional(),
+  capabilities: channelCapabilitiesSchema.nullable().optional(),
+  lastMessagePreview: lastMessagePreviewSchema.nullable().optional(),
   unreadCount: z.number(),
+  unreadForUser: z.number().nullable().optional(),
+  lastReadAt: z.string().nullable().optional(),
+  labels: z.array(labelRefSchema).optional(),
+  version: z.number().optional(),
+  firstResponseAt: z.string().nullable().optional(),
+  resolvedAt: z.string().nullable().optional(),
   lastMessageAt: z.string().nullable(),
   lastInboundAt: z.string().nullable(),
   lastOutboundAt: z.string().nullable(),
@@ -193,9 +247,83 @@ export type ApiPublicMessage = z.infer<typeof publicMessageSchema>;
 export const publicMessageListSchema = cursorResult(publicMessageSchema);
 export type ApiPublicMessageList = z.infer<typeof publicMessageListSchema>;
 
+/**
+ * Item da LISTA de mensagens (C3.1C) — SUPERSET do público com os campos que a
+ * timeline precisa: `visibility` (distingue nota interna), reply/mídia/autor.
+ */
+export const publicMessageListItemSchema = publicMessageSchema.extend({
+  visibility: z.string().optional(),
+  replyToMessageId: z.string().nullable().optional(),
+  mediaId: z.string().nullable().optional(),
+  hasMedia: z.boolean().optional(),
+  senderUserId: z.string().nullable().optional(),
+  updatedAt: z.string().optional(),
+});
+export type ApiPublicMessageListItem = z.infer<typeof publicMessageListItemSchema>;
+export const publicMessageListItemsSchema = cursorResult(publicMessageListItemSchema);
+export type ApiPublicMessageListItems = z.infer<typeof publicMessageListItemsSchema>;
+
+/** Sendability PÚBLICA rica (C3.1C) — usada pelo composer/janela de resposta. */
+export const sendabilityPublicSchema = z.object({
+  canSend: z.boolean(),
+  reasonCode: z.string().nullable(),
+  retryable: z.boolean(),
+  connectionStatus: z.string(),
+  channel: z.string(),
+  allowedMessageTypes: z.array(z.string()),
+  requiresTemplate: z.boolean(),
+  replyWindow: z.object({
+    hasWindow: z.boolean(),
+    windowSeconds: z.number().nullable(),
+    expiresAt: z.string().nullable(),
+    withinWindow: z.boolean(),
+  }),
+  supportedMimeTypes: z.array(z.string()),
+});
+export type ApiSendabilityPublic = z.infer<typeof sendabilityPublicSchema>;
+
+/** Rascunho por (conversa, usuário) — conteúdo decifrado pelo backend (C3.1B/D). */
+export const draftSchema = z.object({
+  conversationId: z.string(),
+  userId: z.string(),
+  text: z.string().nullable(),
+  preview: z.string().nullable().optional(),
+  attachmentRefs: z.array(z.string()).nullable().optional(),
+  replyToMessageId: z.string().nullable().optional(),
+  version: z.number(),
+  updatedAt: z.string(),
+});
+export type ApiDraft = z.infer<typeof draftSchema>;
+
+/** Etiqueta (taxonomia) da empresa (C3.1B). */
+export const labelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ApiLabel = z.infer<typeof labelSchema>;
+export const labelListSchema = z.array(labelSchema);
+
 export const conversationDetailSchema = conversationSummarySchema.extend({
   participants: z.array(participantSchema),
   lastMessage: messageSummarySchema.nullable(),
+  // C3.1C (aditivos): sendability rica, rascunho resumido e métricas.
+  sendabilityDetail: sendabilityPublicSchema.nullable().optional(),
+  draft: z
+    .object({
+      hasDraft: z.boolean(),
+      preview: z.string().nullable(),
+      version: z.number(),
+      updatedAt: z.string(),
+    })
+    .nullable()
+    .optional(),
+  metrics: z
+    .object({ messagesCount: z.number(), participantsCount: z.number() })
+    .nullable()
+    .optional(),
 });
 export type ApiConversationDetail = z.infer<typeof conversationDetailSchema>;
 
