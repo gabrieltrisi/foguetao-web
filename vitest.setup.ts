@@ -29,8 +29,20 @@ class ResizeObserverStub {
 }
 window.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 
+// jsdom não implementa IntersectionObserver — usado pela paginação reversa da timeline
+class IntersectionObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+}
+window.IntersectionObserver = IntersectionObserverStub as unknown as typeof IntersectionObserver;
+
 // Stubs exigidos por Radix (Popover/Dialog/Select) e cmdk no jsdom
 Element.prototype.scrollIntoView = vi.fn();
+Element.prototype.scrollTo = vi.fn();
 Element.prototype.hasPointerCapture = vi.fn(() => false);
 Element.prototype.setPointerCapture = vi.fn();
 Element.prototype.releasePointerCapture = vi.fn();
