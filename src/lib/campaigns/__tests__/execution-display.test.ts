@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountLabel,
   etaDisplay,
   formatDuration,
   formatPercent,
@@ -7,6 +8,17 @@ import {
   recipientStatusMetaOf,
   timelineEventLabel,
 } from "@/lib/campaigns/display";
+
+describe("accountLabel", () => {
+  it("nunca mostra UUID: usa displayName/name + número", () => {
+    expect(accountLabel({ displayName: "Loja", phoneNumber: "+55 71 90000-0000" })).toBe(
+      "Loja · +55 71 90000-0000",
+    );
+    expect(accountLabel({ name: "Conta 1", phoneNumber: null })).toBe("Conta 1");
+    expect(accountLabel({ phoneNumber: "+55 71 1" })).toBe("Conta de WhatsApp · +55 71 1");
+    expect(accountLabel(null)).toBe("—");
+  });
+});
 
 describe("recipientStatusMetaOf", () => {
   it("mapeia todos os status de destinatário", () => {

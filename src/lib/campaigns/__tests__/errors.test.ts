@@ -17,9 +17,16 @@ describe("messageForCampaignError", () => {
     const msg = messageForCampaignError(apiError({ message: "Transição inválida para SENDING" }));
     expect(msg).toBe("Transição inválida para SENDING");
   });
-  it("409 → conflito de estado amigável", () => {
+  it("409 → conflito de estado amigável (sem ação)", () => {
     const msg = messageForCampaignError(apiError({ code: "CONFLICT", statusCode: 409 }));
     expect(msg).toMatch(/mudou de estado/i);
+  });
+
+  it("409 ação-aware: cancel/pause/resume têm mensagens específicas", () => {
+    const e = apiError({ code: "VALIDATION_ERROR", statusCode: 409 });
+    expect(messageForCampaignError(e, "cancel")).toMatch(/já foi concluída/i);
+    expect(messageForCampaignError(e, "pause")).toMatch(/não está mais em envio/i);
+    expect(messageForCampaignError(e, "resume")).toMatch(/não está pausada/i);
   });
   it("403 → sem permissão", () => {
     const msg = messageForCampaignError(apiError({ code: "FORBIDDEN", statusCode: 403 }));
