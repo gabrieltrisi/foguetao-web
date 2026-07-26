@@ -24,6 +24,8 @@ export function CampaignMetricsPanel({ campaign }: { campaign: ApiCampaign }) {
 
   if (!m) return <CountersFallback campaign={campaign} />;
 
+  // P7: campanhas ainda não iniciadas NÃO mostram barra/percentual (seria enganoso).
+  const notStarted = campaign.status === "DRAFT" || campaign.status === "SCHEDULED";
   const eta = etaDisplay(campaign.status, m);
   const tone: ProgressTone =
     campaign.status === "COMPLETED"
@@ -39,29 +41,40 @@ export function CampaignMetricsPanel({ campaign }: { campaign: ApiCampaign }) {
           <CardTitle>Progresso</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <div className="flex items-end justify-between gap-2">
-            <span className="text-body2 text-ink">
-              {m.processed} de {m.eligible} processados
-            </span>
-            <span className="font-display text-h3 font-bold text-ink">
-              {formatPercent(m.progressPercentage)}
-            </span>
-          </div>
-          <Progress value={m.progressPercentage} tone={tone} label="Progresso da campanha" />
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-small sm:grid-cols-3">
-            <Stat label={eta.label} value={eta.value} />
-            <Stat label="Início" value={formatDateTime(m.startedAt, campaign.timezone)} />
-            <Stat
-              label="Conclusão"
-              value={
-                m.completedAt
-                  ? formatDateTime(m.completedAt, campaign.timezone)
-                  : m.remainingSeconds != null
-                    ? `~ ${formatDuration(m.remainingSeconds)}`
-                    : "—"
-              }
-            />
-          </dl>
+          {notStarted ? (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-body2 text-ink-2">
+                {campaign.status === "SCHEDULED" ? "Aguardando envio" : "Não iniciado"}
+              </span>
+              <span className="text-body2 text-ink-3">{m.eligible} elegíveis</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-end justify-between gap-2">
+                <span className="text-body2 text-ink">
+                  {m.processed} de {m.eligible} processados
+                </span>
+                <span className="font-display text-h3 font-bold text-ink">
+                  {formatPercent(m.progressPercentage)}
+                </span>
+              </div>
+              <Progress value={m.progressPercentage} tone={tone} label="Progresso da campanha" />
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-small sm:grid-cols-3">
+                <Stat label={eta.label} value={eta.value} />
+                <Stat label="Início" value={formatDateTime(m.startedAt, campaign.timezone)} />
+                <Stat
+                  label="Conclusão"
+                  value={
+                    m.completedAt
+                      ? formatDateTime(m.completedAt, campaign.timezone)
+                      : m.remainingSeconds != null
+                        ? `~ ${formatDuration(m.remainingSeconds)}`
+                        : "—"
+                  }
+                />
+              </dl>
+            </>
+          )}
         </CardContent>
       </Card>
 
