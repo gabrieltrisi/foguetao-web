@@ -32,6 +32,10 @@ export const ErrorCode = {
   MEMBERSHIP_INACTIVE: "MEMBERSHIP_INACTIVE",
   INSUFFICIENT_PERMISSION: "INSUFFICIENT_PERMISSION",
   INSUFFICIENT_ROLE: "INSUFFICIENT_ROLE",
+  // Inbox (C3.1B/E) — conflitos de concorrência tratados de forma específica na UI.
+  CONVERSATION_VERSION_CONFLICT: "CONVERSATION_VERSION_CONFLICT",
+  CONVERSATION_DRAFT_CONFLICT: "CONVERSATION_DRAFT_CONFLICT",
+  MESSAGING_REALTIME_DISABLED: "MESSAGING_REALTIME_DISABLED",
 } as const;
 
 export type ApiErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode] | (string & {});
@@ -69,6 +73,35 @@ export class ApiError extends Error {
   /** Backend inacessível / indisponível (falha de rede ou 503). */
   get isUnavailable(): boolean {
     return this.statusCode === 0 || this.statusCode === 503 || this.code === ErrorCode.SERVICE_UNAVAILABLE;
+  }
+
+  get isNotFound(): boolean {
+    return this.statusCode === 404;
+  }
+
+  get isValidation(): boolean {
+    return this.statusCode === 400 || this.code === ErrorCode.VALIDATION_ERROR;
+  }
+
+  get isRateLimited(): boolean {
+    return this.statusCode === 429 || this.code === ErrorCode.TOO_MANY_REQUESTS;
+  }
+
+  /** Conflito (409) — inclui conflitos de versão/rascunho (concorrência). */
+  get isConflict(): boolean {
+    return this.statusCode === 409;
+  }
+
+  /** Conflito de concorrência tratado com UI dedicada (recarregar/mesclar). */
+  get isVersionConflict(): boolean {
+    return (
+      this.code === ErrorCode.CONVERSATION_VERSION_CONFLICT ||
+      this.code === ErrorCode.CONVERSATION_DRAFT_CONFLICT
+    );
+  }
+
+  get isServerError(): boolean {
+    return this.statusCode >= 500 && this.statusCode < 600;
   }
 }
 
