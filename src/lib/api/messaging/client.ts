@@ -13,6 +13,7 @@ import type {
   ApiMessagingAccount,
   ApiPublicMessage,
   ApiPublicMessageList,
+  ApiPublicMessageListItems,
   ConversationFilters,
   MessageFilters,
   SendConversationMessageInput,
@@ -61,6 +62,19 @@ export const messagingApi = {
   listPublicMessages: (conversationId: string, filters?: MessageFilters) =>
     clientFetch<ApiPublicMessageList>(
       `${B}/conversations/${conversationId}/messages${buildQuery(filters as QueryParams)}`,
+    ),
+  /**
+   * Histórico da Inbox (F2A) — item de LISTA rico (`visibility`/`replyTo`/`media`/
+   * `sender`) para a timeline. Mesmo endpoint; o BFF valida no contrato superset.
+   */
+  listConversationMessages: (
+    conversationId: string,
+    filters?: MessageFilters,
+    signal?: AbortSignal,
+  ) =>
+    clientFetch<ApiPublicMessageListItems>(
+      `${B}/conversations/${conversationId}/messages${buildQuery(filters as QueryParams)}`,
+      { signal },
     ),
   getMessage: (id: string) => clientFetch<ApiMessageDetail>(`${B}/messages/${id}`),
   sendMessage: (body: SendMessageInput) =>

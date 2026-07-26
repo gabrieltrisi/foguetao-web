@@ -8,7 +8,7 @@ import {
   messageDetailSchema,
   messagingAccountSchema,
   messagingAccountListSchema,
-  publicMessageListSchema,
+  publicMessageListItemsSchema,
   publicMessageSchema,
   draftSchema,
   labelSchema,
@@ -144,7 +144,7 @@ export const messagingService = {
     backendFetch(`/messaging/conversations/${conversationId}/messages${buildQuery(params)}`, {
       token,
       companyId,
-      schema: publicMessageListSchema,
+      schema: publicMessageListItemsSchema,
     }),
   getMessage: ({ token, companyId }: Ctx, id: string) =>
     backendFetch(`/messaging/messages/${id}`, { token, companyId, schema: messageDetailSchema }),
