@@ -22,6 +22,7 @@ export interface ConversationListItemVM {
   accountLabel: string | null;
   preview: string | null;
   previewDirection: string | null;
+  previewType: string | null;
   lastActivityAt: string | null;
   unread: number;
   status: string;
@@ -55,6 +56,7 @@ export function toConversationListItem(c: ApiConversation): ConversationListItem
     accountLabel: c.account?.label ?? null,
     preview: c.lastMessagePreview?.preview ?? null,
     previewDirection: c.lastMessagePreview?.direction ?? null,
+    previewType: c.lastMessagePreview?.type ?? null,
     lastActivityAt: c.lastMessageAt ?? c.updatedAt,
     // Unread por usuário quando disponível; senão cai no global (legado).
     unread: c.unreadForUser ?? c.unreadCount,
