@@ -10,11 +10,16 @@ import { HIGH_VOLUME, INFORMAL_CONTROLS } from "../config/weights";
 import {
   CONTROL_GAP,
   CONTROL_PRIORITY,
+  CONTROLE_LABEL,
   DOR_FEATURES,
   DOR_GAP,
   DOR_NEXT_STEP,
   DOR_PRIORITY,
+  DOR_RISK_LABEL,
+  EQUIPE_LABEL,
+  LEADS_LABEL,
   OBJETIVO_FEATURE,
+  OBJETIVO_LABEL,
   OBJETIVO_PRIORITY,
   PLANS,
   VOLUME_MISMATCH_GAP,
@@ -79,6 +84,12 @@ export function buildDiagnosis(answers: CompleteAnswers): Diagnosis {
 
   const headline = `Para ${flavor.nounPlural}, ${flavor.focus} — e a maturidade comercial da sua operação hoje é ${maturity.label.toLowerCase()}.`;
 
+  const executiveSummary =
+    `No seu segmento (${segmentLabel}), a maturidade comercial da operação é ${maturity.label.toLowerCase()} — score ${score} de 100. ` +
+    `Hoje você controla as vendas ${CONTROLE_LABEL[answers.controle]}, com ${LEADS_LABEL[answers.leads]} leads por mês e ${EQUIPE_LABEL[answers.equipe]} na linha de frente; ` +
+    `o maior risco é ${DOR_RISK_LABEL[answers.dor]}. ` +
+    `Levando a operação para um funil único, o potencial de ganho é de cerca de ${potential}% em eficiência comercial — com foco em ${OBJETIVO_LABEL[answers.objetivo]}.`;
+
   return {
     segmentId,
     segmentLabel,
@@ -86,6 +97,7 @@ export function buildDiagnosis(answers: CompleteAnswers): Diagnosis {
     maturity,
     potential,
     headline,
+    executiveSummary,
     proof: flavor.proof,
     gaps,
     priorities,

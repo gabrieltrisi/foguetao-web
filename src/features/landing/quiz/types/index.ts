@@ -105,6 +105,8 @@ export interface Diagnosis {
   /** Potencial de melhoria (0..100), enquadrado como ganho ao organizar. */
   potential: number;
   headline: string;
+  /** Resumo executivo em linguagem natural (parágrafo), derivado das respostas. */
+  executiveSummary: string;
   proof: string;
   gaps: Gap[];
   priorities: string[];

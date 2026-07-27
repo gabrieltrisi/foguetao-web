@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { ArrowRight, AlertTriangle, Target, CheckCircle2, ListChecks, Gauge } from "lucide-react";
+import { ArrowRight, AlertTriangle, Target, CheckCircle2, ListChecks, Gauge, FileText } from "lucide-react";
 import { FEATURE_ICONS } from "./feature-icon";
 import { useDiagnosisViewModel } from "../view-models/useDiagnosisViewModel";
 import { ScoreGauge } from "./ScoreGauge";
@@ -58,17 +58,14 @@ export function ResultScreen({
         </Kpi>
       </motion.div>
 
-      {/* Headline personalizada */}
-      <motion.p
-        variants={item}
-        className="mt-4 rounded-xl border-l-2 border-brand/50 bg-white/[0.02] p-4 text-[15px] leading-relaxed text-white/75"
-      >
-        {diagnosis.headline}
-      </motion.p>
+      {/* Resumo executivo (linguagem natural) */}
+      <ReportCard variants={item} className="mt-3" icon={<FileText className="size-4 text-brand" aria-hidden />} title="Resumo executivo">
+        <p className="text-[14px] leading-relaxed text-white/70">{diagnosis.executiveSummary}</p>
+      </ReportCard>
 
-      {/* Gargalos + Prioridades */}
+      {/* Riscos + Prioridades */}
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
-        <ReportCard variants={item} icon={<AlertTriangle className="size-4 text-brand" aria-hidden />} title="Principais gargalos">
+        <ReportCard variants={item} icon={<AlertTriangle className="size-4 text-brand" aria-hidden />} title="Principais riscos">
           <ul className="flex flex-col gap-3">
             {diagnosis.gaps.map((g) => (
               <li key={g.id}>

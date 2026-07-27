@@ -211,6 +211,48 @@ export const OBJETIVO_PRIORITY: Record<ObjetivoOption, string> = {
   indicadores: "Acompanhar métricas de conversão em tempo real.",
 };
 
+/* --- Rótulos em linguagem natural (para o resumo executivo) --- */
+
+export const DOR_RISK_LABEL: Record<DorOption, string> = {
+  followup: "o follow-up que escapa",
+  organizacao: "a informação espalhada",
+  equipe: "o time desalinhado",
+  whatsapp: "as conversas que ficam fora do funil",
+  conversao: "a conversão sem previsibilidade",
+  automacao: "o excesso de trabalho manual",
+};
+
+export const CONTROLE_LABEL: Record<ControleOption, string> = {
+  planilha: "em planilhas",
+  whatsapp: "no WhatsApp",
+  crm: "em um CRM",
+  notion: "em Notion/documentos",
+  memoria: "de memória",
+  outro: "de forma informal",
+};
+
+export const LEADS_LABEL: Record<string, string> = {
+  poucos: "até 20",
+  medio: "de 20 a 100",
+  alto: "de 100 a 500",
+  muito_alto: "mais de 500",
+};
+
+export const EQUIPE_LABEL: Record<string, string> = {
+  solo: "você sozinho(a)",
+  pequena: "um time de 2 a 3 pessoas",
+  media: "um time de 4 a 10 pessoas",
+  grande: "um time de mais de 10 pessoas",
+};
+
+export const OBJETIVO_LABEL: Record<ObjetivoOption, string> = {
+  vendas: "vender mais",
+  organizacao: "organizar a operação",
+  escalar: "escalar o time",
+  automatizar: "reduzir o trabalho manual",
+  indicadores: "ter indicadores confiáveis",
+};
+
 /** Próximo passo concreto derivado da dor. */
 export const DOR_NEXT_STEP: Record<DorOption, string> = {
   followup: "Ative lembretes de follow-up para não deixar nenhum lead esfriar.",
