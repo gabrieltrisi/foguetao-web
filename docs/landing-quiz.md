@@ -248,3 +248,93 @@ cliente real. Renderizada entre Produto e Benefícios.
   + rAF on-view; prova server-rendered; sem dependências novas.
 - h1 único mantido; Prova usa `h2`/`h3` + `<figure>`; sem novas imagens
   (avatares por iniciais); meta/canonical/OG/JSON-LD inalterados.
+
+---
+
+# LP3 — Growth Experience, Conversão Premium e Produção
+
+Camada de funil **aditiva** sobre LP1/LP2 (overlay, máquina, score, seam e analytics intactos).
+
+## Auditoria de conversão
+
+| Achado | Ação LP3 |
+|---|---|
+| Quiz aparece só no hero/strip/CTA final | **CTA sticky** (barra mobile + botão flutuante desktop) surge após o hero |
+| Problema/Recursos genéricos | **Personalizados por segmento** (dores + recursos destacados) |
+| Comparativo com 3 colunas | **4 colunas** (Planilha/WhatsApp/CRM/Foguetão) — enquadra o CRM tradicional |
+| Diagnóstico "corrido" | **Relatório executivo** (resumo em linguagem natural + riscos) |
+| Prova enxuta | **Mini-case antes/depois + logos demo + CTA** por segmento |
+| Sem atribuição de origem | Evento **`quiz_open` com `source`** (hero/strip/proof/cta/sticky) |
+
+## Mapa de jornada
+
+```
+Visitante → HERO (Problema→Solução→Prova→Ação, <10s)
+  → INTERESSE (Problema personalizado · Pilares · Produto/mock vivo)
+    → QUIZ (hero / strip / proof / sticky / CTA final → overlay)
+      → DIAGNÓSTICO (relatório executivo: resumo, riscos, prioridades, potencial, recursos, plano, passos)
+        → CONFIANÇA (Prova por segmento · Benefícios · Segurança · Comparativo 4-col)
+          → CTA (register `?segment=`) → LEAD (/api/landing/quiz-lead) → CRM (seam)
+```
+
+**Pontos de abandono e mitigação:** meio da página sem CTA → **sticky**; formulário antes do valor → captura **só após o diagnóstico**; fechar o quiz → progresso salvo + **aviso "Retomamos de onde você parou"** + evento `quiz_abandoned`; comparativo denso no mobile → **scroll-x**.
+
+## Estratégia de CTA (sem caminhos mortos)
+
+| Nível | Onde | Destino |
+|---|---|---|
+| Primário | Hero, Nav, CTA final | `/register?segment=` |
+| Secundário | Hero, CTA final | Quiz (`QuizTrigger`) |
+| Contextual | Strip pós-comparativo, CTA da Prova | Quiz |
+| Sticky | Barra mobile + flutuante desktop | Quiz |
+| Final | Seção CTA | register + quiz |
+
+Todo caminho leva a **Quiz** ou **register**. `useQuiz()` centraliza um overlay lazy único; `QuizTrigger` abre de qualquer ponto e atribui a origem.
+
+## Personalização profunda (matriz)
+
+Por segmento hoje: hero, benefits, **problems**, pipeline, faqExtra, mock CRM, **proof (stats+case+testimonial)**, **highlightFeatures**, finalCta — e o **diagnóstico** (score/maturidade/riscos/plano/resumo) sai das respostas (que começam pelo segmento). `default`/`outro` = versão geral honesta. Novos campos são **opcionais/`undefined`-safe** no deep-merge.
+
+## Diagnóstico executivo
+
+`Diagnosis.executiveSummary` (parágrafo em linguagem natural, `utils/diagnosis.ts`, puro) sintetiza segmento + controle + volume + time + dor + objetivo + potencial. `ResultScreen` abre com **Resumo executivo**, seguido de KPIs, **Principais riscos**, Prioridades, Recursos, Plano e Próximos passos — em cards.
+
+## Prova social (arquitetura pronta para dados reais)
+
+`SegmentProof`: `stats`, `testimonial`, `case` (antes/depois), `logos` (categorias, demo), `cta` — todos renderizados com selo **"Demonstração"**. `videoUrl`/`beforeAfterImage` **existem no tipo mas não são renderizados** (sem ativos reais). Trocar por clientes reais = editar `config/landing/segments/*.ts`.
+
+## Analytics
+
+Eventos: `quiz_open` (novo, `{ source }`), `quiz_started`, `question_viewed`, `question_answered`, `quiz_abandoned`, `diagnosis_viewed`, `lead_created`, `quiz_finished`. Payload do lead inclui `utm`/`referrer`/`origin=landing_quiz` (LP1). **Ponto de integração futura:** trocar o adapter em `analytics/track.ts` (sendBeacon → GA4/PostHog/Plausible) e/o coletor `/api/landing/analytics`. Sem script de terceiros hoje.
+
+## Auditoria de Performance
+
+- **LCP**: hero é server-rendered e pinta estático; o mock vivo anima **só on-view** (não bloqueia o LCP, que é o h1).
+- **CLS**: números com `tabular-nums`/largura reservada; barras crescem por `width` contido; sticky é `fixed` (fora do fluxo) → **sem shift**.
+- **INP**: handlers leves (scroll com rAF/passive; count-up via rAF); nada bloqueante.
+- **Hydration**: ilhas client pequenas (LiveNumber/LiveBar, triggers, sticky); seções são server components.
+- **Bundle**: quiz permanece `next/dynamic(ssr:false)` — chunk separado, sem regressão.
+
+## Auditoria de SEO
+
+h1 único (hero); h2 por seção via `SectionHeader`; `<figure>/<blockquote>` na prova. **Canonical fixo em `/`** de propósito — `?segment=` é UX, não gera páginas indexáveis (evita conteúdo duplicado). `robots.ts` libera `/` + aponta `sitemap.ts` (só a landing; app é noindex). OG (`opengraph-image.tsx`) + Twitter card + JSON-LD `SoftwareApplication` (sem preço/rating inventados) mantidos. Links internos: nav + footer cobrem as âncoras. Sem mudanças de posicionamento.
+
+## Auditoria de A11y
+
+Sticky/case/comparativo 4-col: botões reais + `aria-label`, foco visível, `title` nas marcas do comparativo (+ `sr-only` Sim/Parcial/Não). Overlay do quiz mantém dialog/focus-trap/ESC/retorno de foco. Todas as animações novas respeitam `prefers-reduced-motion`. Contraste AA nas peças novas; alvos de toque ≥44px na barra sticky.
+
+## QA visual (LP3)
+
+Screenshots capturados com Playwright (Chromium) contra o dev server, em desktop
+(1280), tablet (834) e mobile (390), nos segmentos `default`/`academia`/`imobiliaria`,
++ overlay do quiz e seções Prova/Comparativo. **Resultado: OK** — hero personalizado
+por segmento, Prova (stats/case/depoimento/logos/CTA, selo "Demonstração"),
+Comparativo 4 colunas (Planilha/WhatsApp/CRM/Foguetão, coluna do produto destacada),
+overlay do quiz (progresso, opções) e **CTA sticky** (flutuante desktop) renderizando
+como esperado.
+
+Nota técnica: screenshots `fullPage` deixam o conteúdo abaixo da dobra invisível
+porque o `Reveal` usa `whileInView` (dispara ao rolar). Para QA confiável, rolar até
+a seção e capturar o viewport (ou emular scroll) — o conteúdo real renderiza com
+`opacity: 1` (verificado por `getBoundingClientRect`/`innerText`). Não é bug de
+produção: usuários reais rolando disparam as animações normalmente.
