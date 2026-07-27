@@ -1,12 +1,13 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 import { messagingInvalidation } from "@/lib/query/keys";
 import { campaignKeys } from "@/lib/campaigns/query-keys";
-import { upsertNewestMessage } from "@/hooks/messaging/use-inbox";
+import { reconcileServerMessage } from "@/features/inbox/optimistic";
 import { shouldApplyStatus, type RealtimeEvent } from "./realtime-events";
 import type {
   ApiConversationList,
   ApiPublicMessage,
   ApiPublicMessageList,
+  ApiPublicMessageListItems,
   PublicMessageStatus,
 } from "@/types/api/messaging";
 
@@ -27,10 +28,11 @@ export function applyRealtimeEvent(
   switch (event.type) {
     case "message.created": {
       const { conversationId, message } = event.data;
-      // Thread aberta: upsert idempotente por id (não duplica o otimista do envio).
-      qc.setQueriesData<InfiniteData<ApiPublicMessageList>>(
+      // Thread aberta: upsert idempotente por id + colapso da mensagem OTIMISTA (o
+      // eco do próprio envio, mesmo texto pendente) → nunca duplica (F2C).
+      qc.setQueriesData<InfiniteData<ApiPublicMessageListItems>>(
         { queryKey: messagingInvalidation.messages(conversationId) },
-        (old) => upsertNewestMessage(old, message),
+        (old) => reconcileServerMessage(old, message),
       );
       // Listas + conversa: invalidação reconcilia preview/lastMessageAt/unread/ordem.
       invalidate(messagingInvalidation.conversation(conversationId));

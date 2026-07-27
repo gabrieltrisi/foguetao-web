@@ -221,6 +221,7 @@ export const publicFailureSchema = z.object({
   retryable: z.boolean(),
   message: z.string().nullable(),
 });
+export type ApiPublicFailure = z.infer<typeof publicFailureSchema>;
 
 /**
  * Shape sanitizado devolvido por `GET /conversations/:id/messages` e pela

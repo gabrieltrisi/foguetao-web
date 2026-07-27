@@ -5,9 +5,19 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { messagingApi } from "@/lib/api/messaging/client";
 import { queryKeys, messagingInvalidation } from "@/lib/query/keys";
 import { useSession } from "@/providers/session-provider";
+import { toUserErrorMessage } from "@/lib/api/user-error-message";
+import {
+  buildOptimisticMessage,
+  localSendFailure,
+  markTempFailed,
+  reconcileServerMessage,
+  tempIdFor,
+  upsertMessage,
+} from "@/features/inbox/optimistic";
 import type {
   ApiPublicMessage,
   ApiPublicMessageList,
+  ApiPublicMessageListItems,
   MessageFilters,
   SendConversationMessageInput,
 } from "@/types/api/messaging";
@@ -54,27 +64,57 @@ export function upsertNewestMessage(
   return { ...data, pages };
 }
 
+type SendContext = { tempId?: string };
+
 /**
- * Envio conversation-scoped da Inbox (Fase 6.2). Em 202/QUEUED atualiza o CACHE
- * (React Query, fonte única — sem estado paralelo):
- *  - histórico: eco imediato da mensagem retornada;
- *  - conversa + listas: invalidadas para reconciliar preview, ordenação e não-lidas.
- * Em erro (incl. 409/422) recarrega o detalhe, pois a sendability pode ter mudado.
+ * Envio OTIMISTA conversation-scoped da Inbox (F2C). React Query é a fonte única —
+ * sem estado paralelo:
+ *  - `onMutate` (só envio imediato — agendado NÃO é otimista): insere a mensagem
+ *    local (`temp:<clientMessageId>`, SENDING) na hora, sem esperar o servidor;
+ *  - `onSuccess`: reconcilia a temp pela mensagem REAL (id do servidor) e invalida
+ *    conversa/listas (preview, ordenação, não-lidas). Idempotente com o eco por SSE
+ *    (`message.created`), que colapsa a mesma temp;
+ *  - `onError`: marca a temp como FAILED preservando o texto (retry na timeline).
+ *
+ * O eco por SSE é seguro: `reconcileServerMessage`/`upsertMessage` deduplicam por id
+ * e colapsam a temp de mesmo texto — sem duplicar nem regredir status (§realtime).
  */
 export function useSendInboxMessage(conversationId: string) {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (body: SendConversationMessageInput) =>
-      messagingApi.sendConversationMessage(conversationId, body),
-    onSuccess: (message) => {
-      qc.setQueriesData<InfiniteData<ApiPublicMessageList>>(
-        { queryKey: messagingInvalidation.messages(conversationId) },
-        (old) => upsertNewestMessage(old, message),
+  const { user } = useSession();
+  const key = messagingInvalidation.messages(conversationId);
+  return useMutation<ApiPublicMessage, unknown, SendConversationMessageInput, SendContext>({
+    mutationFn: (body) => messagingApi.sendConversationMessage(conversationId, body),
+    onMutate: async (body) => {
+      // Agendada (sendAt): sem otimismo — a mensagem não é "enviando agora".
+      if (body.sendAt) return {};
+      await qc.cancelQueries({ queryKey: key });
+      const tempId = tempIdFor(body.clientMessageId);
+      const optimistic = buildOptimisticMessage({
+        clientMessageId: body.clientMessageId,
+        text: body.text,
+        senderUserId: user?.id ?? null,
+        createdAt: new Date().toISOString(),
+      });
+      qc.setQueriesData<InfiniteData<ApiPublicMessageListItems>>({ queryKey: key }, (old) =>
+        upsertMessage(old, optimistic),
+      );
+      return { tempId };
+    },
+    onSuccess: (message, _body, ctx) => {
+      qc.setQueriesData<InfiniteData<ApiPublicMessageListItems>>({ queryKey: key }, (old) =>
+        reconcileServerMessage(old, message, ctx?.tempId),
       );
       qc.invalidateQueries({ queryKey: messagingInvalidation.conversation(conversationId) });
       qc.invalidateQueries({ queryKey: messagingInvalidation.allConversations });
     },
-    onError: () => {
+    onError: (error, _body, ctx) => {
+      if (ctx?.tempId) {
+        qc.setQueriesData<InfiniteData<ApiPublicMessageListItems>>({ queryKey: key }, (old) =>
+          markTempFailed(old, ctx.tempId as string, localSendFailure(toUserErrorMessage(error))),
+        );
+      }
+      // Sendability pode ter mudado (409/422) — recarrega o detalhe.
       qc.invalidateQueries({ queryKey: messagingInvalidation.conversation(conversationId) });
     },
   });
