@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { Eyebrow } from "./section";
 import { LandingButton } from "./button";
 import { ProductDashboard } from "./product-ui";
-import { SegmentSelector } from "./segment-selector";
+import { QuizEntry } from "@/features/landing/quiz";
 import type { CrmDashboard, HeroContent, SegmentId } from "@/config/landing/segments";
 
 /**
@@ -17,13 +17,11 @@ export function LandingHero({
   content,
   registerHref,
   active,
-  activeLabel,
   dashboard,
 }: {
   content: HeroContent;
   registerHref: string;
   active: SegmentId;
-  activeLabel: string;
   dashboard: CrmDashboard;
 }) {
   return (
@@ -49,7 +47,7 @@ export function LandingHero({
           <LandingButton href={registerHref} size="lg">
             {content.primaryCta} <ArrowRight className="size-4" aria-hidden />
           </LandingButton>
-          <SegmentSelector active={active} activeLabel={activeLabel} />
+          <QuizEntry active={active} />
         </div>
 
         <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">

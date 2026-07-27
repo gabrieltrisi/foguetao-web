@@ -15,7 +15,6 @@ import { LandingCta } from "@/components/site/landing/cta";
 import { LandingFooter } from "@/components/site/landing/footer";
 import { SegmentReconciler } from "@/components/site/landing/segment-reconciler";
 import {
-  SEGMENTS,
   getLandingContent,
   hasUrlSegment,
   isSegmentId,
@@ -89,7 +88,6 @@ export default async function LandingPage({
   const urlPresent = hasUrlSegment(urlSegment);
   const content = getLandingContent(active);
   const registerHref = withSegment("/register", active);
-  const activeLabel = SEGMENTS[active].label;
 
   return (
     <div
@@ -106,7 +104,6 @@ export default async function LandingPage({
           content={content.hero}
           registerHref={registerHref}
           active={active}
-          activeLabel={activeLabel}
           dashboard={content.crm.dashboard}
         />
         <LandingProblem />
