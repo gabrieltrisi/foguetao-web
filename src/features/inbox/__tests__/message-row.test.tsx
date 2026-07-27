@@ -1,6 +1,7 @@
 import * as React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MessageRow } from "@/features/inbox/components/timeline/message/message-row";
 import { toTimelineMessage, type TimelineMessageVM } from "@/features/inbox/view-models";
@@ -70,6 +71,20 @@ describe("MessageRow (F2B)", () => {
   it("falha: indicador + mensagem amigável", () => {
     row(vm({ direction: "OUTBOUND", status: "FAILED", failure: { code: "X", retryable: false, message: "Número inválido" } }));
     expect(screen.getByText("Número inválido")).toBeInTheDocument();
+  });
+
+  it("falha outbound: botão 'Tentar novamente' chama onRetry (F2C)", async () => {
+    const onRetry = vi.fn();
+    const failed = vm({ id: "temp:c1", direction: "OUTBOUND", status: "FAILED", text: "olá", failure: { code: "LOCAL_SEND_FAILED", retryable: true, message: "Sem conexão" } });
+    render(<MessageRow message={failed} group={GROUP} senderName="Você" onRetry={onRetry} />, { wrapper: Wrap });
+    const btn = screen.getByRole("button", { name: "Tentar novamente" });
+    await userEvent.click(btn);
+    expect(onRetry).toHaveBeenCalledWith(failed);
+  });
+
+  it("falha inbound: não mostra retry (só outbound)", () => {
+    row(vm({ direction: "INBOUND", status: "FAILED", failure: { code: "X", retryable: true, message: "x" } }));
+    expect(screen.queryByRole("button", { name: "Tentar novamente" })).not.toBeInTheDocument();
   });
 
   it("sem conteúdo/tipo não suportado → fallback", () => {

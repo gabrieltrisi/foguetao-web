@@ -97,6 +97,22 @@ describe("applyRealtimeEvent (Fase 6.3C)", () => {
     expect(messagesItems()[0].status).toBe("SENT");
   });
 
+  it("message.created: colapsa a mensagem OTIMISTA (eco do próprio envio) sem duplicar (F2C)", () => {
+    // Timeline com uma temp OUTBOUND ainda enviando (mesmo texto do eco que vai chegar).
+    qc.setQueryData(
+      MESSAGES_KEY,
+      messagesCache([msg({ id: "temp:c1", status: "SENDING", text: "olá" })]),
+    );
+    const event: RealtimeEvent = {
+      ...ENV,
+      type: "message.created",
+      data: { conversationId: "conv1", message: msg({ id: "s99", status: "SENT", text: "olá" }) },
+    };
+    applyRealtimeEvent(qc, event, invalidate);
+    // A temp some; fica só a real. Sem duplicar.
+    expect(messagesItems().map((m) => m.id)).toEqual(["s99"]);
+  });
+
   it("message.statusChanged: avança o status; NÃO regride", () => {
     qc.setQueryData(MESSAGES_KEY, messagesCache([msg({ id: "m1", status: "SENT" })]));
     applyRealtimeEvent(
