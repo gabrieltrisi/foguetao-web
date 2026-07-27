@@ -6,6 +6,7 @@ import { LandingHero } from "@/components/site/landing/hero";
 import { LandingProblem } from "@/components/site/landing/problem";
 import { LandingPillars } from "@/components/site/landing/pillars";
 import { LandingShowcase } from "@/components/site/landing/showcase";
+import { LandingProof } from "@/components/site/landing/proof";
 import { LandingBenefits } from "@/components/site/landing/benefits";
 import { LandingFeatures } from "@/components/site/landing/features";
 import { LandingSecurity } from "@/components/site/landing/security";
@@ -13,7 +14,9 @@ import { LandingComparison } from "@/components/site/landing/comparison";
 import { LandingFaq } from "@/components/site/landing/faq";
 import { LandingCta } from "@/components/site/landing/cta";
 import { LandingFooter } from "@/components/site/landing/footer";
+import { QuizCtaStrip } from "@/components/site/landing/quiz-cta-strip";
 import { SegmentReconciler } from "@/components/site/landing/segment-reconciler";
+import { QuizProvider } from "@/features/landing/quiz";
 import {
   getLandingContent,
   hasUrlSegment,
@@ -98,25 +101,28 @@ export default async function LandingPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <SegmentReconciler active={active} fromUrl={fromUrl} urlPresent={urlPresent} />
-      <LandingNav registerHref={registerHref} />
-      <main>
-        <LandingHero
-          content={content.hero}
-          registerHref={registerHref}
-          active={active}
-          dashboard={content.crm.dashboard}
-        />
-        <LandingProblem />
-        <LandingPillars />
-        <LandingShowcase crm={content.crm} />
-        <LandingBenefits benefits={content.benefits} />
-        <LandingFeatures />
-        <LandingSecurity />
-        <LandingComparison />
-        <LandingFaq faq={content.faq} />
-        <LandingCta content={content.finalCta} registerHref={registerHref} />
-      </main>
-      <LandingFooter />
+      <QuizProvider active={active}>
+        <LandingNav registerHref={registerHref} />
+        <main>
+          <LandingHero
+            content={content.hero}
+            registerHref={registerHref}
+            dashboard={content.crm.dashboard}
+          />
+          <LandingProblem />
+          <LandingPillars />
+          <LandingShowcase crm={content.crm} />
+          <LandingProof proof={content.proof} />
+          <LandingBenefits benefits={content.benefits} />
+          <LandingFeatures />
+          <LandingSecurity />
+          <LandingComparison />
+          <QuizCtaStrip />
+          <LandingFaq faq={content.faq} />
+          <LandingCta content={content.finalCta} registerHref={registerHref} />
+        </main>
+        <LandingFooter />
+      </QuizProvider>
     </div>
   );
 }

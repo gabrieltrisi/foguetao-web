@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "./reveal";
 import { LandingButton } from "./button";
+import { QuizTrigger } from "@/features/landing/quiz";
 import type { FinalCtaContent } from "@/config/landing/segments";
 
 /**
@@ -38,14 +40,23 @@ export function LandingCta({
             <LandingButton href={registerHref} size="lg">
               {content.primaryCta} <ArrowRight className="size-4" aria-hidden />
             </LandingButton>
-            <LandingButton href="/login" variant="ghost" size="lg">
-              Já tenho conta
-            </LandingButton>
+            <QuizTrigger variant="cta" />
           </div>
         </Reveal>
         <Reveal delay={0.2}>
           <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
             14 dias grátis · sem cartão de crédito · suporte em português
+          </p>
+        </Reveal>
+        <Reveal delay={0.24}>
+          <p className="mt-3 text-[13px] text-white/45">
+            Já tem conta?{" "}
+            <Link
+              href="/login"
+              className="text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              Entrar
+            </Link>
           </p>
         </Reveal>
       </div>

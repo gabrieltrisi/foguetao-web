@@ -2,8 +2,8 @@ import { ArrowRight } from "lucide-react";
 import { Eyebrow } from "./section";
 import { LandingButton } from "./button";
 import { ProductDashboard } from "./product-ui";
-import { QuizEntry } from "@/features/landing/quiz";
-import type { CrmDashboard, HeroContent, SegmentId } from "@/config/landing/segments";
+import { QuizTrigger } from "@/features/landing/quiz";
+import type { CrmDashboard, HeroContent } from "@/config/landing/segments";
 
 /**
  * Hero — o produto é o protagonista. Conteúdo ESTÁTICO (sem reveal on-scroll):
@@ -16,12 +16,10 @@ import type { CrmDashboard, HeroContent, SegmentId } from "@/config/landing/segm
 export function LandingHero({
   content,
   registerHref,
-  active,
   dashboard,
 }: {
   content: HeroContent;
   registerHref: string;
-  active: SegmentId;
   dashboard: CrmDashboard;
 }) {
   return (
@@ -47,7 +45,7 @@ export function LandingHero({
           <LandingButton href={registerHref} size="lg">
             {content.primaryCta} <ArrowRight className="size-4" aria-hidden />
           </LandingButton>
-          <QuizEntry active={active} />
+          <QuizTrigger variant="hero" />
         </div>
 
         <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
