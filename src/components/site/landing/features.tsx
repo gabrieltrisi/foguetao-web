@@ -35,7 +35,7 @@ export function LandingFeatures() {
           const Icon = f.icon;
           return (
             <Reveal key={f.name} delay={(i % 4) * 0.05} className="h-full">
-              <div className="flex h-full flex-col bg-[#0a0a0c] p-6">
+              <div className="flex h-full flex-col bg-[#0a0a0c] p-6 transition-colors duration-200 hover:bg-[#101014]">
                 <Icon className="size-5 text-brand" aria-hidden />
                 <h3 className="mt-4 text-[15px] font-semibold text-white">{f.name}</h3>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-white/45">{f.desc}</p>

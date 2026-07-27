@@ -23,7 +23,7 @@ export function LandingSecurity() {
             const Icon = it.icon;
             return (
               <Reveal key={it.title} delay={(i % 2) * 0.06}>
-                <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+                <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.03]">
                   <span className="flex size-9 items-center justify-center rounded-lg border border-white/10 text-brand">
                     <Icon className="size-[18px]" aria-hidden />
                   </span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { QuizOption } from "../types";
@@ -18,11 +19,14 @@ export function OptionCard({
   selected: boolean;
   onSelect: (id: string) => void;
 }) {
+  const reduced = useReducedMotion();
   return (
-    <button
+    <motion.button
       type="button"
       onClick={() => onSelect(option.id)}
       aria-pressed={selected}
+      whileTap={reduced ? undefined : { scale: 0.985 }}
+      transition={{ duration: 0.12 }}
       className={cn(
         "group flex min-h-16 w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
         selected
@@ -48,6 +52,6 @@ export function OptionCard({
         )}
         aria-hidden
       />
-    </button>
+    </motion.button>
   );
 }

@@ -33,7 +33,7 @@ export function LandingPillars() {
           const Icon = p.icon;
           return (
             <Reveal key={p.title} delay={i * 0.08}>
-              <div className="h-full rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.03] to-transparent p-7">
+              <div className="h-full rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.03] to-transparent p-7 transition duration-200 hover:-translate-y-0.5 hover:border-white/15">
                 <span className="flex size-11 items-center justify-center rounded-xl bg-brand/10 text-brand">
                   <Icon className="size-5" aria-hidden />
                 </span>

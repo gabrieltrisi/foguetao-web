@@ -38,7 +38,7 @@ export function LandingProblem() {
           const Icon = p.icon;
           return (
             <Reveal key={p.title} delay={i * 0.06}>
-              <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6">
+              <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.03]">
                 <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/70">
                   <Icon className="size-5" aria-hidden />
                 </span>
