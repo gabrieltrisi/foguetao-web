@@ -15,6 +15,7 @@ import { LandingFaq } from "@/components/site/landing/faq";
 import { LandingCta } from "@/components/site/landing/cta";
 import { LandingFooter } from "@/components/site/landing/footer";
 import { QuizCtaStrip } from "@/components/site/landing/quiz-cta-strip";
+import { QuizStickyCta } from "@/components/site/landing/quiz-sticky-cta";
 import { SegmentReconciler } from "@/components/site/landing/segment-reconciler";
 import { QuizProvider } from "@/features/landing/quiz";
 import {
@@ -109,19 +110,20 @@ export default async function LandingPage({
             registerHref={registerHref}
             dashboard={content.crm.dashboard}
           />
-          <LandingProblem />
+          <LandingProblem problems={content.problems} />
           <LandingPillars />
           <LandingShowcase crm={content.crm} />
           <LandingProof proof={content.proof} />
           <LandingBenefits benefits={content.benefits} />
-          <LandingFeatures />
+          <LandingFeatures highlight={content.highlightFeatures} />
           <LandingSecurity />
-          <LandingComparison />
+          <LandingComparison note={content.comparisonNote} />
           <QuizCtaStrip />
           <LandingFaq faq={content.faq} />
           <LandingCta content={content.finalCta} registerHref={registerHref} />
         </main>
         <LandingFooter />
+        <QuizStickyCta />
       </QuizProvider>
     </div>
   );

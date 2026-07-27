@@ -1,31 +1,21 @@
-import { Snowflake, LineChart, Users, Clock } from "lucide-react";
+import { TrendingUp, BellRing, Users2, BarChart3, Layers3, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Section, SectionHeader } from "./section";
 import { Reveal } from "./reveal";
+import type { BenefitIconKey, ProblemItem } from "@/config/landing/segments";
 
-const PAINS = [
-  {
-    icon: Snowflake,
-    title: "Leads que esfriam",
-    body: "Sem um lugar único, o follow-up escapa — e o cliente fecha com quem respondeu primeiro.",
-  },
-  {
-    icon: LineChart,
-    title: "Receita imprevisível",
-    body: "Sem pipeline claro, você só descobre o resultado do mês quando ele já acabou.",
-  },
-  {
-    icon: Users,
-    title: "Time desalinhado",
-    body: "Cada vendedor com sua planilha. Ninguém enxerga o todo, ninguém fala a mesma língua.",
-  },
-  {
-    icon: Clock,
-    title: "Horas perdidas",
-    body: "Atualizar planilha, copiar dado, procurar histórico. Tempo que deveria ser de venda.",
-  },
-];
+/** Mapa chave→ícone (dados de segmento carregam só a string). */
+const ICONS: Record<BenefitIconKey, LucideIcon> = {
+  trendingUp: TrendingUp,
+  bell: BellRing,
+  users: Users2,
+  chart: BarChart3,
+  layers: Layers3,
+  zap: Zap,
+};
 
-export function LandingProblem() {
+/** Seção "Problema" — dores do segmento (personalizadas por nicho). */
+export function LandingProblem({ problems }: { problems: ProblemItem[] }) {
   return (
     <Section id="problema">
       <SectionHeader
@@ -34,8 +24,8 @@ export function LandingProblem() {
         subtitle="Planilha aqui, anotação ali, conversa em outro lugar. Quando a informação está espalhada, oportunidade vira esquecimento — e receita vira estimativa."
       />
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {PAINS.map((p, i) => {
-          const Icon = p.icon;
+        {problems.map((p, i) => {
+          const Icon = ICONS[p.icon];
           return (
             <Reveal key={p.title} delay={i * 0.06}>
               <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.03]">

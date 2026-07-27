@@ -56,7 +56,10 @@ export function LandingHero({
       {/* Produto — protagonista, grande, acima da dobra. O indicador discreto de
           segmento ativo fica no gatilho do seletor acima ("Personalizado: …");
           o selo "Exemplo para …" aparece só no showcase, para não repetir. */}
-      <div className="relative z-10 mt-14 w-full max-w-[1080px] px-4 sm:mt-16 sm:px-8">
+      <div className="relative z-10 mt-12 w-full max-w-[1080px] px-4 sm:mt-14 sm:px-8">
+        <p className="mb-4 text-center font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/35">
+          Telas reais do Foguetão · números em tempo real · dados de demonstração
+        </p>
         <div className="relative">
           <div aria-hidden className="absolute -inset-x-8 -top-8 bottom-0 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(224,7,15,0.22),transparent_70%)] blur-2xl" />
           <ProductDashboard data={dashboard} className="relative" />

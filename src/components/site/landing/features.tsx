@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Section, SectionHeader } from "./section";
 import { Reveal } from "./reveal";
+import { cn } from "@/lib/utils";
 
 const FEATURES = [
   { icon: LayoutGrid, name: "Visão geral", desc: "Receita, conversão e atividades do time ao vivo." },
@@ -22,7 +23,8 @@ const FEATURES = [
   { icon: Boxes, name: "Multiempresa", desc: "Gerencie várias operações em uma única conta." },
 ];
 
-export function LandingFeatures() {
+export function LandingFeatures({ highlight = [] }: { highlight?: string[] }) {
+  const highlighted = new Set(highlight);
   return (
     <Section id="recursos">
       <SectionHeader
@@ -33,9 +35,20 @@ export function LandingFeatures() {
       <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.05] sm:grid-cols-2 lg:grid-cols-4">
         {FEATURES.map((f, i) => {
           const Icon = f.icon;
+          const on = highlighted.has(f.name);
           return (
             <Reveal key={f.name} delay={(i % 4) * 0.05} className="h-full">
-              <div className="flex h-full flex-col bg-[#0a0a0c] p-6 transition-colors duration-200 hover:bg-[#101014]">
+              <div
+                className={cn(
+                  "relative flex h-full flex-col p-6 transition-colors duration-200",
+                  on ? "bg-brand/[0.06] hover:bg-brand/[0.09]" : "bg-[#0a0a0c] hover:bg-[#101014]",
+                )}
+              >
+                {on ? (
+                  <span className="absolute right-3 top-3 rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-brand">
+                    Recomendado
+                  </span>
+                ) : null}
                 <Icon className="size-5 text-brand" aria-hidden />
                 <h3 className="mt-4 text-[15px] font-semibold text-white">{f.name}</h3>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-white/45">{f.desc}</p>
