@@ -123,6 +123,15 @@
   }
 }
 
+/* Safe-area (notch / home indicator do iOS). Usados no nav fixo, no menu mobile
+ * e nos overlays fullscreen da landing. `max(...,0px)` = no-op onde não há inset. */
+@utility pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
 /* ===========================================================================
  * Landing "Console de Missão" (src/components/site/*)
  * Bloco isolado: só afeta a landing. A fonte mono só resolve para JetBrains

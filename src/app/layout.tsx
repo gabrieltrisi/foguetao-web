@@ -45,6 +45,8 @@ export const viewport: Viewport = {
   themeColor: "#E0070F",
   width: "device-width",
   initialScale: 1,
+  // `cover` habilita as safe-area-insets (utilitários pt-safe/pb-safe da landing).
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

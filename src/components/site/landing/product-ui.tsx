@@ -179,8 +179,8 @@ export function ProductDashboard({ data, className }: { data: CrmDashboard; clas
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#66666d]">Funil de vendas</p>
           <div className="mt-3 flex flex-col gap-2">
             {data.funnel.map((s) => (
-              <div key={s.label} className="flex items-center gap-3">
-                <span className="w-28 shrink-0 text-[11.5px] text-[#66666d]">{s.label}</span>
+              <div key={s.label} className="flex items-center gap-2 sm:gap-3">
+                <span className="w-20 shrink-0 text-[11.5px] text-[#66666d] sm:w-28">{s.label}</span>
                 <span className="h-6 flex-1 overflow-hidden rounded bg-[#f7f7f8]">
                   <span className="flex h-full items-center rounded bg-gradient-to-r from-brand to-brand-dark px-2 text-[10px] font-semibold text-white" style={{ width: `${s.pct}%` }}>
                     {s.count}
@@ -299,7 +299,7 @@ export function ProductDeal({ deal, className }: { deal: CrmDeal; className?: st
         </div>
       </div>
       <div className="mt-4">
-        <div className="flex items-center justify-between text-[11px] text-[#66666d]">
+        <div className="flex items-center justify-between gap-1 text-[10px] text-[#66666d] sm:text-[11px]">
           {deal.stages.map((s, i) => (
             <span key={s} className={cn(i <= 2 && "font-semibold text-brand")}>{s}</span>
           ))}

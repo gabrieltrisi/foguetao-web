@@ -37,7 +37,7 @@ export function LandingHero({
       <div className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col items-center px-6 text-center sm:px-8">
         <Eyebrow>{content.eyebrow}</Eyebrow>
 
-        <h1 className="mt-6 max-w-4xl font-display text-[clamp(2.6rem,7vw,5.25rem)] font-bold leading-[0.98] tracking-[-0.035em] text-white">
+        <h1 className="mt-6 max-w-4xl font-display text-[clamp(2rem,8vw,5.25rem)] font-bold leading-[0.98] tracking-[-0.035em] text-white">
           {content.titleLead} <span className="text-brand">{content.titleHighlight}</span>
         </h1>
 

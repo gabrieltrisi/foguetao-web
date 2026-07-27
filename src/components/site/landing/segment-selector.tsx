@@ -103,7 +103,7 @@ export function SegmentSelector({
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
           role="presentation"
-          onMouseDown={(e) => {
+          onPointerDown={(e) => {
             if (e.target === e.currentTarget) close();
           }}
         >
@@ -114,7 +114,7 @@ export function SegmentSelector({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={descId}
-            className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-[#0f0f12] p-6 text-left shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] sm:p-8"
+            className="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#0f0f12] p-6 text-left shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] sm:p-8"
           >
             <button
               type="button"

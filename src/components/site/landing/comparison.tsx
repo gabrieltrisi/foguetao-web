@@ -52,38 +52,44 @@ export function LandingComparison() {
 
       <Reveal className="mt-14">
         <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.01]">
-          {/* Cabeçalho */}
-          <div className="grid grid-cols-[1.6fr_repeat(3,1fr)] items-center border-b border-white/[0.07] px-4 py-4 sm:px-6">
-            <span className="text-[12px] font-medium uppercase tracking-wide text-white/40">Recurso</span>
-            {COLS.map((c) => (
-              <span
-                key={c}
-                className={cn(
-                  "text-center text-[12.5px] font-semibold sm:text-[13.5px]",
-                  c === "Foguetão" ? "text-brand" : "text-white/55",
-                )}
-              >
-                {c}
-              </span>
-            ))}
-          </div>
-          {/* Linhas */}
-          {ROWS.map((row, i) => (
-            <div
-              key={row.label}
-              className={cn(
-                "grid grid-cols-[1.6fr_repeat(3,1fr)] items-center px-4 py-3.5 sm:px-6",
-                i % 2 === 1 && "bg-white/[0.015]",
-              )}
-            >
-              <span className="pr-3 text-[13px] text-white/70 sm:text-[14px]">{row.label}</span>
-              {row.values.map((v, j) => (
-                <span key={j} className="flex justify-center">
-                  <Mark level={v} strong={j === 2} />
-                </span>
+          {/* Em telas estreitas a tabela rola na horizontal (min-width) em vez de
+              espremer as 4 colunas; a partir de sm ela ocupa a largura toda. */}
+          <div className="no-scrollbar overflow-x-auto">
+            <div className="min-w-[520px] sm:min-w-0">
+              {/* Cabeçalho */}
+              <div className="grid grid-cols-[1.6fr_repeat(3,1fr)] items-center border-b border-white/[0.07] px-4 py-4 sm:px-6">
+                <span className="text-[12px] font-medium uppercase tracking-wide text-white/40">Recurso</span>
+                {COLS.map((c) => (
+                  <span
+                    key={c}
+                    className={cn(
+                      "text-center text-[12.5px] font-semibold sm:text-[13.5px]",
+                      c === "Foguetão" ? "text-brand" : "text-white/55",
+                    )}
+                  >
+                    {c}
+                  </span>
+                ))}
+              </div>
+              {/* Linhas */}
+              {ROWS.map((row, i) => (
+                <div
+                  key={row.label}
+                  className={cn(
+                    "grid grid-cols-[1.6fr_repeat(3,1fr)] items-center px-4 py-3.5 sm:px-6",
+                    i % 2 === 1 && "bg-white/[0.015]",
+                  )}
+                >
+                  <span className="pr-3 text-[13px] text-white/70 sm:text-[14px]">{row.label}</span>
+                  {row.values.map((v, j) => (
+                    <span key={j} className="flex justify-center">
+                      <Mark level={v} strong={j === 2} />
+                    </span>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          </div>
         </div>
       </Reveal>
     </Section>

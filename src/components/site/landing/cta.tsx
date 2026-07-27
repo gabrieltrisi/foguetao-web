@@ -23,7 +23,7 @@ export function LandingCta({
 
       <div className="relative z-10 mx-auto max-w-[900px] px-6 py-32 text-center sm:py-44">
         <Reveal>
-          <h2 className="font-display text-[clamp(2.6rem,6.5vw,5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-white">
+          <h2 className="font-display text-[clamp(2rem,7vw,5rem)] font-bold leading-[0.98] tracking-[-0.03em] text-white">
             {content.titleLead} <span className="text-brand">{content.titleHighlight}</span>
             {content.titleTail}
           </h2>

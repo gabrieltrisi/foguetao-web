@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { LandingLogo } from "./brand-logo";
 import { LandingButton } from "./button";
+import { NavMobile } from "./nav-mobile";
 
 /** Navbar minimalista da landing — logo, âncoras e acesso. Sem HUD/telemetria. */
 export function LandingNav({ registerHref = "/register" }: { registerHref?: string }) {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-[#08080a]/80 backdrop-blur-md">
+    <header className="pt-safe fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-[#08080a]/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between px-6 sm:px-8">
         <Link href="/" aria-label="Foguetão — início" className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
           <LandingLogo priority className="h-7" />
@@ -35,7 +36,10 @@ export function LandingNav({ registerHref = "/register" }: { registerHref?: stri
           >
             Entrar
           </Link>
-          <LandingButton href={registerHref}>Começar agora</LandingButton>
+          <LandingButton href={registerHref} className="hidden sm:inline-flex">
+            Começar agora
+          </LandingButton>
+          <NavMobile registerHref={registerHref} />
         </div>
       </div>
     </header>
