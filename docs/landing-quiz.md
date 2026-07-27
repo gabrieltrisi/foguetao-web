@@ -174,3 +174,77 @@ retorna ao gatilho, grupos rotulados por pergunta, alvos de toque ≥ 44px,
 persistência, utm, seam de lead (ligado/desligado), máquina do quiz (fluxo,
 voltar, progresso, abandono, submissão/erro) e componentes (OptionCard,
 QuizOverlay ponta a ponta, QuizEntry lazy, NavMobile).
+
+---
+
+# LP2 — Conversão & UX
+
+Camada de conversão/percepção premium **aditiva** sobre a LP1 (overlay, máquina,
+score, seam e analytics permanecem intactos).
+
+## Auditoria de conversão
+
+A landing já era sólida (copy honesta, headings/SEO corretos, motion único). Os
+atritos reais e as alavancas atacadas:
+
+| Achado | Ação LP2 |
+|---|---|
+| Quiz (maior conversor) só no hero | Hierarquia de CTA que repete o quiz em pontos de alta intenção |
+| Sem prova social | Nova seção **Prova** por segmento (demonstração rotulada) |
+| Mock estático | Mock **"ao vivo"** (KPIs contando, barras crescendo, pulso) |
+| Comparativo denso | Redesenho visual Planilha × WhatsApp × Foguetão (leitura rápida) |
+| Diagnóstico "corrido" | Diagnóstico como **relatório de cards** |
+| `loja`/`prestador` genéricos | `benefits` próprios + `proof` bespoke |
+
+## Hierarquia de CTA (leva ao quiz)
+
+- **Primário** (sólido, marca): "Começar agora" → `/register` (hero, nav, CTA final).
+- **Secundário** (ghost): Quiz "Descobrir meu plano em 60s" (hero + CTA final).
+- **Contextual** (sólido): `QuizCtaStrip` após o Comparativo — "Fazer meu diagnóstico".
+
+Implementação **aditiva**: `QuizProvider` (client) envolve o conteúdo em
+`page.tsx` e é dono de UM overlay lazy compartilhado + da aplicação do segmento ao
+fechar; `QuizTrigger` (variantes `hero`/`cta`/`strip`) abre via `useQuiz()`.
+`QuizEntry` virou wrapper fino. Nada do overlay/máquina/score da LP1 mudou.
+
+## Personalização por segmento (estratégia)
+
+Cada nicho já entrega hero, benefits, pipeline, faqExtra, mock CRM e finalCta
+próprios. LP2 adiciona:
+- `SegmentContent.proof` (`ProofStat[]` + `ProofTestimonial`, `demo: boolean`):
+  8 nichos com prova bespoke (semeada dos flavors do quiz); `default`/`outro`
+  honestos genéricos. **`demo: true` até haver dados reais** — trocar é só editar
+  o config (`config/landing/segments/*.ts`).
+- `benefits` próprios para `loja` e `prestador-servico` (fecha a lacuna).
+
+Trocar `?segment=` agora personaliza hero + benefits + mock + **prova** + finalCta.
+
+## Mock "ao vivo" (`product-ui-live.tsx`)
+
+`LiveNumber` (count-up), `LiveBar` (cresce 0→pct) e `LiveDot` (pulso). Regras:
+anima **só on-view** (`useInView`, once), `transform`/`width` contidos (**zero
+CLS**), DOM já com o **valor final** (SSR/no-JS/leitor de tela leem o real) e
+**desliga em `prefers-reduced-motion`**. O hero pinta estático primeiro → **LCP
+preservado**.
+
+## Diagnóstico como relatório (`ResultScreen.tsx`)
+
+Faixa de KPIs (Score / Maturidade / Potencial) + grade de cards (gargalos,
+prioridades, recursos, plano, próximos passos), com stagger discreto
+(reduced-safe). Só apresentação — `buildDiagnosis` inalterado.
+
+## Prova social (`proof.tsx` + `demo-badge.tsx`)
+
+Stats + depoimento por segmento em `<figure>/<blockquote>/<figcaption>`, com selo
+**"Demonstração"** (`DemoBadge`, neutro, com texto — não só cor). Nunca finge
+cliente real. Renderizada entre Produto e Benefícios.
+
+## A11y / Performance / SEO (LP2)
+
+- Todas as novas animações desligam em `prefers-reduced-motion`; números animados
+  têm o valor final no DOM (leitor de tela lê o real); marcas do comparativo com
+  `sr-only`; foco visível nos novos gatilhos.
+- Quiz continua **lazy** (sem regressão de bundle/LCP); animações `transform`/`width`
+  + rAF on-view; prova server-rendered; sem dependências novas.
+- h1 único mantido; Prova usa `h2`/`h3` + `<figure>`; sem novas imagens
+  (avatares por iniciais); meta/canonical/OG/JSON-LD inalterados.
