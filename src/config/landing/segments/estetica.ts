@@ -19,6 +19,15 @@ export const ESTETICA = defineSegment(
       { icon: "layers", title: "Contatos num lugar só", body: "Interessados, avaliações e pacotes num painel só — sem abas espalhadas." },
       { icon: "zap", title: "Menos organização, mais agenda cheia", body: "Menos tempo com cadastro, mais tempo transformando contato em cliente." },
     ],
+    problems: [
+      { icon: "bell", title: "Agendamento que esfria", body: "Quem pediu preço e não marcou fica sem follow-up." },
+      { icon: "trendingUp", title: "Agenda com furos", body: "Sem funil, sobra horário e falta previsão." },
+      { icon: "users", title: "Equipe sem base única", body: "Contatos e pacotes espalhados entre as pessoas." },
+      { icon: "zap", title: "Cadastro roubando tempo", body: "Tempo organizando é tempo longe do atendimento." },
+    ],
+
+    highlightFeatures: ["Tarefas", "Pipeline", "Contatos"],
+
     pipeline: {
       stages: ["Novo contato", "Avaliação", "Agendamento", "Procedimento", "Retorno"],
     },
@@ -84,6 +93,11 @@ export const ESTETICA = defineSegment(
         { value: "Tempo real", label: "conversão em agendamento ao vivo" },
         { value: "0 agendamento", label: "esfriando" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Contatos espalhados, agendamento de memória, agenda com furos.",
+        after: "Cada avaliação vira etapa do funil com próximo passo — a agenda enche com o mesmo movimento.",
+      },
       testimonial: {
         quote:
           "A agenda ficou mais cheia porque nenhum contato fica sem retorno. Cada avaliação vira um próximo passo claro.",

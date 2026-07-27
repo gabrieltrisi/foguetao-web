@@ -19,6 +19,15 @@ export const IMOBILIARIA = defineSegment(
       { icon: "layers", title: "Cada imóvel num lugar só", body: "Leads, visitas e propostas num painel só — sem cinco abas abertas." },
       { icon: "zap", title: "Menos planilha, mais vendas", body: "Menos tempo organizando, mais tempo fechando negócios." },
     ],
+    problems: [
+      { icon: "bell", title: "Comprador sem follow-up", body: "Quem visitou e não recebeu retorno fecha com outro corretor." },
+      { icon: "trendingUp", title: "Vendas imprevisíveis", body: "Sem funil, não dá para prever quantas fecham no mês." },
+      { icon: "users", title: "Corretores desalinhados", body: "Cada corretor com sua lista de compradores." },
+      { icon: "zap", title: "Planilha que não acompanha visita", body: "Tempo com cadastro é tempo sem vender imóvel." },
+    ],
+
+    highlightFeatures: ["Pipeline", "Negócios", "Tarefas"],
+
     pipeline: {
       stages: ["Lead", "Visita", "Proposta", "Fechamento"],
     },
@@ -88,6 +97,11 @@ export const IMOBILIARIA = defineSegment(
         { value: "Tempo real", label: "funil do mês ao vivo" },
         { value: "0 comprador", label: "sem follow-up" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Compradores em planilha, visita sem retorno, venda imprevisível.",
+        after: "Cada visita e proposta no funil — nenhum comprador sem acompanhamento.",
+      },
       testimonial: {
         quote:
           "Antes a gente perdia comprador entre a visita e a proposta. Agora cada corretor sabe exatamente qual é o próximo passo.",

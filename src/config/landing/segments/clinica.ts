@@ -19,6 +19,15 @@ export const CLINICA = defineSegment(
       { icon: "layers", title: "Comercial num lugar só", body: "Contatos, avaliações e orçamentos num painel só — sem depender de planilhas." },
       { icon: "zap", title: "Menos planilha, mais atendimento", body: "Menos tempo organizando, mais tempo trazendo novos pacientes." },
     ],
+    problems: [
+      { icon: "bell", title: "Orçamento sem retorno", body: "Quem fez avaliação e recebeu orçamento fica sem follow-up." },
+      { icon: "trendingUp", title: "Novos atendimentos imprevisíveis", body: "Sem funil comercial, não dá para prever o mês." },
+      { icon: "users", title: "Time comercial desalinhado", body: "Cada pessoa com sua lista de contatos e orçamentos." },
+      { icon: "zap", title: "Planilha travando a recepção", body: "Tempo com cadastro é tempo longe do paciente." },
+    ],
+
+    highlightFeatures: ["Pipeline", "Contatos", "Tarefas"],
+
     pipeline: {
       stages: ["Novo contato", "Avaliação", "Orçamento", "Retorno", "Fechado"],
     },
@@ -88,6 +97,11 @@ export const CLINICA = defineSegment(
         { value: "Tempo real", label: "conversão de avaliação em fechamento" },
         { value: "0 orçamento", label: "sem retorno" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Orçamentos soltos, avaliação sem follow-up, mês na surpresa.",
+        after: "Contatos, orçamentos e retornos num funil — cada avaliação acompanhada até o fechamento.",
+      },
       testimonial: {
         quote:
           "Os retornos deixaram de depender de memória. O time vê quem avaliou, quem tem orçamento aberto e quem precisa de um novo contato.",

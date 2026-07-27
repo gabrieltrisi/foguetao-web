@@ -19,6 +19,15 @@ export const ACADEMIA = defineSegment(
       { icon: "layers", title: "Tudo da recepção num lugar", body: "Leads, visitas, aulas e matrículas num painel só — sem cinco abas abertas." },
       { icon: "zap", title: "Menos papelada, mais alunos", body: "Menos tempo organizando cadastros, mais tempo convertendo interessados." },
     ],
+    problems: [
+      { icon: "bell", title: "Aula experimental sem retorno", body: "Quem visitou e não voltou fica sem follow-up — e a matrícula vai para outro lugar." },
+      { icon: "trendingUp", title: "Matrículas imprevisíveis", body: "Sem funil, você só sabe quantas fecharam quando o mês acabou." },
+      { icon: "users", title: "Consultores desalinhados", body: "Cada consultor com sua lista. Ninguém vê o interessado por inteiro." },
+      { icon: "zap", title: "Recepção afogada em planilha", body: "Tempo com cadastro é tempo que não vira matrícula." },
+    ],
+
+    highlightFeatures: ["Pipeline", "Tarefas", "Contatos"],
+
     pipeline: {
       stages: ["Novo lead", "Contato", "Aula experimental", "Visitou", "Proposta", "Matrícula"],
     },
@@ -92,6 +101,11 @@ export const ACADEMIA = defineSegment(
         { value: "Tempo real", label: "conversão em matrícula ao vivo" },
         { value: "0 aluno", label: "perdido sem follow-up" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Interessados no caderno da recepção, aula experimental sem confirmação, matrícula na sorte.",
+        after: "Cada visita no funil, com confirmação e follow-up no lugar — a matrícula acompanhada até fechar.",
+      },
       testimonial: {
         quote:
           "Cada aula experimental virou uma etapa que a gente acompanha. Nenhum interessado some mais entre a visita e a matrícula.",

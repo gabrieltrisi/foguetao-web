@@ -19,6 +19,15 @@ export const LOJA = defineSegment(
       { icon: "layers", title: "Vendas num lugar só", body: "Contatos, orçamentos e pedidos num painel só — sem cinco abas abertas." },
       { icon: "zap", title: "Menos planilha, mais venda", body: "Menos tempo organizando, mais tempo transformando curioso em cliente." },
     ],
+    problems: [
+      { icon: "bell", title: "Orçamento sem retorno", body: "Quem pediu preço e não voltou fica sem follow-up." },
+      { icon: "trendingUp", title: "Vendas imprevisíveis", body: "Sem funil, o mês depende da sorte do balcão." },
+      { icon: "users", title: "Vendedores sem base única", body: "Contatos e pedidos espalhados entre as pessoas." },
+      { icon: "zap", title: "Cadastro tomando o tempo da venda", body: "Organizar planilha é tempo longe do cliente." },
+    ],
+
+    highlightFeatures: ["Pipeline", "Contatos", "Tarefas"],
+
     pipeline: {
       stages: ["Novo contato", "Orçamento", "Negociação", "Venda", "Pós-venda"],
     },
@@ -84,6 +93,11 @@ export const LOJA = defineSegment(
         { value: "Tempo real", label: "orçamentos e pedidos ao vivo" },
         { value: "0 orçamento", label: "sem follow-up" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Orçamentos no papel, cliente que sumiu esquecido, mês incerto.",
+        after: "Cada contato no funil com follow-up — recompra e histórico num lugar só.",
+      },
       testimonial: {
         quote:
           "Passamos a vender mais pra quem já comprou. O histórico do cliente fica num lugar só e o follow-up não escapa.",

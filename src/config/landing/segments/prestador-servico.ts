@@ -19,6 +19,15 @@ export const PRESTADOR_SERVICO = defineSegment(
       { icon: "layers", title: "Trabalhos num lugar só", body: "Solicitações, orçamentos e follow-up num painel só — sem abas espalhadas." },
       { icon: "zap", title: "Menos organização, mais serviço fechado", body: "Menos tempo com cadastro, mais tempo executando o trabalho." },
     ],
+    problems: [
+      { icon: "bell", title: "Orçamento sem follow-up", body: "Solicitação que recebeu orçamento e não fechou fica sem retorno." },
+      { icon: "trendingUp", title: "Trabalho imprevisível", body: "Sem funil, não dá para prever quantos contratos vêm." },
+      { icon: "users", title: "Equipe sem visão", body: "Solicitações e orçamentos espalhados entre as pessoas." },
+      { icon: "zap", title: "Tempo com cadastro, não com serviço", body: "Organizar é tempo longe de executar o trabalho." },
+    ],
+
+    highlightFeatures: ["Negócios", "Tarefas", "Pipeline"],
+
     pipeline: {
       stages: ["Solicitação", "Orçamento", "Negociação", "Contrato", "Concluído"],
     },
@@ -84,6 +93,11 @@ export const PRESTADOR_SERVICO = defineSegment(
         { value: "Tempo real", label: "orçamentos e follow-up ao vivo" },
         { value: "0 pedido", label: "sem retorno" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Pedidos de orçamento espalhados, follow-up de memória.",
+        after: "Cada solicitação no funil — orçamento e retorno acompanhados até o contrato.",
+      },
       testimonial: {
         quote:
           "Cada pedido de orçamento vira uma etapa que a gente acompanha. Fechamos mais do mesmo número de solicitações.",

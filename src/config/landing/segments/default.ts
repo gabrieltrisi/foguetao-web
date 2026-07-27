@@ -29,7 +29,16 @@ export const DEFAULT_SEGMENT: SegmentContent = {
     { icon: "zap", title: "Velocidade no dia a dia", body: "Menos tempo organizando, mais tempo vendendo. A rotina fica leve." },
   ],
 
+  problems: [
+    { icon: "bell", title: "Leads que esfriam", body: "Sem um lugar único, o follow-up escapa — e o cliente fecha com quem respondeu primeiro." },
+    { icon: "trendingUp", title: "Receita imprevisível", body: "Sem pipeline claro, você só descobre o resultado do mês quando ele já acabou." },
+    { icon: "users", title: "Time desalinhado", body: "Cada vendedor com sua planilha. Ninguém enxerga o todo, ninguém fala a mesma língua." },
+    { icon: "zap", title: "Horas perdidas", body: "Atualizar planilha, copiar dado, procurar histórico. Tempo que deveria ser de venda." },
+  ],
+
   faqExtra: [],
+
+  highlightFeatures: [],
 
   pipeline: {
     stages: ["Novo lead", "Em contato", "Proposta enviada", "Fechamento"],
@@ -99,6 +108,13 @@ export const DEFAULT_SEGMENT: SegmentContent = {
       role: "Diretora comercial",
       company: "Operação de exemplo",
     },
+    case: {
+      label: "Como costuma mudar",
+      before: "Leads em planilha e anotações, follow-up de memória, resultado do mês só no fim.",
+      after: "Tudo num funil: cada lead com próximo passo, conversão ao vivo e previsão de fechamento.",
+    },
+    logos: ["Comércio", "Serviços", "Saúde", "Educação", "Imobiliário", "Agências"],
+    cta: { label: "Descobrir meu potencial" },
   },
 
   finalCta: {

@@ -32,6 +32,8 @@ export type {
   SegmentProof,
   ProofStat,
   ProofTestimonial,
+  ProofCase,
+  ProblemItem,
 } from "./types";
 
 /** Registro completo dos segmentos, indexado por id. */

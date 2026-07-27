@@ -19,6 +19,15 @@ export const AGENCIA = defineSegment(
       { icon: "layers", title: "Cada oportunidade num lugar só", body: "Leads, diagnósticos e propostas num painel só — sem abas espalhadas." },
       { icon: "zap", title: "Menos organização, mais fechamento", body: "Menos tempo com cadastro, mais tempo fechando contratos." },
     ],
+    problems: [
+      { icon: "bell", title: "Lead esfriando", body: "A proposta enviada sem follow-up vira cliente da concorrência." },
+      { icon: "trendingUp", title: "Contratos imprevisíveis", body: "Sem pipeline, o mês fecha na surpresa." },
+      { icon: "users", title: "Time comercial sem visão", body: "Cada um com sua lista de leads e propostas." },
+      { icon: "zap", title: "Tempo com organização, não com fechamento", body: "Cadastro manual come as horas de vender." },
+    ],
+
+    highlightFeatures: ["Negócios", "Pipeline", "Tarefas"],
+
     pipeline: {
       stages: ["Novo lead", "Diagnóstico", "Proposta", "Negociação", "Contrato"],
     },
@@ -84,6 +93,11 @@ export const AGENCIA = defineSegment(
         { value: "Tempo real", label: "propostas e follow-up ao vivo" },
         { value: "0 proposta", label: "esfriando sem retorno" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Propostas no e-mail, follow-up de memória, contrato na surpresa.",
+        after: "Cada lead no pipeline com próximo passo — proposta e follow-up sem escapar.",
+      },
       testimonial: {
         quote:
           "Centralizamos proposta e follow-up. Paramos de perder contrato por falta de um retorno na hora certa.",

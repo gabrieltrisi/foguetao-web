@@ -153,15 +153,41 @@ export interface ProofTestimonial {
   company: string;
 }
 
+/** Mini-case antes/depois (texto) — a transformação que a operação viveu. */
+export interface ProofCase {
+  label: string;
+  before: string;
+  after: string;
+}
+
 /**
  * Prova social por segmento. `demo: true` sinaliza que os dados são ilustrativos
  * (selo "Demonstração" na UI) — NUNCA fingimos clientes reais. Trocar por
  * depoimentos reais depois é só editar o config, sem mexer na UI.
+ *
+ * `stats`/`testimonial` são obrigatórios; o resto é opcional (arquitetura pronta
+ * para cases, logos, CTA e — sem render por ora — vídeo/antes-depois visual).
  */
 export interface SegmentProof {
   demo: boolean;
   stats: ProofStat[];
   testimonial: ProofTestimonial;
+  /** Mini-case antes → depois (texto). */
+  case?: ProofCase;
+  /** "Logos" de demonstração (rótulos), até haver marcas reais. */
+  logos?: string[];
+  /** CTA da prova (leva ao quiz). */
+  cta?: { label: string };
+  /** Arquitetura pronta — ainda NÃO renderizados (sem ativos reais). */
+  videoUrl?: string;
+  beforeAfterImage?: { before: string; after: string; alt: string };
+}
+
+/** Dor do segmento na seção "Problema" (dados; ícone mapeado na UI). */
+export interface ProblemItem {
+  icon: BenefitIconKey;
+  title: string;
+  body: string;
 }
 
 /** Configuração de um segmento (o que cada arquivo `segments/*.ts` exporta). */
@@ -173,12 +199,18 @@ export interface SegmentContent {
   emoji: string;
   hero: HeroContent;
   benefits: BenefitItem[];
+  /** Dores da seção "Problema" — herdadas do default, sobrescritas por nicho. */
+  problems: ProblemItem[];
   /** Perguntas específicas do nicho, anexadas à base comum. */
   faqExtra: FaqItem[];
   pipeline: PipelineContent;
   crm: CrmExamples;
   /** Prova social (stats + depoimento) — herdada do default, sobrescrita por nicho. */
   proof: SegmentProof;
+  /** Nomes de recursos a destacar na grade de recursos (por nicho). */
+  highlightFeatures: string[];
+  /** Intro opcional do comparativo, por nicho. */
+  comparisonNote?: string;
   finalCta: FinalCtaContent;
 }
 

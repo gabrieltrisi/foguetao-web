@@ -183,6 +183,42 @@ describe("integridade de todos os segmentos", () => {
     }
   });
 
+  it("todo segmento tem a seção Problema preenchida (dores)", () => {
+    for (const id of SEGMENT_IDS) {
+      const problems = SEGMENTS[id].problems;
+      expect(problems.length, id).toBeGreaterThanOrEqual(3);
+      for (const p of problems) {
+        expect(p.icon.length, id).toBeGreaterThan(0);
+        expect(p.title.length, id).toBeGreaterThan(0);
+        expect(p.body.length, id).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("todo segmento tem mini-case (antes/depois) e highlightFeatures válidos", () => {
+    const featureNames = new Set([
+      "Visão geral", "Pipeline", "Contatos", "Organizações", "Negócios", "Tarefas", "Campanhas", "Multiempresa",
+    ]);
+    for (const id of SEGMENT_IDS) {
+      const c = SEGMENTS[id].proof.case;
+      expect(c, id).toBeTruthy();
+      expect(c!.before.length, id).toBeGreaterThan(0);
+      expect(c!.after.length, id).toBeGreaterThan(0);
+      // highlightFeatures referenciam recursos reais da grade
+      for (const name of SEGMENTS[id].highlightFeatures) {
+        expect(featureNames.has(name), `${id}:${name}`).toBe(true);
+      }
+    }
+  });
+
+  it("nichos contextualizam a seção Problema (não são as dores gerais)", () => {
+    for (const id of [
+      "academia", "nutricionista", "clinica", "estetica", "imobiliaria", "agencia", "loja", "prestador-servico",
+    ] as const) {
+      expect(SEGMENTS[id].problems, id).not.toEqual(SEGMENTS.default.problems);
+    }
+  });
+
   it("benefícios/hero/CTA citam só recursos reais (sem WhatsApp/IA/automação/prontuário/agenda médica/integração)", () => {
     const forbidden = /whatsapp|intelig[êe]ncia artificial|automa[çc]|integra[çc]|prontu[áa]rio|agenda m[ée]dica/i;
     for (const id of SEGMENT_IDS) {
@@ -191,8 +227,10 @@ describe("integridade de todos os segmentos", () => {
         s.hero.eyebrow, s.hero.titleLead, s.hero.titleHighlight, s.hero.subtitle, s.hero.primaryCta,
         s.finalCta.titleLead, s.finalCta.titleHighlight, s.finalCta.subtitle, s.finalCta.primaryCta,
         ...s.benefits.flatMap((b) => [b.title, b.body]),
+        ...s.problems.flatMap((p) => [p.title, p.body]),
         ...s.proof.stats.flatMap((st) => [st.value, st.label]),
         s.proof.testimonial.quote, s.proof.testimonial.role,
+        s.proof.case?.before ?? "", s.proof.case?.after ?? "",
       ].join(" · ");
       expect(claims, id).not.toMatch(forbidden);
     }

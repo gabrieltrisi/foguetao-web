@@ -19,6 +19,15 @@ export const NUTRICIONISTA = defineSegment(
       { icon: "layers", title: "Contatos num lugar só", body: "Interessados, consultas e retornos num painel só — sem planilhas paralelas." },
       { icon: "zap", title: "Menos organização, mais atendimento", body: "Menos tempo com cadastro, mais tempo com quem quer marcar." },
     ],
+    problems: [
+      { icon: "bell", title: "Interessado que some", body: "Quem pediu informação e não agendou fica sem retorno." },
+      { icon: "trendingUp", title: "Agenda imprevisível", body: "Sem funil, a semana começa sem saber quantas consultas vêm." },
+      { icon: "users", title: "Recepção sem visão", body: "Contatos espalhados entre agenda, caderno e conversa." },
+      { icon: "zap", title: "Retorno esquecido", body: "O paciente que sumiu deveria ter recebido um lembrete." },
+    ],
+
+    highlightFeatures: ["Contatos", "Tarefas", "Pipeline"],
+
     pipeline: {
       stages: ["Novo contato", "Consulta", "Plano", "Retorno"],
     },
@@ -88,6 +97,11 @@ export const NUTRICIONISTA = defineSegment(
         { value: "Tempo real", label: "agenda de consultas ao vivo" },
         { value: "0 retorno", label: "esquecido" },
       ],
+      case: {
+        label: "Como costuma mudar",
+        before: "Interessados espalhados, retorno de memória, agenda cheia de furos.",
+        after: "Cada contato no funil, com consulta e retorno lembrados — agenda mais previsível.",
+      },
       testimonial: {
         quote:
           "Os interessados pararam de sumir. Vejo quem agendou, quem compareceu e quem precisa de um novo contato.",
