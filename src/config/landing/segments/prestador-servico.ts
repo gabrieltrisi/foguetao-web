@@ -11,6 +11,14 @@ export const PRESTADOR_SERVICO = defineSegment(
         "Acompanhe cada solicitação, orçamento e follow-up num funil só — sem perder trabalho por falta de retorno.",
       primaryCta: "Quero fechar mais orçamentos",
     },
+    benefits: [
+      { icon: "trendingUp", title: "Preveja seus fechamentos", body: "Veja quais orçamentos estão perto de virar contrato — o funil mostra cada trabalho em potencial." },
+      { icon: "bell", title: "Nenhum orçamento sem retorno", body: "Tarefas e lembretes no lugar certo: faça o follow-up de cada solicitação na hora certa." },
+      { icon: "users", title: "Equipe na mesma página", body: "Cada pessoa com seu acesso; todos veem as mesmas solicitações e orçamentos." },
+      { icon: "chart", title: "Decida com o número do dia", body: "A conversão de orçamento em contrato ao vivo, não na planilha de ontem." },
+      { icon: "layers", title: "Trabalhos num lugar só", body: "Solicitações, orçamentos e follow-up num painel só — sem abas espalhadas." },
+      { icon: "zap", title: "Menos organização, mais serviço fechado", body: "Menos tempo com cadastro, mais tempo executando o trabalho." },
+    ],
     pipeline: {
       stages: ["Solicitação", "Orçamento", "Negociação", "Contrato", "Concluído"],
     },
@@ -69,6 +77,22 @@ export const PRESTADOR_SERVICO = defineSegment(
         { t: "Atualizar cadastro — Marcenaria", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "Pedido → contrato", label: "cada orçamento no funil" },
+        { value: "Tempo real", label: "orçamentos e follow-up ao vivo" },
+        { value: "0 pedido", label: "sem retorno" },
+      ],
+      testimonial: {
+        quote:
+          "Cada pedido de orçamento vira uma etapa que a gente acompanha. Fechamos mais do mesmo número de solicitações.",
+        author: "Carlos Ferreira",
+        role: "Proprietário",
+        company: "Prestador de serviço (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para",
       titleHighlight: "fechar mais orçamentos",

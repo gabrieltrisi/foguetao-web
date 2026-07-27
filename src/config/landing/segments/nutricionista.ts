@@ -81,6 +81,22 @@ export const NUTRICIONISTA = defineSegment(
         { t: "Atualizar contato — Marcos", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "Contato → consulta", label: "cada interessado no funil" },
+        { value: "Tempo real", label: "agenda de consultas ao vivo" },
+        { value: "0 retorno", label: "esquecido" },
+      ],
+      testimonial: {
+        quote:
+          "Os interessados pararam de sumir. Vejo quem agendou, quem compareceu e quem precisa de um novo contato.",
+        author: "Marina Teixeira",
+        role: "Nutricionista",
+        company: "Consultório (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para lotar",
       titleHighlight: "sua agenda de consultas",

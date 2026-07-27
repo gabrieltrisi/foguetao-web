@@ -11,6 +11,14 @@ export const LOJA = defineSegment(
         "Organize interessados, orçamentos e pedidos num funil só — e transforme curiosos em clientes que voltam.",
       primaryCta: "Quero vender mais",
     },
+    benefits: [
+      { icon: "trendingUp", title: "Preveja suas vendas", body: "Veja quais orçamentos estão perto de fechar — o funil mostra cada venda em potencial." },
+      { icon: "bell", title: "Nenhum orçamento sem retorno", body: "Tarefas e lembretes no lugar certo: faça o follow-up de cada pedido na hora certa." },
+      { icon: "users", title: "Balcão e vendas alinhados", body: "Cada vendedor com seu acesso; todos veem os mesmos contatos e pedidos." },
+      { icon: "chart", title: "Decida com o número do dia", body: "A conversão de orçamento em venda ao vivo, não na planilha de ontem." },
+      { icon: "layers", title: "Vendas num lugar só", body: "Contatos, orçamentos e pedidos num painel só — sem cinco abas abertas." },
+      { icon: "zap", title: "Menos planilha, mais venda", body: "Menos tempo organizando, mais tempo transformando curioso em cliente." },
+    ],
     pipeline: {
       stages: ["Novo contato", "Orçamento", "Negociação", "Venda", "Pós-venda"],
     },
@@ -69,6 +77,22 @@ export const LOJA = defineSegment(
         { t: "Atualizar cadastro — Eduardo", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "Contato → recompra", label: "histórico do cliente sempre à mão" },
+        { value: "Tempo real", label: "orçamentos e pedidos ao vivo" },
+        { value: "0 orçamento", label: "sem follow-up" },
+      ],
+      testimonial: {
+        quote:
+          "Passamos a vender mais pra quem já comprou. O histórico do cliente fica num lugar só e o follow-up não escapa.",
+        author: "Sérgio Antunes",
+        role: "Dono",
+        company: "Loja (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para",
       titleHighlight: "vender mais",

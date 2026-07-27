@@ -29,6 +29,9 @@ export type {
   CrmActivity,
   CrmTag,
   Tone,
+  SegmentProof,
+  ProofStat,
+  ProofTestimonial,
 } from "./types";
 
 /** Registro completo dos segmentos, indexado por id. */

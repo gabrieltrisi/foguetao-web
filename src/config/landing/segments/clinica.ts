@@ -81,6 +81,22 @@ export const CLINICA = defineSegment(
         { t: "Atualizar contato — Tiago", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "1 funil", label: "contatos, orçamentos e retornos juntos" },
+        { value: "Tempo real", label: "conversão de avaliação em fechamento" },
+        { value: "0 orçamento", label: "sem retorno" },
+      ],
+      testimonial: {
+        quote:
+          "Os retornos deixaram de depender de memória. O time vê quem avaliou, quem tem orçamento aberto e quem precisa de um novo contato.",
+        author: "Dra. Helena Vasconcelos",
+        role: "Sócia",
+        company: "Clínica (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para",
       titleHighlight: "encher sua agenda comercial",

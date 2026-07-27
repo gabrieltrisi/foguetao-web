@@ -81,6 +81,22 @@ export const IMOBILIARIA = defineSegment(
         { t: "Atualizar cadastro — Sala Centro", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "Visita → proposta", label: "cada etapa acompanhada" },
+        { value: "Tempo real", label: "funil do mês ao vivo" },
+        { value: "0 comprador", label: "sem follow-up" },
+      ],
+      testimonial: {
+        quote:
+          "Antes a gente perdia comprador entre a visita e a proposta. Agora cada corretor sabe exatamente qual é o próximo passo.",
+        author: "Paula Aragão",
+        role: "Gestora de vendas",
+        company: "Imobiliária (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para",
       titleHighlight: "fechar mais vendas",

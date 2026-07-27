@@ -139,6 +139,31 @@ export interface CrmExamples {
   tasks: CrmTask[];
 }
 
+/** Um número de destaque da prova social (ex.: "3x mais follow-up"). */
+export interface ProofStat {
+  value: string;
+  label: string;
+}
+
+/** Depoimento (estrutura preparada para dados reais). */
+export interface ProofTestimonial {
+  quote: string;
+  author: string;
+  role: string;
+  company: string;
+}
+
+/**
+ * Prova social por segmento. `demo: true` sinaliza que os dados são ilustrativos
+ * (selo "Demonstração" na UI) — NUNCA fingimos clientes reais. Trocar por
+ * depoimentos reais depois é só editar o config, sem mexer na UI.
+ */
+export interface SegmentProof {
+  demo: boolean;
+  stats: ProofStat[];
+  testimonial: ProofTestimonial;
+}
+
 /** Configuração de um segmento (o que cada arquivo `segments/*.ts` exporta). */
 export interface SegmentContent {
   id: SegmentId;
@@ -152,6 +177,8 @@ export interface SegmentContent {
   faqExtra: FaqItem[];
   pipeline: PipelineContent;
   crm: CrmExamples;
+  /** Prova social (stats + depoimento) — herdada do default, sobrescrita por nicho. */
+  proof: SegmentProof;
   finalCta: FinalCtaContent;
 }
 

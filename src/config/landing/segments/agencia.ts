@@ -77,6 +77,22 @@ export const AGENCIA = defineSegment(
         { t: "Atualizar cadastro — Grupo Vega", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "Lead → contrato", label: "pipeline inteiro num lugar" },
+        { value: "Tempo real", label: "propostas e follow-up ao vivo" },
+        { value: "0 proposta", label: "esfriando sem retorno" },
+      ],
+      testimonial: {
+        quote:
+          "Centralizamos proposta e follow-up. Paramos de perder contrato por falta de um retorno na hora certa.",
+        author: "Diego Prado",
+        role: "Head comercial",
+        company: "Agência (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para",
       titleHighlight: "fechar mais contratos",

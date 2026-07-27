@@ -148,14 +148,38 @@ describe("integridade de todos os segmentos", () => {
   });
 
   it("deep-merge: nicho que não declara benefits herda os do default", () => {
-    // loja não está nos 6 principais → herda os benefícios gerais
-    expect(SEGMENTS.loja.benefits).toEqual(SEGMENTS.default.benefits);
+    // outro é passthrough puro → herda os benefícios gerais
+    expect(SEGMENTS.outro.benefits).toEqual(SEGMENTS.default.benefits);
   });
 
-  it("segmentos principais contextualizam os benefícios (não são os gerais)", () => {
-    for (const id of ["academia", "nutricionista", "clinica", "estetica", "imobiliaria", "agencia"] as const) {
+  it("todos os nichos contextualizam os benefícios (não são os gerais)", () => {
+    for (const id of [
+      "academia", "nutricionista", "clinica", "estetica", "imobiliaria", "agencia", "loja", "prestador-servico",
+    ] as const) {
       expect(SEGMENTS[id].benefits, id).not.toEqual(SEGMENTS.default.benefits);
       expect(SEGMENTS[id].benefits, id).toHaveLength(6);
+    }
+  });
+
+  it("todo segmento tem prova social preenchida (stats + depoimento)", () => {
+    for (const id of SEGMENT_IDS) {
+      const p = SEGMENTS[id].proof;
+      expect(typeof p.demo, id).toBe("boolean");
+      expect(p.stats.length, id).toBeGreaterThanOrEqual(2);
+      for (const s of p.stats) {
+        expect(s.value.length, id).toBeGreaterThan(0);
+        expect(s.label.length, id).toBeGreaterThan(0);
+      }
+      expect(p.testimonial.quote.length, id).toBeGreaterThan(0);
+      expect(p.testimonial.author.length, id).toBeGreaterThan(0);
+      expect(p.testimonial.role.length, id).toBeGreaterThan(0);
+      expect(p.testimonial.company.length, id).toBeGreaterThan(0);
+    }
+  });
+
+  it("prova social atual é demonstração (nunca finge cliente real)", () => {
+    for (const id of SEGMENT_IDS) {
+      expect(SEGMENTS[id].proof.demo, id).toBe(true);
     }
   });
 
@@ -167,6 +191,8 @@ describe("integridade de todos os segmentos", () => {
         s.hero.eyebrow, s.hero.titleLead, s.hero.titleHighlight, s.hero.subtitle, s.hero.primaryCta,
         s.finalCta.titleLead, s.finalCta.titleHighlight, s.finalCta.subtitle, s.finalCta.primaryCta,
         ...s.benefits.flatMap((b) => [b.title, b.body]),
+        ...s.proof.stats.flatMap((st) => [st.value, st.label]),
+        s.proof.testimonial.quote, s.proof.testimonial.role,
       ].join(" · ");
       expect(claims, id).not.toMatch(forbidden);
     }

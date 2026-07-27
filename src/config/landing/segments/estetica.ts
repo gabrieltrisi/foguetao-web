@@ -77,6 +77,22 @@ export const ESTETICA = defineSegment(
         { t: "Atualizar contato — Vanessa", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "Contato → agenda", label: "cada avaliação acompanhada" },
+        { value: "Tempo real", label: "conversão em agendamento ao vivo" },
+        { value: "0 agendamento", label: "esfriando" },
+      ],
+      testimonial: {
+        quote:
+          "A agenda ficou mais cheia porque nenhum contato fica sem retorno. Cada avaliação vira um próximo passo claro.",
+        author: "Bruna Camargo",
+        role: "Proprietária",
+        company: "Estúdio de estética (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para",
       titleHighlight: "lotar sua agenda",

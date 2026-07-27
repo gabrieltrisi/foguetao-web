@@ -85,6 +85,22 @@ export const ACADEMIA = defineSegment(
         { t: "Atualizar cadastro — Rafael", tag: "Concluída", tone: "success", done: true },
       ],
     },
+    proof: {
+      demo: true,
+      stats: [
+        { value: "Aula → matrícula", label: "cada experimental vira etapa do funil" },
+        { value: "Tempo real", label: "conversão em matrícula ao vivo" },
+        { value: "0 aluno", label: "perdido sem follow-up" },
+      ],
+      testimonial: {
+        quote:
+          "Cada aula experimental virou uma etapa que a gente acompanha. Nenhum interessado some mais entre a visita e a matrícula.",
+        author: "Rodrigo Sanches",
+        role: "Gerente comercial",
+        company: "Rede de academias (exemplo)",
+      },
+    },
+
     finalCta: {
       titleLead: "Pronto para",
       titleHighlight: "lotar suas turmas",

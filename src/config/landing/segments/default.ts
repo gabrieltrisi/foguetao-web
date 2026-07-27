@@ -85,6 +85,22 @@ export const DEFAULT_SEGMENT: SegmentContent = {
     ],
   },
 
+  proof: {
+    demo: true,
+    stats: [
+      { value: "1 painel", label: "no lugar de 5 abas abertas" },
+      { value: "Tempo real", label: "cada número atualizado na hora" },
+      { value: "0 lead", label: "esquecido com follow-up no lugar certo" },
+    ],
+    testimonial: {
+      quote:
+        "Paramos de descobrir o resultado do mês quando ele já tinha acabado. Agora o funil mostra o que vai fechar antes.",
+      author: "Marina Alves",
+      role: "Diretora comercial",
+      company: "Operação de exemplo",
+    },
+  },
+
   finalCta: {
     titleLead: "Pronto para",
     titleHighlight: "decolar",
