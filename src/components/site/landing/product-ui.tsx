@@ -14,6 +14,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LiveNumber, LiveBar, LiveDot } from "./product-ui-live";
 import type {
   CrmBoardColumn,
   CrmContact,
@@ -139,7 +140,7 @@ export function AppFrame({
           <span className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-[#e6e6e8]" />
             <span className="size-2 rounded-full bg-[#e6e6e8]" />
-            <span className="size-2 rounded-full bg-brand/70" />
+            <LiveDot className="size-2" />
           </span>
         </div>
         <div className="p-4 sm:p-5">{children}</div>
@@ -148,7 +149,7 @@ export function AppFrame({
   );
 }
 
-function MetricCard({ label, value, delta }: { label: string; value: string; delta?: string }) {
+function MetricCard({ label, value, delta }: { label: string; value: React.ReactNode; delta?: string }) {
   return (
     <div className="rounded-lg border border-[#e6e6e8] bg-[#ffffff] p-3.5">
       <p className="text-[10px] font-medium uppercase tracking-wide text-[#66666d]">{label}</p>
@@ -168,10 +169,10 @@ export function ProductDashboard({ data, className }: { data: CrmDashboard; clas
   return (
     <AppFrame active="Visão geral" title="Visão geral" className={className}>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard label="Receita no funil" value="R$ 486.200" delta="+18%" />
-        <MetricCard label="Negócios abertos" value="72" delta="+9%" />
-        <MetricCard label="Taxa de conversão" value="31%" delta="+4%" />
-        <MetricCard label="Ganhos no mês" value="24" />
+        <MetricCard label="Receita no funil" value={<LiveNumber target={486200} prefix="R$ " thousands />} delta="+18%" />
+        <MetricCard label="Negócios abertos" value={<LiveNumber target={72} />} delta="+9%" />
+        <MetricCard label="Taxa de conversão" value={<LiveNumber target={31} suffix="%" />} delta="+4%" />
+        <MetricCard label="Ganhos no mês" value={<LiveNumber target={24} />} />
       </div>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-3">
@@ -182,9 +183,12 @@ export function ProductDashboard({ data, className }: { data: CrmDashboard; clas
               <div key={s.label} className="flex items-center gap-2 sm:gap-3">
                 <span className="w-20 shrink-0 text-[11.5px] text-[#66666d] sm:w-28">{s.label}</span>
                 <span className="h-6 flex-1 overflow-hidden rounded bg-[#f7f7f8]">
-                  <span className="flex h-full items-center rounded bg-gradient-to-r from-brand to-brand-dark px-2 text-[10px] font-semibold text-white" style={{ width: `${s.pct}%` }}>
-                    {s.count}
-                  </span>
+                  <LiveBar
+                    pct={s.pct}
+                    className="flex h-full items-center rounded bg-gradient-to-r from-brand to-brand-dark px-2 text-[10px] font-semibold text-white"
+                  >
+                    <LiveNumber target={Number.parseInt(s.count, 10) || 0} thousands />
+                  </LiveBar>
                 </span>
               </div>
             ))}
@@ -295,7 +299,9 @@ export function ProductDeal({ deal, className }: { deal: CrmDeal; className?: st
         </div>
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wide text-[#66666d]">Probabilidade</p>
-          <p className="font-display text-2xl font-bold">{deal.probability}</p>
+          <p className="font-display text-2xl font-bold">
+            <LiveNumber target={Number.parseInt(deal.probability, 10) || 0} suffix="%" />
+          </p>
         </div>
       </div>
       <div className="mt-4">
@@ -305,7 +311,7 @@ export function ProductDeal({ deal, className }: { deal: CrmDeal; className?: st
           ))}
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#f7f7f8]">
-          <span className="block h-full rounded-full bg-gradient-to-r from-brand to-brand-dark" style={{ width: `${deal.progressPct}%` }} />
+          <LiveBar pct={deal.progressPct} className="block h-full rounded-full bg-gradient-to-r from-brand to-brand-dark" />
         </div>
       </div>
     </AppFrame>
