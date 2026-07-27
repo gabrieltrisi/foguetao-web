@@ -75,4 +75,14 @@ describe("buildDiagnosis", () => {
     expect(d.potential).toBeGreaterThan(0);
     expect(d.priorities.length).toBeGreaterThan(0);
   });
+
+  it("gera um resumo executivo em linguagem natural que reflete as respostas", () => {
+    const d = buildDiagnosis(ecommerceHighVolume);
+    expect(d.executiveSummary.length).toBeGreaterThan(80);
+    // cita o segmento e o método de controle informado
+    expect(d.executiveSummary).toContain(d.segmentLabel);
+    expect(d.executiveSummary.toLowerCase()).toContain("planilhas");
+    // difere de outro conjunto de respostas
+    expect(d.executiveSummary).not.toBe(buildDiagnosis(academiaSolo).executiveSummary);
+  });
 });
