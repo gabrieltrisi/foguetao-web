@@ -3,6 +3,7 @@
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuiz } from "./quiz-provider";
+import { track } from "../analytics/track";
 
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080a]";
@@ -26,17 +27,24 @@ const VARIANTS = {
 export function QuizTrigger({
   variant = "hero",
   label = "Descobrir meu plano em 60s",
+  source,
   className,
 }: {
   variant?: keyof typeof VARIANTS;
   label?: string;
+  /** Origem do funil para telemetria (default: o próprio variant). */
+  source?: string;
   className?: string;
 }) {
   const { open } = useQuiz();
+  function handleClick() {
+    track("quiz_open", { source: source ?? variant });
+    open();
+  }
   return (
     <button
       type="button"
-      onClick={open}
+      onClick={handleClick}
       aria-haspopup="dialog"
       className={cn(BASE, VARIANTS[variant], className)}
     >

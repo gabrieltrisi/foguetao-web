@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, History, X } from "lucide-react";
 import { withSegment } from "@/lib/landing/segment";
 import type { SegmentId } from "@/config/landing/segments";
 import { useQuizMachine } from "../hooks/useQuizMachine";
@@ -36,6 +36,7 @@ export function QuizOverlay({
 
   const machine = useQuizMachine();
   const { markAbandonedIfIncomplete, diagnosis } = machine;
+  const [hintDismissed, setHintDismissed] = React.useState(false);
 
   const handleClose = React.useCallback(() => {
     markAbandonedIfIncomplete();
@@ -87,6 +88,20 @@ export function QuizOverlay({
           />
 
           <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-7">
+            {machine.restored && machine.phase === "question" && !hintDismissed ? (
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[12.5px] text-white/60">
+                <History className="size-3.5 shrink-0 text-brand" aria-hidden />
+                <span className="flex-1">Retomamos de onde você parou.</span>
+                <button
+                  type="button"
+                  onClick={() => setHintDismissed(true)}
+                  aria-label="Dispensar aviso"
+                  className="text-white/40 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  <X className="size-3.5" aria-hidden />
+                </button>
+              </div>
+            ) : null}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={phaseKey}

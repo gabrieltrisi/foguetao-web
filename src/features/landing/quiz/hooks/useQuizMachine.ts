@@ -40,6 +40,9 @@ export function useQuizMachine() {
     };
   });
 
+  // Retomada: havia progresso salvo (passo > 0 ou alguma resposta).
+  const restored = initial.step > 0 || Object.keys(initial.answers).length > 0;
+
   const [phase, setPhase] = React.useState<QuizPhase>("question");
   const [stepIndex, setStepIndex] = React.useState(initial.step);
   const [answers, setAnswers] = React.useState<QuizAnswers>(initial.answers);
@@ -184,6 +187,7 @@ export function useQuizMachine() {
     diagnosis,
     progress,
     canGoBack,
+    restored,
     leadStatus,
     leadError,
     select,

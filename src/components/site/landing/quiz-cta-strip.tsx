@@ -21,7 +21,7 @@ export function QuizCtaStrip() {
               Responda 6 perguntas rápidas e receba um diagnóstico com score comercial, gargalos e próximos passos — feito para a sua operação.
             </p>
             <div className="mt-8 flex justify-center">
-              <QuizTrigger variant="strip" label="Fazer meu diagnóstico grátis" />
+              <QuizTrigger variant="strip" label="Fazer meu diagnóstico grátis" source="strip" />
             </div>
           </div>
         </div>
