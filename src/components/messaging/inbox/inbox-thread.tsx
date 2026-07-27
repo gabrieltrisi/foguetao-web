@@ -16,6 +16,8 @@ import { isApiError } from "@/types/api/error";
 import { InboxSendabilityBanner } from "@/components/messaging/inbox/inbox-sendability-banner";
 import { InboxComposer } from "@/components/messaging/inbox/inbox-composer";
 import { ConversationTimeline } from "@/features/inbox/components/timeline/conversation-timeline";
+import { clientMessageIdFromTempId } from "@/features/inbox/optimistic";
+import type { TimelineMessageVM } from "@/features/inbox/view-models";
 
 /**
  * Thread da Inbox. O detalhe (`useConversation`) traz `canSend`/`sendabilityReason`
@@ -51,6 +53,17 @@ export function InboxThread({
       }
     },
     [send, toast],
+  );
+
+  // Retry de uma mensagem OTIMISTA falha: reusa o MESMO clientMessageId (idempotente
+  // no backend) → a temp volta a SENDING; não cria mensagem nova. Preserva o texto.
+  const handleRetry = React.useCallback(
+    (message: TimelineMessageVM) => {
+      if (!message.text) return;
+      const clientMessageId = clientMessageIdFromTempId(message.id) ?? crypto.randomUUID();
+      send.mutate({ text: message.text, clientMessageId });
+    },
+    [send],
   );
 
   const notFound = detail.isError && isApiError(detail.error) && detail.error.statusCode === 404;
@@ -113,6 +126,7 @@ export function InboxThread({
         conversationId={conversationId}
         unreadForUser={conversation.unreadForUser}
         counterpartName={name}
+        onRetry={handleRetry}
       />
 
       <InboxComposer

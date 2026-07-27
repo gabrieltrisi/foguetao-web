@@ -6,6 +6,7 @@ import { toUserErrorMessage } from "@/lib/api/user-error-message";
 import { useSession } from "@/providers/session-provider";
 import { useConversationMessages } from "@/features/inbox/hooks/use-conversation-messages";
 import { useTimelineScroll } from "@/features/inbox/hooks/use-timeline-scroll";
+import { useMarkConversationReadOnView } from "@/features/inbox/hooks/use-mark-read";
 import { buildTimeline, findFirstUnreadId, flattenTimelinePages } from "@/features/inbox/timeline";
 import type { TimelineMessageVM } from "@/features/inbox/view-models";
 import {
@@ -31,10 +32,12 @@ export function ConversationTimeline({
   conversationId,
   unreadForUser,
   counterpartName = "Contato",
+  onRetry,
 }: {
   conversationId: string;
   unreadForUser?: number | null;
   counterpartName?: string;
+  onRetry?: (message: TimelineMessageVM) => void;
 }) {
   const { user } = useSession();
   const q = useConversationMessages(conversationId, { limit: PAGE });
@@ -56,6 +59,14 @@ export function ConversationTimeline({
 
   const { ref: scrollRef, isAtBottom, unseenCount, scrollToBottom, beforePrepend, addUnseen } =
     useTimelineScroll({ topItemId });
+
+  // Leitura REAL (F2C): marca lida só quando o atendente vê as novas (no final +
+  // janela ativa), com debounce. Não marca só por abrir (decisão F2A preservada).
+  useMarkConversationReadOnView({
+    conversationId,
+    hasUnread: (unreadForUser ?? 0) > 0,
+    isAtBottom,
+  });
 
   // Primeira não-lida: calculada UMA vez ao carregar (não pula ao marcar lida).
   const [firstUnreadId, setFirstUnreadId] = React.useState<string | null>(null);
@@ -161,7 +172,13 @@ export function ConversationTimeline({
                 <UnreadSeparator />
               </div>
             ) : (
-              <MessageRow key={it.id} message={it.message} group={it.group} senderName={senderName(it.message)} />
+              <MessageRow
+                key={it.id}
+                message={it.message}
+                group={it.group}
+                senderName={senderName(it.message)}
+                onRetry={onRetry}
+              />
             ),
           )}
         </div>

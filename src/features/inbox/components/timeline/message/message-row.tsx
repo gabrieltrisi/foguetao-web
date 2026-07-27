@@ -54,11 +54,13 @@ export const MessageRow = React.memo(function MessageRow({
   group,
   senderName,
   onReply,
+  onRetry,
 }: {
   message: TimelineMessageVM;
   group: GroupMeta;
   senderName: string;
   onReply?: (id: string) => void;
+  onRetry?: (message: TimelineMessageVM) => void;
 }) {
   const { toast } = useToast();
   if (m.kind === "system") return <SystemEvent text={m.text} at={m.createdAt} />;
@@ -122,10 +124,21 @@ export const MessageRow = React.memo(function MessageRow({
           </span>
 
           {m.isFailed ? (
-            <p className="mt-1 inline-flex items-center gap-1 text-micro text-danger">
-              <AlertTriangle className="size-3" aria-hidden />
-              {m.failure?.message ?? "Falha no envio"}
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="inline-flex items-center gap-1 text-micro text-danger">
+                <AlertTriangle className="size-3" aria-hidden />
+                {m.failure?.message ?? "Falha no envio"}
+              </span>
+              {outbound && onRetry ? (
+                <button
+                  type="button"
+                  onClick={() => onRetry(m)}
+                  className="text-micro font-semibold text-danger underline underline-offset-2 hover:text-danger/80"
+                >
+                  Tentar novamente
+                </button>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
