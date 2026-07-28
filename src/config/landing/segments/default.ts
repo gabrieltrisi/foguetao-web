@@ -11,11 +11,11 @@ export const DEFAULT_SEGMENT: SegmentContent = {
   emoji: "🌎",
 
   hero: {
-    eyebrow: "Plataforma comercial para times que crescem",
-    titleLead: "Toda a sua operação comercial, em",
-    titleHighlight: "trajetória de crescimento.",
+    eyebrow: "CRM para empresas que querem vender mais",
+    titleLead: "Mais vendas.",
+    titleHighlight: "Menos oportunidades perdidas.",
     subtitle:
-      "Contatos, pipeline, negócios, tarefas e campanhas reunidos em um painel único — com cada número atualizado em tempo real. Menos planilhas, mais decisões.",
+      "Centralize leads, atendimentos, negócios e tarefas em um único CRM — e acompanhe cada oportunidade até a venda. Menos planilhas, mais decisões.",
     primaryCta: "Começar agora",
     note: "14 dias grátis · sem cartão de crédito · suporte em português",
   },
@@ -53,7 +53,7 @@ export const DEFAULT_SEGMENT: SegmentContent = {
         { label: "Proposta enviada", count: "141", pct: 45 },
         { label: "Fechamento", count: "88", pct: 28 },
       ],
-      tasks: ["Ligar para Studio Vitta", "Enviar proposta — Alpha", "Follow-up Rede Norte"],
+      tasks: ["Fazer follow-up com oportunidade", "Enviar proposta comercial", "Retornar contato do novo lead"],
     },
     board: [
       { stage: "Lead", deals: [{ name: "Studio Vitta", value: "R$ 12.400" }, { name: "Café Aurora", value: "R$ 6.900" }] },
