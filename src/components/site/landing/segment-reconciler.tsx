@@ -1,57 +1,33 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { isSegmentId } from "@/config/landing/segments";
 import type { SegmentId } from "@/config/landing/segments";
-import { persistSegment, SEGMENT_STORAGE_KEY, withSegment } from "@/lib/landing/segment";
+import { persistSegment } from "@/lib/landing/segment";
 
 /**
- * Ilha invisível que reconcilia a prioridade URL > Cookie > LocalStorage.
+ * Ilha invisível de reconciliação de segmento.
  *
- * O servidor só enxerga URL e cookie, então o SSR é determinístico (sem
- * hydration mismatch). Este efeito, uma vez montado, cuida do que o servidor
- * não vê — SEMPRE respeitando que a URL é autoritativa:
- *  - URL válida        → grava cookie + localStorage (a escolha "gruda");
- *  - URL presente inválida → não faz NADA (não restaura, não sobrescreve cookie);
- *  - sem URL, veio do cookie → espelha no localStorage;
- *  - sem URL e default → se houver segmento no localStorage, restaura via URL.
+ * LP3.1 — Reposicionamento Universal: a home pública é personalizada APENAS por
+ * um `?segment=` explícito na URL. Portanto este efeito NÃO restaura mais um
+ * segmento persistido (cookie/localStorage) na home sem contexto — a home aberta
+ * sem contexto permanece universal (`default`).
+ *
+ * Ele apenas PERSISTE a escolha quando ela veio de uma URL explícita (link de
+ * campanha ou aplicação do Quiz), para que a preferência possa ser reutilizada
+ * depois de uma escolha explícita. Sem `?segment=` na URL, é um no-op.
  */
 export function SegmentReconciler({
   active,
   fromUrl,
-  urlPresent,
 }: {
   active: SegmentId;
   fromUrl: boolean;
-  urlPresent: boolean;
 }) {
-  const router = useRouter();
-
   React.useEffect(() => {
-    if (fromUrl) {
-      persistSegment(active);
-      return;
-    }
-    // Havia parâmetro na URL, porém inválido: a URL manda (default nesta view).
-    // Não restaura do storage nem sobrescreve o cookie por causa de um typo.
-    if (urlPresent) return;
-    // Sem parâmetro na URL: veio do cookie → espelha no localStorage.
-    if (active !== "default") {
-      persistSegment(active);
-      return;
-    }
-    // Sem URL e default: tenta restaurar do localStorage.
-    let stored: string | null = null;
-    try {
-      stored = window.localStorage.getItem(SEGMENT_STORAGE_KEY);
-    } catch {
-      stored = null;
-    }
-    if (isSegmentId(stored) && stored !== "default") {
-      router.replace(withSegment("/", stored), { scroll: false });
-    }
-  }, [active, fromUrl, urlPresent, router]);
+    if (fromUrl) persistSegment(active);
+    // Sem parâmetro de URL: NÃO restauramos segmento persistido — a home sem
+    // contexto nunca vira um nicho (LP3.1).
+  }, [active, fromUrl]);
 
   return null;
 }

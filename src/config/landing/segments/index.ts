@@ -103,6 +103,19 @@ export function resolveSegmentId(sources: {
 }
 
 /**
+ * Segmento ATIVO da home pública (LP3.1 — Reposicionamento Universal).
+ *
+ * REGRA: a home só é personalizada por um `?segment=` EXPLÍCITO na URL — link de
+ * campanha ou a escolha aplicada pelo próprio Quiz. Um segmento PERSISTIDO
+ * (cookie/localStorage) NUNCA força a home sem contexto a parecer de um nicho.
+ * A home aberta sem contexto é SEMPRE universal (`default`). Nenhum nicho —
+ * `academia` inclusive — é fallback implícito da home principal.
+ */
+export function resolveLandingSegment(urlSegment: unknown): SegmentId {
+  return resolveSegmentId({ url: urlSegment });
+}
+
+/**
  * Conteúdo pronto para a UI: resolve o FAQ final (base comum + específicas do
  * nicho) e devolve todas as fatias tipadas. Componentes consomem só isto.
  */

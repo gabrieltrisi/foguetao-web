@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useReducedMotion } from "framer-motion";
-import { QUESTIONS, QUESTION_COUNT } from "../constants/questions";
+import { QUESTIONS, QUESTION_COUNT, SEGMENT_MAP } from "../constants/questions";
 import { buildDiagnosis } from "../utils/diagnosis";
 import { completeAnswersSchema } from "../utils/validation";
 import { captureTracking } from "../utils/utm";
@@ -31,13 +31,16 @@ export function useQuizMachine() {
   // setState em efeito. `QuizOverlay` é ssr:false, então roda no navegador.
   const [initial] = React.useState(() => {
     const saved = loadProgress();
-    return {
-      answers: (saved?.answers ?? {}) as QuizAnswers,
-      step:
-        saved && typeof saved.step === "number"
-          ? Math.min(Math.max(saved.step, 0), QUESTION_COUNT - 1)
-          : 0,
-    };
+    const answers = (saved?.answers ?? {}) as QuizAnswers;
+    let step =
+      saved && typeof saved.step === "number"
+        ? Math.min(Math.max(saved.step, 0), QUESTION_COUNT - 1)
+        : 0;
+    // Migração LP3.1: a 1ª pergunta é o segmento. Se um progresso antigo/inválido
+    // avançou sem o segmento respondido, retoma no passo 0 (pede o segmento antes
+    // de continuar) — NUNCA assume um nicho (ex.: academia) por fallback.
+    if (step > 0 && !answers.segmento) step = 0;
+    return { answers, step };
   });
 
   // Retomada: havia progresso salvo (passo > 0 ou alguma resposta).
@@ -93,6 +96,10 @@ export function useQuizMachine() {
       const nextAnswers: QuizAnswers = { ...answers, [q.id]: value };
       setAnswers(nextAnswers);
       analytics.questionAnswered(q.id, value, stepIndex);
+      // Evento dedicado de segmentação (canônico), para o funil por segmento.
+      if (q.id === "segmento") {
+        analytics.segmentSelected(SEGMENT_MAP[value as keyof typeof SEGMENT_MAP] ?? "outro");
+      }
 
       const isLast = stepIndex >= QUESTION_COUNT - 1;
       if (isLast) {

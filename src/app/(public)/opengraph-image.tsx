@@ -26,13 +26,13 @@ export default function OpengraphImage() {
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ width: 12, height: 12, borderRadius: 12, background: "#e0070f" }} />
           <div style={{ fontSize: 22, letterSpacing: 8, color: "rgba(255,255,255,0.6)" }}>
-            PLATAFORMA COMERCIAL PARA TIMES QUE CRESCEM
+            CRM PARA EMPRESAS QUE QUEREM VENDER MAIS
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 82, fontWeight: 800, lineHeight: 1.02, letterSpacing: -3 }}>
-            Toda a sua operação
+            Mais vendas.
           </div>
           <div
             style={{
@@ -44,8 +44,7 @@ export default function OpengraphImage() {
               letterSpacing: -3,
             }}
           >
-            <span>{"comercial, em "}</span>
-            <span style={{ color: "#e0070f" }}>{" crescimento."}</span>
+            <span style={{ color: "#e0070f" }}>Menos oportunidades perdidas.</span>
           </div>
         </div>
 

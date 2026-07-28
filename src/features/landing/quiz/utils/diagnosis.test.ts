@@ -28,7 +28,7 @@ describe("buildDiagnosis", () => {
   });
 
   it("usa o rótulo que o usuário viu como segmentLabel", () => {
-    expect(buildDiagnosis(ecommerceHighVolume).segmentLabel).toBe("E-commerce");
+    expect(buildDiagnosis(ecommerceHighVolume).segmentLabel).toBe("Comércio ou varejo");
   });
 
   it("inclui o gargalo primário da dor escolhida", () => {

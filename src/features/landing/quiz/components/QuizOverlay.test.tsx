@@ -38,7 +38,7 @@ describe("QuizOverlay", () => {
     render(<QuizOverlay active="default" onClose={() => {}} onSegmentResolved={() => {}} />);
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
-    expect(screen.getByText(/qual é o seu segmento/i)).toBeInTheDocument();
+    expect(screen.getByText(/qual é o segmento da sua empresa/i)).toBeInTheDocument();
     expect(screen.getByText(/pergunta 1 de 6/i)).toBeInTheDocument();
   });
 
