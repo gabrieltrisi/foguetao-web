@@ -2,6 +2,7 @@
 export type QuizEventName =
   | "quiz_open"
   | "quiz_started"
+  | "quiz_segment_selected"
   | "question_viewed"
   | "question_answered"
   | "quiz_abandoned"

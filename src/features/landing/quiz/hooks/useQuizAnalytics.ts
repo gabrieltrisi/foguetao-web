@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { track } from "../analytics/track";
+import { QUIZ_VERSION } from "../constants/storage";
 import type { QuestionId } from "../types";
 
 /**
@@ -16,6 +17,8 @@ export function useQuizAnalytics() {
         track("question_viewed", { question: id, index }),
       questionAnswered: (id: QuestionId, value: string, index: number) =>
         track("question_answered", { question: id, value, index }),
+      segmentSelected: (segment: string) =>
+        track("quiz_segment_selected", { segment, source: "quiz", quizVersion: QUIZ_VERSION }),
       abandoned: (id: QuestionId | null, index: number) =>
         track("quiz_abandoned", { question: id, index }),
       diagnosisViewed: (segment: string, score: number) =>

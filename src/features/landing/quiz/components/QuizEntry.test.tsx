@@ -35,7 +35,7 @@ describe("QuizProvider + QuizTrigger", () => {
     );
     await user.click(screen.getByRole("button", { name: /fazer meu diagnóstico/i }));
     expect(await screen.findByRole("dialog", {}, { timeout: 5000 })).toBeInTheDocument();
-    expect(await screen.findByText(/qual é o seu segmento/i)).toBeInTheDocument();
+    expect(await screen.findByText(/qual é o segmento da sua empresa/i)).toBeInTheDocument();
   }, 15000);
 
   it("useQuiz fora do provider lança erro", () => {
