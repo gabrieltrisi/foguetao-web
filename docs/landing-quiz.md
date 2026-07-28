@@ -338,3 +338,74 @@ porque o `Reveal` usa `whileInView` (dispara ao rolar). Para QA confiável, rola
 a seção e capturar o viewport (ou emular scroll) — o conteúdo real renderiza com
 `opacity: 1` (verificado por `getBoundingClientRect`/`innerText`). Não é bug de
 produção: usuários reais rolando disparam as animações normalmente.
+
+---
+
+# LP3.1 — Reposicionamento Universal + Segmentação pelo Quiz
+
+## Decisão de posicionamento
+A home do Foguetão é **universal**: um CRM para empresas em geral. Segmentos
+específicos são **descobertos pelo Quiz** (1ª pergunta) e usados para
+personalização posterior. **Nenhum nicho é fallback implícito** da home
+principal — academia inclusive.
+
+## Causa raiz (por que a home abria em "academia")
+O `default` sempre foi universal. A home virava um nicho porque o **segmento
+persistido** era restaurado na home sem contexto, por dois caminhos:
+1. **SSR — cookie** (`page.tsx`): lia `fg_segment` e passava a `resolveSegmentId`.
+2. **Client — localStorage** (`SegmentReconciler`): sem `?segment=`, fazia
+   `router.replace("/?segment=<nicho>")`.
+Quem uma vez escolheu um nicho via cookie/localStorage via a home sempre naquele nicho.
+
+## Correção (arquitetura, não só texto)
+- Novo `resolveLandingSegment(urlSegment)` (`config/landing/segments/index.ts`):
+  a home só personaliza por `?segment=` **explícito** na URL (link de campanha ou
+  aplicação do Quiz). Sem parâmetro → `default` (universal).
+- `page.tsx` não lê mais o cookie de segmento.
+- `SegmentReconciler` **não restaura** mais nicho do localStorage; apenas persiste
+  uma escolha explícita da URL (para reuso após escolha explícita). Sem `?segment=`
+  → no-op. SSR determinístico (só URL) — sem flash/hydration mismatch/layout shift.
+- Copy universal do `default` (hero/subtítulo/mock) + OG alinhados; sem termos de nicho.
+
+## Primeira pergunta do Quiz (segmento)
+Já era a 1ª etapa; reposicionada com clareza:
+- Título: **"Qual é o segmento da sua empresa?"** · apoio: "Isso ajuda o Foguetão
+  a montar um diagnóstico mais próximo da sua operação."
+
+### Taxonomia (label de exibição → chave canônica → SegmentId)
+| Label | id (resposta) | SegmentId |
+|---|---|---|
+| Prestação de serviços | `consultoria` | `prestador-servico` |
+| Agência de marketing | `agencia` | `agencia` |
+| Academia ou estúdio | `academia` | `academia` |
+| Imobiliária | `imobiliaria` | `imobiliaria` |
+| Clínica ou consultório | `clinica` | `clinica` |
+| Comércio ou varejo | `ecommerce` | `loja` |
+| Infoproduto | `infoproduto` | `outro` |
+| Outro | `outro` | `outro` |
+
+Uma taxonomia só: os `id` de resposta são estáveis (persistência/analytics/zod);
+apenas os labels de exibição mudaram. "Outro" usa a experiência genérica.
+
+## Persistência / migração
+O progresso do quiz (`fg_quiz_progress`, versionado) não quebra: a 1ª pergunta é o
+segmento. Guarda de migração (`useQuizMachine`): um progresso salvo com `step > 0`
+mas **sem `segmento`** retoma no passo 0 (pede o segmento antes de continuar) —
+**nunca assume um nicho**. Respostas compatíveis são preservadas.
+
+## Analytics
+Novo evento `quiz_segment_selected { segment (canônico), source: "quiz",
+quizVersion }` disparado ao responder o segmento. Mantidos `quiz_open { source }`,
+`quiz_started`, `question_*`, `diagnosis_viewed`, `lead_created`, `quiz_finished`.
+Diagnóstico e payload de lead usam a escolha real do usuário. Sem provider externo.
+
+## SEO
+Home permanece universal e **canonical fixo em `/`**. Metadata/title/description
+já eram universais; OG (`opengraph-image.tsx`) atualizado para o posicionamento
+universal ("Mais vendas. / Menos oportunidades perdidas."). Nenhuma página
+indexável nova.
+
+## Known issue (fora de escopo, não-landing)
+`src/features/inbox/__tests__/conversation-timeline.test.tsx` falha por depender da
+data atual (separador "Hoje" → "Ontem" após virada de dia). É código de **Inbox**
+(intocável nesta sprint) e a falha independe da LP3.1 (0 diff de inbox).
