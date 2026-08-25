@@ -12,6 +12,10 @@
 
 <p align="center">🔗 <strong>Ao vivo:</strong> https://foguetao-web.vercel.app/login</p>
 
+<p align="center">
+  <a href="https://foguetao-web.vercel.app"><img width="100%" src="docs/preview.gif" alt="Landing do Foguetao - hero e secoes com animacoes de scroll" /></a>
+</p>
+
 ---
 
 
