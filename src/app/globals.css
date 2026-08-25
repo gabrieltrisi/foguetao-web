@@ -1,0 +1,205 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * Foguetão — Design tokens
+ * Fonte oficial: foguetao-design-reference.pdf (v1.0)
+ * Não alterar cores/fontes/proporções sem atualizar o PDF de referência.
+ */
+
+@theme {
+  /* ---------- Cores semânticas ---------- */
+  --color-brand: #e0070f;
+  --color-brand-dark: #8a0509;
+  --color-brand-soft: #fdecec;
+
+  --color-ink: #17171a;
+  --color-ink-2: #66666d;
+  --color-ink-3: #929298;
+
+  --color-surface: #f7f7f8;
+  --color-line: #e6e6e8;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  --color-white: #ffffff;
+
+  /* Alias de anel de foco */
+  --color-ring: #e0070f;
+
+  /* ---------- Tipografia ---------- */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-sora), system-ui, sans-serif;
+
+  /* Escala tipográfica (px, conforme PDF) */
+  --text-display: 32px;
+  --text-display--line-height: 40px;
+  --text-h1: 22px;
+  --text-h1--line-height: 28px;
+  --text-h2: 18px;
+  --text-h2--line-height: 26px;
+  --text-h3: 14px;
+  --text-h3--line-height: 20px;
+  --text-body: 14px;
+  --text-body--line-height: 22px;
+  --text-body2: 13px;
+  --text-body2--line-height: 20px;
+  --text-small: 12px;
+  --text-small--line-height: 18px;
+  --text-caption: 11px;
+  --text-caption--line-height: 16px;
+  --text-micro: 10px;
+  --text-micro--line-height: 14px;
+
+  /* ---------- Raios de borda ---------- */
+  /* Raio padrão da plataforma: 10px (lg) */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* ---------- Sombras (discretas) ---------- */
+  --shadow-sm: 0 1px 2px 0 rgb(17 17 26 / 0.05);
+  --shadow-md: 0 2px 8px -2px rgb(17 17 26 / 0.08);
+  --shadow-lg: 0 12px 32px -8px rgb(17 17 26 / 0.14);
+}
+
+/* ---------- Base ---------- */
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Foco visível consistente (acessibilidade) */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-soft);
+    color: var(--color-brand-dark);
+  }
+}
+
+/* Respeitar prefers-reduced-motion globalmente */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utilitário: esconder scrollbar (filtros com scroll horizontal no mobile) */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Safe-area (notch / home indicator do iOS). Usados no nav fixo, no menu mobile
+ * e nos overlays fullscreen da landing. `max(...,0px)` = no-op onde não há inset. */
+@utility pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+/* ===========================================================================
+ * Landing "Console de Missão" (src/components/site/*)
+ * Bloco isolado: só afeta a landing. A fonte mono só resolve para JetBrains
+ * onde `--font-jetbrains-mono` está definida (o wrapper da landing); no resto
+ * do app o var() cai no fallback ui-monospace de sempre.
+ * ========================================================================= */
+@theme {
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Ângulo animável para a borda que "carrega" (ChargeBorder). */
+@property --charge {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes charge-spin {
+  to {
+    --charge: 360deg;
+  }
+}
+
+/* Revelação de fase de missão (fallback CSS; o principal é via framer-motion). */
+@keyframes hud-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* ===========================================================================
+ * Modo noturno (dark) — alternado pela classe `.dark` em <html>.
+ *
+ * Estratégia: só redefinimos os TOKENS semânticos. Como o app usa `text-ink`,
+ * `bg-surface`, `border-line` e `bg-white` em toda parte, ele vira sozinho —
+ * sem reescrever cada tela. `text-white` (literal, sobre o vermelho da marca)
+ * NÃO é tocado, então botões/badges continuam legíveis.
+ * ========================================================================= */
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --color-ink: #f3f3f5;
+  --color-ink-2: #a6a6ae;
+  --color-ink-3: #74747d;
+  --color-surface: #202127;
+  --color-line: #2b2c33;
+  --color-brand-soft: #2a1012;
+  color-scheme: dark;
+}
+
+/* Fundo geral da página. */
+.dark body {
+  background-color: #0c0c0f;
+}
+
+/* `bg-white` = superfície de card no app → escurece no dark. Regra fora de
+   `@layer` de propósito, para vencer o utilitário `.bg-white`. */
+.dark .bg-white {
+  background-color: #16171c;
+}
+
+/* Sombras claras somem no escuro; um leve realce de borda separa as camadas. */
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.03),
+    0 10px 30px -14px rgb(0 0 0 / 0.7);
+}
