@@ -1,4 +1,19 @@
-# Foguetão Web (`foguetao-web`)
+<h1 align="center">🚀 Foguetão</h1>
+
+<p align="center"><strong>CRM de performance para marketing, vendas e resultado.</strong><br/>Interface web oficial — landing pública, login, AppShell autenticado, dashboard e as rotas do produto.</p>
+
+<p align="center">
+  <a href="https://foguetao-web.vercel.app/login"><img src="https://img.shields.io/badge/demo-ao%20vivo-2ea44f?style=for-the-badge&logo=vercel&logoColor=white" alt="Demo ao vivo" /></a>
+  <img src="https://img.shields.io/badge/Next.js%2016-000000?style=for-the-badge&logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/Tailwind%20v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+</p>
+
+<p align="center">🔗 <strong>Ao vivo:</strong> https://foguetao-web.vercel.app/login</p>
+
+---
+
 
 Interface web oficial do **Foguetão** — CRM de performance para marketing, vendas e resultado.
 Primeira versão visual completa: landing pública, login, AppShell autenticado, dashboard e
